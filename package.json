@@ -1,0 +1,75 @@
+{
+    "name": "@egomobile/http-server",
+    "version": "0.0.1",
+    "description": "Very fast alternative HTTP server to Express, with simple routing and middleware support.",
+    "main": "lib/index.js",
+    "engines": {
+        "node": ">=12.0.0"
+    },
+    "scripts": {
+        "build": "del ./lib && tsc",
+        "docs:generate": "del ./docs && typedoc --out ./docs ./src",
+        "lint": "eslint -c .eslintrc.js --ext .ts src",
+        "lint:fix": "eslint --fix -c .eslintrc.js --ext .ts src",
+        "sandbox": "nodemon --watch './sandbox.ts' --exec node -r ts-node/register --inspect=0.0.0.0:9229 ./sandbox.ts",
+        "test": "jest --no-cache"
+    },
+    "jest": {
+        "preset": "ts-jest",
+        "testEnvironment": "node",
+        "testMatch": [
+            "**/__tests__/**/*.test.ts"
+        ],
+        "setupFilesAfterEnv": [
+            "./src/setupTests.ts"
+        ]
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/egomobile/node-http-server.git"
+    },
+    "keywords": [
+        "node",
+        "http",
+        "http2",
+        "http server",
+        "backend",
+        "router",
+        "routing",
+        "middleware",
+        "server",
+        "path matching"
+    ],
+    "author": "Next.e.GO Mobile SE, Aachen, Germany",
+    "license": "LGPL-3.0",
+    "files": [
+        "index.d.ts",
+        "CHANGELOG.md",
+        "LICENSE",
+        "lib",
+        "!lib/**/__tests__/**/*",
+        "!lib/**/*.map",
+        "!lib/**/setupTests.*",
+        "README.md"
+    ],
+    "dependencies": {
+        "@types/node": "^12.12.6"
+    },
+    "devDependencies": {
+        "@egomobile/tsconfig": "^5.0.0",
+        "@types/jest": "^26.0.24",
+        "@types/supertest": "^2.0.11",
+        "babel-jest": "^27.0.6",
+        "del-cli": "^4.0.1",
+        "eslint": "^7.32.0",
+        "eslint-config-ego": "^0.15.0",
+        "jest": "^27.0.6",
+        "nodemon": "^2.0.12",
+        "supertest": "^6.1.6",
+        "ts-jest": "^27.0.4",
+        "ts-node": "^10.2.0",
+        "tslint": "^6.1.3",
+        "typedoc": "^0.21.5",
+        "typescript": "~4.2.4"
+    }
+}
