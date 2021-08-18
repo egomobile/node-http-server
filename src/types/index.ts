@@ -73,6 +73,13 @@ export type HttpRequestPath = string | RegExp | HttpPathValidator;
  */
 export interface IHttpRequestHandlerOptions {
     /**
+     * Automatic call `end()` method on response context
+     * when handler was executed successfully.
+     *
+     * Default: (true)
+     */
+    autoEnd?: boolean;
+    /**
      * A list of one or more middlewares.
      */
     use?: HttpMiddleware[] | null | undefined;

@@ -25,10 +25,22 @@ import { readStream } from '../utils';
  */
 export function json(): HttpMiddleware {
     return async (request, response, next) => {
-        request.body = JSON.parse(
-            (await readStream(request)).toString('utf8')
-        );
+        try {
+            request.body = JSON.parse(
+                (await readStream(request)).toString('utf8')
+            );
 
-        next();
+            next();
+        } catch (ex) {
+            if (ex instanceof SyntaxError) {
+                if (!response.headersSent) {
+                    response.writeHead(400);
+                }
+
+                return response.end();
+            }
+
+            throw ex;
+        }
     };
 }

@@ -1,3 +1,4 @@
+import type { ServerResponse } from 'http';
 import type { HttpPathValidator, HttpRequestHandler } from '.';
 
 export type GroupedHttpRequestHandlers = {
@@ -5,6 +6,7 @@ export type GroupedHttpRequestHandlers = {
 };
 
 export interface RequestHandlerContext {
+    end: (response: ServerResponse) => void;
     handler: HttpRequestHandler;
     isPathValid: HttpPathValidator;
 }

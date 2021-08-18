@@ -20,6 +20,7 @@
 import { createServer as createHttpServer, IncomingMessage, Server, ServerResponse } from 'http';
 import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer } from './types';
 import type { GroupedHttpRequestHandlers } from './types/internal';
+import { isNil } from './utils';
 
 /**
  * The default HTTP error handler.
@@ -80,19 +81,19 @@ export const createServer = (): IHttpServer => {
 
     const server: IHttpServer = (async (request: IncomingMessage, response: ServerResponse) => {
         try {
-            const handler = compiledHandlers[request.method!]?.find(ctx => ctx.isPathValid(request))?.handler;
+            const context = compiledHandlers[request.method!]?.find(ctx => ctx.isPathValid(request));
 
-            if (handler) {
-                await handler(request as IHttpRequest, response as IHttpResponse);
+            if (context?.handler) {
+                await context.handler(request as IHttpRequest, response as IHttpResponse);
 
-                response.end();
+                context.end(response);
             } else {
                 notFoundHandler(request, response)
-                    .catch((error) => logError(error));
+                    .catch(logError);
             }
         } catch (error) {
             errorHandler(error, request, response)
-                .catch((error) => logError(error));
+                .catch(logError);
         }
     }) as any;
 
@@ -173,6 +174,12 @@ export const createServer = (): IHttpServer => {
                 handler = mergeHandler(handler, middlewares, getErrorHandler);
             }
 
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            const autoEnd = isNil(options.autoEnd) ? true : options.autoEnd;
+            if (typeof autoEnd !== 'boolean') {
+                throw new TypeError('optionsOrMiddlewares.autoEnd must be boolean');
+            }
+
             // path validator
             let isPathValid: HttpPathValidator;
             if (typeof path === 'function') {
@@ -184,6 +191,7 @@ export const createServer = (): IHttpServer => {
             }
 
             groupedHandlers[method].push({
+                end: autoEnd ? endRequest : doNotEndRequest,
                 handler,
                 isPathValid
             });
@@ -235,7 +243,7 @@ export const createServer = (): IHttpServer => {
             }
         }
 
-        if (port === null || typeof port === 'undefined') {
+        if (isNil(port)) {
             if (process.env.NODE_ENV?.toLowerCase().trim() === 'development') {
                 port = 8080;
             } else {
@@ -303,12 +311,19 @@ function compileAllWithMiddlewares(
     const compiledHandlers: GroupedHttpRequestHandlers = {};
     for (const method in groupedHandlers) {
         compiledHandlers[method] = groupedHandlers[method].map(ctx => ({
+            end: ctx.end,
             handler: mergeHandler(ctx.handler, middlewares, getErrorHandler),
             isPathValid: ctx.isPathValid
         }));
     }
 
     return compiledHandlers;
+}
+
+function doNotEndRequest() { }
+
+function endRequest(response: ServerResponse) {
+    response.end();
 }
 
 function isPathValidByRegex(path: RegExp) {

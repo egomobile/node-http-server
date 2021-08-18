@@ -13,6 +13,11 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+export function isNil(val: unknown): val is (null | undefined) {
+    return val === null ||
+        typeof val === 'undefined';
+}
+
 export async function readStream(stream: NodeJS.ReadableStream) {
     const chunks: Buffer[] = [];
 

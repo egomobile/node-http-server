@@ -44,8 +44,6 @@ describe('Middlewares', () => {
                     next();
                 }
             ], async (request: IHttpRequest, response: IHttpResponse) => {
-                response.writeHead(200);
-
                 response.write((request as any).foo);
             });
 
@@ -85,8 +83,6 @@ describe('Middlewares', () => {
             );
 
             (server as any)[method](path, async (request: IHttpRequest, response: IHttpResponse) => {
-                response.writeHead(200);
-
                 response.write((request as any).foo);
             });
 
@@ -127,8 +123,6 @@ describe('Middlewares', () => {
                     next();
                 }
             ], async (request: IHttpRequest, response: IHttpResponse) => {
-                response.writeHead(200);
-
                 response.write((request as any).foo);
             });
 
