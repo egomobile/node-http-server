@@ -69,6 +69,21 @@ export type HttpRequestHandler = (request: IHttpRequest, response: IHttpResponse
 export type HttpRequestPath = string | RegExp | HttpPathValidator;
 
 /**
+ * Options for 'body()' function.
+ */
+export interface IHttpBodyParserOptions {
+    /**
+     * Defines the maximum size of the body, in bytes.
+     * (null) indicates to use NO limit
+     */
+    limit?: number | null | undefined;
+    /**
+     * A custom handler, to tell the client, that the body is too big.
+     */
+    onLimitReached?: HttpRequestHandler | null;
+}
+
+/**
  * Options for a request handler.
  */
 export interface IHttpRequestHandlerOptions {

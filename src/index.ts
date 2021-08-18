@@ -18,7 +18,7 @@
 /// <reference path="../index.d.ts" />
 
 import { createServer as createHttpServer, IncomingMessage, Server, ServerResponse } from 'http';
-import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer } from './types';
+import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction } from './types';
 import type { GroupedHttpRequestHandlers } from './types/internal';
 import { isNil } from './utils';
 
@@ -347,9 +347,9 @@ function mergeHandler(
         return new Promise<any>((resolve, reject) => {
             let i = -1;
 
-            const handleError = (err: any) => getErrorHandler()(err, request, response);
+            const handleError = (error: any) => getErrorHandler()(error, request, response);
 
-            const next = () => {
+            const next: NextFunction = () => {
                 const mw = middlewares[++i];
 
                 if (mw) {

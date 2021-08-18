@@ -13,34 +13,74 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { HttpMiddleware } from '../types';
-import { readStream } from '../utils';
+import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions } from '../types';
+import { isNil, readStreamWithLimit, withEntityTooLarge } from '../utils';
 
 /**
- * Creates a middleware, that reads the while input of the request stream,
+ * Options for 'json()' function.
+ */
+export interface IJsonOptions extends IHttpBodyParserOptions {
+}
+
+/**
+ * Creates a middleware, that reads the whole input of the request stream,
  * parses it as JSON UTF-8 string and writes the object to 'body' property of the request
  * context.
  *
+ * @param {number} [limit] The limit in MB.
+ * @param {HttpRequestHandler|null} [onLimitReached] The custom handler, that is invoked, when limit has been reached.
+ * @param {IJsonOptions|null|undefined} [options] Custom options.
+ *
  * @returns {HttpMiddleware} The new middleware.
  */
-export function json(): HttpMiddleware {
-    return async (request, response, next) => {
+export function json(): HttpMiddleware;
+export function json(limit: number, onLimitReached?: HttpRequestHandler | null): HttpMiddleware;
+export function json(options: IJsonOptions | null): HttpMiddleware;
+export function json(optionsOrLimit?: number | IJsonOptions | null, onLimitReached?: HttpRequestHandler | null): HttpMiddleware {
+    if (typeof optionsOrLimit === 'number') {
+        // [0] number
+        // [1] HttpRequestHandler
+
+        optionsOrLimit = {
+            limit: optionsOrLimit * 1048576
+        };
+
+        optionsOrLimit.onLimitReached = onLimitReached;
+    }
+
+    const limit = optionsOrLimit?.limit;
+    onLimitReached = optionsOrLimit?.onLimitReached;
+
+    if (!isNil(limit)) {
+        if (typeof limit !== 'number') {
+            throw new TypeError('limit must be of type number');
+        }
+    }
+
+    if (!isNil(onLimitReached)) {
+        if (typeof onLimitReached !== 'function') {
+            throw new TypeError('onLimitReached must be of type function');
+        }
+    }
+
+    return withEntityTooLarge(async (request, response, next) => {
         try {
             request.body = JSON.parse(
-                (await readStream(request)).toString('utf8')
+                (await readStreamWithLimit(request, limit)).toString('utf8')
             );
-
-            next();
-        } catch (ex) {
-            if (ex instanceof SyntaxError) {
+        } catch (error) {
+            if (error instanceof SyntaxError) {
                 if (!response.headersSent) {
                     response.writeHead(400);
                 }
 
-                return response.end();
+                response.end();
+                return;
             }
 
-            throw ex;
+            throw error;
         }
-    };
+
+        next();
+    }, onLimitReached);
 }

@@ -37,5 +37,28 @@ describe('buffer() middleware', () => {
             expect(typeof str).toBe('string');
             expect(str).toBe(expectedResponse);
         });
+
+        it.each(routePaths)(`should return 413 when do a ${methodName} request with valid JSON data, with is bigger than the limit`, async (path) => {
+            const text = 'mNKU3t79xFBBPxRGL4WMoXMnt8jyApgYnz';
+
+            const server = createServer();
+
+            (server as any)[method](path, [
+                buffer({ limit: text.length - 1 })
+            ], async (request: IHttpRequest, response: IHttpResponse) => {
+                response.write(
+                    JSON.stringify(request.body)
+                );
+            });
+
+            const response = await (request(server) as any)[method]('/')
+                .send(text)
+                .parse(binaryParser)
+                .expect(413);
+
+            const data = response.body;
+            expect(Buffer.isBuffer(data)).toBe(true);
+            expect(data.length).toBe(0);
+        });
     });
 });

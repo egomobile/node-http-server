@@ -45,6 +45,33 @@ describe('json() middleware', () => {
             expect(obj).toEqual(objectToSend);
         });
 
+        it.each(routePaths)(`should return 413 when do a ${methodName} request with valid JSON data, with is bigger than the limit`, async (path) => {
+            const server = createServer();
+
+            const objectToSend = {
+                mk: '23979',
+                tm: 5979
+            };
+            const objectAsString = JSON.stringify(objectToSend);
+
+            (server as any)[method](path, [
+                json({ limit: objectAsString.length - 1 })
+            ], async (request: IHttpRequest, response: IHttpResponse) => {
+                response.write(
+                    JSON.stringify(request.body)
+                );
+            });
+
+            const response = await (request(server) as any)[method]('/')
+                .send(objectAsString)
+                .parse(binaryParser)
+                .expect(413);
+
+            const data = response.body;
+            expect(Buffer.isBuffer(data)).toBe(true);
+            expect(data.length).toBe(0);
+        });
+
         it.each(routePaths)(`should return 400 when do a ${methodName} request with invalid data`, async (path) => {
             const server = createServer();
 

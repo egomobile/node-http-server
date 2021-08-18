@@ -9,6 +9,7 @@ module.exports = {
     "rules": {
         // Additional, per-project rules...
         "import/no-default-export": ["off"],
-        "require-await": ["off"]
+        "require-await": ["off"],
+        "no-redeclare": ["off"]
     }
 }
