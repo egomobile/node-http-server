@@ -16,6 +16,11 @@
 import type { ParseErrorHandler } from '../types';
 
 /**
+ * Default limit of a body parser: 128 MB
+ */
+export const defaultBodyLimit = 134217728;
+
+/**
  * The default 'parse error' handler.
  *
  * @param {ParseError} error The error.

@@ -409,6 +409,7 @@ export {
 
 export {
     buffer,
+    defaultParseErrorHandler,
     json
 } from './middlewares';
 

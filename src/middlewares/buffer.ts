@@ -22,6 +22,11 @@ import { isNil, readStreamWithLimit, withEntityTooLarge } from '../utils';
 export interface IBufferOptions extends IHttpBodyParserOptions {
 }
 
+interface ICreateMiddlewareOptions {
+    limit: number | null;
+    onLimitReached: HttpRequestHandler;
+}
+
 /**
  * Creates a middleware, that reads the whole input of the request stream
  * and writes data to 'body' property of the request
@@ -80,8 +85,12 @@ export function buffer(optionsOrLimit?: number | IBufferOptions | null, onLimitR
         optionsOrLimit.onLimitReached = onLimitReached;
     }
 
-    const limit = optionsOrLimit?.limit;
+    let limit = optionsOrLimit?.limit;
     onLimitReached = optionsOrLimit?.onLimitReached;
+
+    if (limit === null) {
+        limit = require('.').defaultBodyLimit;
+    }
 
     if (!isNil(limit)) {
         if (typeof limit !== 'number') {
@@ -95,6 +104,13 @@ export function buffer(optionsOrLimit?: number | IBufferOptions | null, onLimitR
         }
     }
 
+    return createMiddleware({
+        limit: limit!,
+        onLimitReached: onLimitReached!
+    });
+}
+
+function createMiddleware({ limit, onLimitReached }: ICreateMiddlewareOptions) {
     return withEntityTooLarge(async (request, response, next) => {
         request.body = await readStreamWithLimit(request, limit);
 

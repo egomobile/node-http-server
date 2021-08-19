@@ -17,6 +17,12 @@ import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions, ParseE
 import { ParseError } from '../errors/parse';
 import { isNil, readStreamWithLimit, withEntityTooLarge } from '../utils';
 
+interface ICreateMiddlewareOptions {
+    limit: number | null;
+    onLimitReached: HttpRequestHandler | null | undefined;
+    onParsingFailed: ParseErrorHandler;
+}
+
 /**
  * Options for 'json()' function.
  */
@@ -89,9 +95,13 @@ export function json(optionsOrLimit?: number | IJsonOptions | null, onLimitReach
         optionsOrLimit.onParsingFailed = onParsingFailed;
     }
 
-    const limit = optionsOrLimit?.limit;
+    let limit = optionsOrLimit?.limit;
     onLimitReached = optionsOrLimit?.onLimitReached;
     onParsingFailed = optionsOrLimit?.onParsingFailed;
+
+    if (limit === null) {
+        limit = require('.').defaultBodyLimit;
+    }
 
     if (!isNil(limit)) {
         if (typeof limit !== 'number') {
@@ -113,6 +123,14 @@ export function json(optionsOrLimit?: number | IJsonOptions | null, onLimitReach
         }
     }
 
+    return createMiddleware({
+        limit: limit!,
+        onLimitReached: onLimitReached!,
+        onParsingFailed: onParsingFailed!
+    });
+}
+
+function createMiddleware({ limit, onLimitReached, onParsingFailed }: ICreateMiddlewareOptions): HttpMiddleware {
     return withEntityTooLarge(async (request, response, next) => {
         try {
             request.body = JSON.parse(
