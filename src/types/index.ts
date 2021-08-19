@@ -120,11 +120,38 @@ export interface IHttpServer {
      * A HTTP server itself is a HTTP request listener,
      * which can be used in any compatible server instance, like
      * Node HTTP, e.g.
+     *
+     * @example
+     * ```
+     * import createServer from '@egomobile/http-server'
+     * import { createServer as createHTTPServer } from 'http'
+     *
+     * const app = createServer()
+     * const server = createHTTPServer(app)
+     *
+     * server.listen(8080, () => {
+     *   console.log('Server is listing')
+     * })
+     * ```
      */
     (request: IncomingMessage, response: ServerResponse): void;
 
     /**
      * Closes / stops the server.
+     *
+     * @example
+     * ```
+     * import createServer from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * await app = server.listen()
+     * console.log('Server is listening')
+     *
+     * setTimeout(() => {
+     *     app.close().catch(console.error)
+     * }, 60000)
+     * ```
      */
     close(): Promise<void>;
 
@@ -134,6 +161,19 @@ export interface IHttpServer {
      * @param {HttpRequestPath} path The path.
      * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
      * @param {HttpRequestHandler} handler The handler.
+     *
+     * @example
+     * ```
+     * import createServer, { IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * app.connect('/', async (request: IHttpRequest, response: IHttpResponse) => {
+     *     // do your magic here
+     * })
+     *
+     * await app.listen()  // port === 8080, if NODE_ENV === 'development'; otherwise 80
+     * ```
      */
     connect(path: HttpRequestPath, handler: HttpRequestHandler): this;
     connect(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
@@ -144,6 +184,19 @@ export interface IHttpServer {
      * @param {HttpRequestPath} path The path.
      * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
      * @param {HttpRequestHandler} handler The handler.
+     *
+     * @example
+     * ```
+     * import createServer, { IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * app.delete('/', async (request: IHttpRequest, response: IHttpResponse) => {
+     *     // do your magic here
+     * })
+     *
+     * await app.listen()  // port === 8080, if NODE_ENV === 'development'; otherwise 80
+     * ```
      */
     delete(path: HttpRequestPath, handler: HttpRequestHandler): this;
     delete(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
@@ -154,6 +207,19 @@ export interface IHttpServer {
      * @param {HttpRequestPath} path The path.
      * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
      * @param {HttpRequestHandler} handler The handler.
+     *
+     * @example
+     * ```
+     * import createServer, { IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * app.get('/', async (request: IHttpRequest, response: IHttpResponse) => {
+     *     // do your magic here
+     * })
+     *
+     * await app.listen()  // port === 8080, if NODE_ENV === 'development'; otherwise 80
+     * ```
      */
     get(path: HttpRequestPath, handler: HttpRequestHandler): this;
     get(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
@@ -164,12 +230,35 @@ export interface IHttpServer {
      * @param {HttpRequestPath} path The path.
      * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
      * @param {HttpRequestHandler} handler The handler.
+     *
+     * @example
+     * ```
+     * import createServer, { IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * app.head('/', async (request: IHttpRequest, response: IHttpResponse) => {
+     *     // do your magic here
+     * })
+     *
+     * await app.listen()  // port === 8080, if NODE_ENV === 'development'; otherwise 80
+     * ```
      */
     head(path: HttpRequestPath, handler: HttpRequestHandler): this;
     head(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
 
     /**
      * Indicates if that instance is an e.GO HTTP server.
+     *
+     * @example
+     * ```
+     * import assert from 'assert'
+     * import createServer from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * assert.strictEqual(app.isEgoHttpServer, true)
+     * ```
      */
     readonly isEgoHttpServer: true;
 
@@ -178,6 +267,18 @@ export interface IHttpServer {
      *
      * @param {number|string} [port] The custom TCP port.
      *                               Default is 8080 in development mode (NODE_ENV), otherwise 80.
+     *
+     * @example
+     * ```
+     * import createServer from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * await app.listen()  // if NODE_ENV === 'development', port is 8080
+     *                     // otherwise port is 80
+     *
+     * await app.listen(5979)  // explicit port 5979
+     * ```
      */
     listen(port?: number | string | null): Promise<void>;
 
@@ -187,6 +288,19 @@ export interface IHttpServer {
      * @param {HttpRequestPath} path The path.
      * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
      * @param {HttpRequestHandler} handler The handler.
+     *
+     * @example
+     * ```
+     * import createServer, { IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * app.options('/', async (request: IHttpRequest, response: IHttpResponse) => {
+     *     // do your magic here
+     * })
+     *
+     * await app.listen()  // port === 8080, if NODE_ENV === 'development'; otherwise 80
+     * ```
      */
     options(path: HttpRequestPath, handler: HttpRequestHandler): this;
     options(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
@@ -197,6 +311,19 @@ export interface IHttpServer {
      * @param {HttpRequestPath} path The path.
      * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
      * @param {HttpRequestHandler} handler The handler.
+     *
+     * @example
+     * ```
+     * import createServer, { IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * app.patch('/', async (request: IHttpRequest, response: IHttpResponse) => {
+     *     // do your magic here
+     * })
+     *
+     * await app.listen()  // port === 8080, if NODE_ENV === 'development'; otherwise 80
+     * ```
      */
     patch(path: HttpRequestPath, handler: HttpRequestHandler): this;
     patch(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
@@ -212,6 +339,19 @@ export interface IHttpServer {
      * @param {HttpRequestPath} path The path.
      * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
      * @param {HttpRequestHandler} handler The handler.
+     *
+     * @example
+     * ```
+     * import createServer, { IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * app.post('/', async (request: IHttpRequest, response: IHttpResponse) => {
+     *     // do your magic here
+     * })
+     *
+     * await app.listen()  // port === 8080, if NODE_ENV === 'development'; otherwise 80
+     * ```
      */
     post(path: HttpRequestPath, handler: HttpRequestHandler): this;
     post(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
@@ -222,14 +362,53 @@ export interface IHttpServer {
      * @param {HttpRequestPath} path The path.
      * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
      * @param {HttpRequestHandler} handler The handler.
+     *
+     * @example
+     * ```
+     * import createServer, { IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * app.put('/', async (request: IHttpRequest, response: IHttpResponse) => {
+     *     // do your magic here
+     * })
+     *
+     * await app.listen()  // port === 8080, if NODE_ENV === 'development'; otherwise 80
+     * ```
      */
     put(path: HttpRequestPath, handler: HttpRequestHandler): this;
     put(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
 
     /**
-     * Sets a new error handler.
+     * Sets a custom error handler.
      *
      * @param {HttpErrorHandler} handler The new handler.
+     *
+     * @example
+     * ```
+     * import createServer, { json, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * app.setErrorHandler(async (error: any, request: IHttpRequest, response: IHttpResponse) => {
+     *     const errorMessage = Buffer.from('SERVER ERROR: ' + String(error))
+     *
+     *     if (!response.headersSent) {
+     *         response.writeHead(500, {
+     *             'Content-Length': String(errorMessage.length)
+     *         })
+     *     }
+     *
+     *     response.write(errorMessage)
+     *     response.end()
+     * });
+     *
+     * app.get('/', async (request: IHttpRequest, response: IHttpResponse) => {
+     *     throw new Error('Something went wrong')
+     * })
+     *
+     * await app.listen()
+     * ```
      *
      * @returns {this}
      */
@@ -239,6 +418,32 @@ export interface IHttpServer {
      * Sets a new 'not found' handler.
      *
      * @param {HttpNotFoundHandler} handler The new handler.
+     *
+     * @example
+     * ```
+     * import createServer, { json, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * app.setNotFoundHandler(async (request: IHttpRequest, response: IHttpResponse) => {
+     *     const errorMessage = Buffer.from(`The page ${request.url} could not be found`)
+     *
+     *     if (!response.headersSent) {
+     *         response.writeHead(404, {
+     *             'Content-Length': String(errorMessage.length)
+     *         })
+     *     }
+     *
+     *     response.write(errorMessage)
+     *     response.end()
+     * });
+     *
+     * app.get('/', async (request: IHttpRequest, response: IHttpResponse) => {
+     *     throw new Error('Something went wrong')
+     * })
+     *
+     * await app.listen()
+     * ```
      *
      * @returns {this}
      */
@@ -250,6 +455,19 @@ export interface IHttpServer {
      * @param {HttpRequestPath} path The path.
      * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
      * @param {HttpRequestHandler} handler The handler.
+     *
+     * @example
+     * ```
+     * import createServer, { IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * app.trace('/', async (request: IHttpRequest, response: IHttpResponse) => {
+     *     // do your magic here
+     * })
+     *
+     * await app.listen()  // port === 8080, if NODE_ENV === 'development'; otherwise 80
+     * ```
      */
     trace(path: HttpRequestPath, handler: HttpRequestHandler): this;
     trace(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
@@ -260,6 +478,29 @@ export interface IHttpServer {
      * @param {Middleware[]} [middlewares] The middlewares to add.
      *
      * @returns {this}
+     *
+     * @example
+     * ```
+     * import assert from 'assert'
+     * import createServer from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * assert.strictEqual(app.isEgoHttpServer, true)
+     *
+     * app.use(async (request: any, response: any, next) => {
+     *     request.foo = '1'
+     *     next()
+     * }, async (request: any, response: any, next) => {
+     *     // foo is currently '1'
+     *     request.foo += 2
+     *     next()
+     * })
+     *
+     * app.get('/', async (request: any, response: any) => {
+     *     response.write(String(request.foo === '12'))
+     * })
+     * ```
      */
     use(...middlewares: HttpMiddleware[]): this;
 }

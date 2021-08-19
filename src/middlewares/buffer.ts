@@ -32,6 +32,41 @@ export interface IBufferOptions extends IHttpBodyParserOptions {
  * @param {IJsonOptions|null|undefined} [options] Custom options.
  *
  * @returns {HttpMiddleware} The new middleware.
+ *
+ * @example
+ * ```
+ * import assert from 'assert'
+ * import createServer, { buffer, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+ *
+ * const app = createServer()
+ *
+ * async function handleLimitReached(request: IHttpRequest, response: IHttpResponse) {
+ *     request.writeHead(400)
+ *     request.write('Input is too big')
+ * }
+ *
+ * // maximum input size: 128 MB
+ * app.post('/', buffer(), async (request: IHttpRequest, response: IHttpResponse) => {
+ *     assert.strictEqual(Buffer.isBuffer(request.body), true)
+ * })
+ *
+ * // maximum input size: 256 MB
+ * app.put('/', buffer(256), async (request: IHttpRequest, response: IHttpResponse) => {
+ *     assert.strictEqual(Buffer.isBuffer(request.body), true)
+ * })
+ *
+ * // maximum input size: 384 MB
+ * app.patch('/', buffer({ limit: 402653184 }), async (request: IHttpRequest, response: IHttpResponse) => {
+ *     assert.strictEqual(Buffer.isBuffer(request.body), true)
+ * })
+ *
+ * // custom error handler
+ * app.delete('/', buffer({ limit: 1048576, onLimitReached: handleLimitReached }), async (request: IHttpRequest, response: IHttpResponse) => {
+ * // alternative:
+ * // app.delete('/', buffer(1, handleLimitReached), async (request: IHttpRequest, response: IHttpResponse) => {
+ *     assert.strictEqual(Buffer.isBuffer(request.body), true)
+ * })
+ * ```
  */
 export function buffer(): HttpMiddleware;
 export function buffer(limit: number, onLimitReached?: HttpRequestHandler | null): HttpMiddleware;

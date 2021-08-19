@@ -102,7 +102,9 @@ export function withEntityTooLarge(
         // default handler
         onLimitReached = async (request, response) => {
             if (!response.headersSent) {
-                response.writeHead(413);
+                response.writeHead(413, {
+                    'Content-Length': '0'
+                });
             }
 
             response.end();

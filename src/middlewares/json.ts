@@ -32,6 +32,41 @@ export interface IJsonOptions extends IHttpBodyParserOptions {
  * @param {IJsonOptions|null|undefined} [options] Custom options.
  *
  * @returns {HttpMiddleware} The new middleware.
+ *
+ * @example
+ * ```
+ * import assert from 'assert'
+ * import createServer, { json, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+ *
+ * const app = createServer()
+ *
+ * async function handleLimitReached(request: IHttpRequest, response: IHttpResponse) {
+ *     request.writeHead(400)
+ *     request.write('Input is too big')
+ * }
+ *
+ * // maximum input size: 128 MB
+ * app.post('/', json(), async (request: IHttpRequest, response: IHttpResponse) => {
+ *     assert.strictEqual(typeof request.body, 'object')
+ * })
+ *
+ * // maximum input size: 256 MB
+ * app.put('/', json(256), async (request: IHttpRequest, response: IHttpResponse) => {
+ *     assert.strictEqual(typeof request.body, 'object')
+ * })
+ *
+ * // maximum input size: 384 MB
+ * app.patch('/', json({ limit: 402653184 }), async (request: IHttpRequest, response: IHttpResponse) => {
+ *     assert.strictEqual(typeof request.body, 'object')
+ * })
+ *
+ * // custom error handler
+ * app.delete('/', json({ limit: 1048576, onLimitReached: handleLimitReached }), async (request: IHttpRequest, response: IHttpResponse) => {
+ * // alternative:
+ * // app.delete('/', json(1, handleLimitReached), async (request: IHttpRequest, response: IHttpResponse) => {
+ *     assert.strictEqual(typeof request.body, 'object')
+ * })
+ * ```
  */
 export function json(): HttpMiddleware;
 export function json(limit: number, onLimitReached?: HttpRequestHandler | null): HttpMiddleware;
@@ -71,7 +106,9 @@ export function json(optionsOrLimit?: number | IJsonOptions | null, onLimitReach
         } catch (error) {
             if (error instanceof SyntaxError) {
                 if (!response.headersSent) {
-                    response.writeHead(400);
+                    response.writeHead(400, {
+                        'Content-Length': '0'
+                    });
                 }
 
                 response.end();

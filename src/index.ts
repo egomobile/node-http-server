@@ -33,7 +33,9 @@ export const defaultHttpErrorHandler: HttpErrorHandler = async (error, request, 
     logError(error);
 
     if (!response.headersSent) {
-        response.writeHead(500);
+        response.writeHead(500, {
+            'Content-Length': '0'
+        });
     }
 
     response.end();
@@ -47,7 +49,9 @@ export const defaultHttpErrorHandler: HttpErrorHandler = async (error, request, 
  */
 export const defaultHttpNotFoundHandler: HttpNotFoundHandler = async (request, response) => {
     if (!response.headersSent) {
-        response.writeHead(404);
+        response.writeHead(404, {
+            'Content-Length': '0'
+        });
     }
 
     response.end();
@@ -58,9 +62,24 @@ const supportedHttpMethods = ['CONNECT', 'DELETE', 'GET', 'HEAD', 'OPTIONS', 'PA
 /**
  * Creates a new instance of a HTTP server.
  *
+ * @example
+ * ```
+ * import assert from 'assert'
+ * import createServer, { json, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+ *
+ * const app = createServer()
+ *
+ * app.get('/', async (request: IHttpRequest, response: IHttpResponse) => {
+ *     response.write('Hello!')
+ *     // no response.end() needed here!
+ * })
+ *
+ * await app.listen(8181)
+ * console.log('HTTP server is running')
+ * ```
+ *
  * @returns {IHttpServer} The new instance.
  */
-// createServer()
 export const createServer = (): IHttpServer => {
     let errorHandler: HttpErrorHandler = defaultHttpErrorHandler;
     const globalMiddleWares: HttpMiddleware[] = [];
@@ -252,7 +271,7 @@ export const createServer = (): IHttpServer => {
         }
 
         if (typeof port !== 'number' || isNaN(port) || port < 0 || port > 65535) {
-            throw new TypeError('port value is invalid');
+            throw new TypeError('port must be a valid number between 0 and 65535');
         }
 
         return new Promise<void>((resolve, reject) => {
@@ -292,12 +311,12 @@ export const createServer = (): IHttpServer => {
 
     return server;
 };
-// createServer()
 
 /**
  * @inheritdoc
  */
 export default createServer;
+
 
 function compileAllWithMiddlewares(
     groupedHandlers: GroupedHttpRequestHandlers,
