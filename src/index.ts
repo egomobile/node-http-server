@@ -18,7 +18,7 @@
 /// <reference path="../index.d.ts" />
 
 import { createServer as createHttpServer, IncomingMessage, Server, ServerResponse } from 'http';
-import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction } from './types';
+import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction, Nilable, Optional } from './types';
 import type { GroupedHttpRequestHandlers } from './types/internal';
 import { isNil } from './utils';
 
@@ -83,7 +83,7 @@ const supportedHttpMethods = ['CONNECT', 'DELETE', 'GET', 'HEAD', 'OPTIONS', 'PA
 export const createServer = (): IHttpServer => {
     let errorHandler: HttpErrorHandler = defaultHttpErrorHandler;
     const globalMiddleWares: HttpMiddleware[] = [];
-    let instance: Server | undefined;
+    let instance: Optional<Server>;
     let notFoundHandler: HttpNotFoundHandler = defaultHttpNotFoundHandler;
 
     const getErrorHandler = () => errorHandler;
@@ -136,7 +136,7 @@ export const createServer = (): IHttpServer => {
                 throw new TypeError('path must be of type string, function or RegEx');
             }
 
-            let optionsOrMiddlewares: HttpOptionsOrMiddlewares | null | undefined;
+            let optionsOrMiddlewares: Nilable<HttpOptionsOrMiddlewares>;
             let handler: HttpRequestHandler;
             if (args.length < 3) {
                 // args[1]: HttpRequestHandler

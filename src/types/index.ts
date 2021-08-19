@@ -77,11 +77,11 @@ export interface IHttpBodyParserOptions {
      * Defines the maximum size of the body, in bytes.
      * (null) indicates to use NO limit
      */
-    limit?: number | null | undefined;
+    limit?: Nilable<number>;
     /**
      * A custom handler, to tell the client, that the body is too big.
      */
-    onLimitReached?: HttpRequestHandler | null;
+    onLimitReached?: Nilable<HttpRequestHandler>;
 }
 
 /**
@@ -94,11 +94,11 @@ export interface IHttpRequestHandlerOptions {
      *
      * Default: (true)
      */
-    autoEnd?: boolean;
+    autoEnd?: Optional<boolean>;
     /**
      * A list of one or more middlewares.
      */
-    use?: HttpMiddleware[] | null | undefined;
+    use?: Nilable<HttpMiddleware[]>;
 }
 
 /**
@@ -266,8 +266,8 @@ export interface IHttpServer {
     /**
      * Starts listening for connections.
      *
-     * @param {number|string} [port] The custom TCP port.
-     *                               Default is 8080 in development mode (NODE_ENV), otherwise 80.
+     * @param {Nilable<number|string>} [port] The custom TCP port.
+     *                                        Default is 8080 in development mode (NODE_ENV), otherwise 80.
      *
      * @example
      * ```
@@ -281,7 +281,7 @@ export interface IHttpServer {
      * await app.listen(5979)  // explicit port 5979
      * ```
      */
-    listen(port?: number | string | null): Promise<void>;
+    listen(port?: Nilable<number | string>): Promise<void>;
 
     /**
      * Registers a route for a OPTIONS request.
@@ -510,6 +510,21 @@ export interface IHttpServer {
  * A next function.
  */
 export type NextFunction = () => void;
+
+/**
+ * A type, that can also be (null) or (undefined).
+ */
+export type Nilable<T extends any = any> = Nullable<T> | Optional<T>;
+
+/**
+ * A type, that can also be (null).
+ */
+export type Nullable<T extends any = any> = T | null;
+
+/**
+ * A type, that can also be (undefined).
+ */
+export type Optional<T extends any = any> = T | undefined;
 
 /**
  * A handler, that is executed, if data could not be parsed.

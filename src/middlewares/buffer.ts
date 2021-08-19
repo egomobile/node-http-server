@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions } from '../types';
+import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions, Nilable } from '../types';
 import { isNil, readStreamWithLimit, withEntityTooLarge } from '../utils';
 
 /**
@@ -23,8 +23,8 @@ export interface IBufferOptions extends IHttpBodyParserOptions {
 }
 
 interface ICreateMiddlewareOptions {
-    limit: number | null;
-    onLimitReached: HttpRequestHandler;
+    limit: Nilable<number>;
+    onLimitReached: Nilable<HttpRequestHandler>;
 }
 
 /**
@@ -33,8 +33,8 @@ interface ICreateMiddlewareOptions {
  * context as buffer.
  *
  * @param {number} [limit] The limit in MB.
- * @param {HttpRequestHandler|null} [onLimitReached] The custom handler, that is invoked, when limit has been reached.
- * @param {IJsonOptions|null|undefined} [options] Custom options.
+ * @param {Nilable<HttpRequestHandler>} [onLimitReached] The custom handler, that is invoked, when limit has been reached.
+ * @param {Nilable<IJsonOptions>} [options] Custom options.
  *
  * @returns {HttpMiddleware} The new middleware.
  *
@@ -74,9 +74,9 @@ interface ICreateMiddlewareOptions {
  * ```
  */
 export function buffer(): HttpMiddleware;
-export function buffer(limit: number, onLimitReached?: HttpRequestHandler | null): HttpMiddleware;
-export function buffer(options: IBufferOptions | null): HttpMiddleware;
-export function buffer(optionsOrLimit?: number | IBufferOptions | null, onLimitReached?: HttpRequestHandler | null): HttpMiddleware {
+export function buffer(limit: number, onLimitReached?: Nilable<HttpRequestHandler>): HttpMiddleware;
+export function buffer(options: Nilable<IBufferOptions>): HttpMiddleware;
+export function buffer(optionsOrLimit?: Nilable<IBufferOptions | number>, onLimitReached?: Nilable<HttpRequestHandler>): HttpMiddleware {
     if (typeof optionsOrLimit === 'number') {
         optionsOrLimit = {
             limit: optionsOrLimit * 1048576
@@ -87,10 +87,6 @@ export function buffer(optionsOrLimit?: number | IBufferOptions | null, onLimitR
 
     let limit = optionsOrLimit?.limit;
     onLimitReached = optionsOrLimit?.onLimitReached;
-
-    if (limit === null) {
-        limit = require('.').defaultBodyLimit;
-    }
 
     if (!isNil(limit)) {
         if (typeof limit !== 'number') {
@@ -105,8 +101,8 @@ export function buffer(optionsOrLimit?: number | IBufferOptions | null, onLimitR
     }
 
     return createMiddleware({
-        limit: limit!,
-        onLimitReached: onLimitReached!
+        limit,
+        onLimitReached
     });
 }
 

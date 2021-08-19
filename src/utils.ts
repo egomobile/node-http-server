@@ -14,7 +14,12 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { EntityTooLargeError } from './errors';
-import type { HttpMiddleware, HttpRequestHandler } from './types';
+import type { HttpMiddleware, HttpRequestHandler, Nilable } from './types';
+
+interface ICreateWithEntityTooLargeAction {
+    action: HttpMiddleware;
+    onLimitReached: HttpRequestHandler;
+}
 
 export function isNil(val: unknown): val is (null | undefined) {
     return val === null ||
@@ -46,7 +51,8 @@ export function readStream(stream: NodeJS.ReadableStream) {
 }
 
 export function readStreamWithLimit(
-    stream: NodeJS.ReadableStream, limit: number | null | undefined
+    stream: NodeJS.ReadableStream,
+    limit: Nilable<number>
 ) {
     const allChunks: Buffer[] = [];
     let currentSize = 0;
@@ -96,27 +102,25 @@ export function readStreamWithLimit(
 
 export function withEntityTooLarge(
     action: HttpMiddleware,
-    onLimitReached: HttpRequestHandler | null | undefined
+    onLimitReached: Nilable<HttpRequestHandler>
 ): HttpMiddleware {
     if (!onLimitReached) {
-        // default handler
-        onLimitReached = async (request, response) => {
-            if (!response.headersSent) {
-                response.writeHead(413, {
-                    'Content-Length': '0'
-                });
-            }
-
-            response.end();
-        };
+        onLimitReached = require('./middlewares').defaultLimitReachedHandler;
     }
 
+    return createWithEntityTooLargeAction({
+        action,
+        onLimitReached: onLimitReached!
+    });
+}
+
+function createWithEntityTooLargeAction({ action, onLimitReached }: ICreateWithEntityTooLargeAction) {
     return async (request, response, next) => {
         try {
             await action(request, response, next);
         } catch (error) {
             if (error instanceof EntityTooLargeError) {
-                await onLimitReached!(request, response);
+                await onLimitReached(request, response);
             } else {
                 throw error;
             }

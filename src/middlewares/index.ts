@@ -13,12 +13,28 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { ParseErrorHandler } from '../types';
+import type { HttpRequestHandler, ParseErrorHandler } from '../types';
 
 /**
  * Default limit of a body parser: 128 MB
  */
 export const defaultBodyLimit = 134217728;
+
+/**
+ * The default 'body limit reached' handler.
+ *
+ * @param {IncomingMessage} request The request context.
+ * @param {ServerResponse} response The response context.
+ */
+export const defaultLimitReachedHandler: HttpRequestHandler = async (request, response) => {
+    if (!response.headersSent) {
+        response.writeHead(413, {
+            'Content-Length': '0'
+        });
+    }
+
+    response.end();
+};
 
 /**
  * The default 'parse error' handler.

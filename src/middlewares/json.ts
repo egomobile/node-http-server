@@ -13,13 +13,13 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions, ParseErrorHandler } from '../types';
+import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions, Nilable, ParseErrorHandler } from '../types';
 import { ParseError } from '../errors/parse';
 import { isNil, readStreamWithLimit, withEntityTooLarge } from '../utils';
 
 interface ICreateMiddlewareOptions {
-    limit: number | null;
-    onLimitReached: HttpRequestHandler | null | undefined;
+    limit: Nilable<number>;
+    onLimitReached: Nilable<HttpRequestHandler>;
     onParsingFailed: ParseErrorHandler;
 }
 
@@ -30,7 +30,7 @@ export interface IJsonOptions extends IHttpBodyParserOptions {
     /**
      * A custom parse error handler.
      */
-    onParsingFailed?: ParseErrorHandler | null;
+    onParsingFailed?: Nilable<ParseErrorHandler>;
 }
 
 /**
@@ -39,8 +39,9 @@ export interface IJsonOptions extends IHttpBodyParserOptions {
  * context.
  *
  * @param {number} [limit] The limit in MB.
- * @param {HttpRequestHandler|null} [onLimitReached] The custom handler, that is invoked, when limit has been reached.
- * @param {IJsonOptions|null|undefined} [options] Custom options.
+ * @param {Nilable<HttpRequestHandler>} [onLimitReached] The custom handler, that is invoked, when limit has been reached.
+ * @param {Nilable<ParseErrorHandler>} [onParsingFailed] The custom handler, that is invoked, when input is no valid JSON.
+ * @param {Nilable<IJsonOptions>} [options] Custom options.
  *
  * @returns {HttpMiddleware} The new middleware.
  *
@@ -80,9 +81,9 @@ export interface IJsonOptions extends IHttpBodyParserOptions {
  * ```
  */
 export function json(): HttpMiddleware;
-export function json(limit: number, onLimitReached?: HttpRequestHandler | null, onParsingFailed?: ParseErrorHandler | null): HttpMiddleware;
-export function json(options: IJsonOptions | null): HttpMiddleware;
-export function json(optionsOrLimit?: number | IJsonOptions | null, onLimitReached?: HttpRequestHandler | null, onParsingFailed?: ParseErrorHandler | null): HttpMiddleware {
+export function json(limit: number, onLimitReached?: Nilable<HttpRequestHandler>, onParsingFailed?: Nilable<ParseErrorHandler>): HttpMiddleware;
+export function json(options: Nilable<IJsonOptions>): HttpMiddleware;
+export function json(optionsOrLimit?: Nilable<number | IJsonOptions>, onLimitReached?: Nilable<HttpRequestHandler>, onParsingFailed?: Nilable<ParseErrorHandler>): HttpMiddleware {
     if (typeof optionsOrLimit === 'number') {
         // [0] number
         // [1] HttpRequestHandler
@@ -98,10 +99,6 @@ export function json(optionsOrLimit?: number | IJsonOptions | null, onLimitReach
     let limit = optionsOrLimit?.limit;
     onLimitReached = optionsOrLimit?.onLimitReached;
     onParsingFailed = optionsOrLimit?.onParsingFailed;
-
-    if (limit === null) {
-        limit = require('.').defaultBodyLimit;
-    }
 
     if (!isNil(limit)) {
         if (typeof limit !== 'number') {
@@ -124,8 +121,8 @@ export function json(optionsOrLimit?: number | IJsonOptions | null, onLimitReach
     }
 
     return createMiddleware({
-        limit: limit!,
-        onLimitReached: onLimitReached!,
+        limit,
+        onLimitReached,
         onParsingFailed: onParsingFailed!
     });
 }
