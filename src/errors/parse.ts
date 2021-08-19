@@ -14,7 +14,15 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Describes an 'entity too large' error.
+ * A parse error.
  */
-export class EntityTooLargeError extends Error {
+export class ParseError extends Error {
+    /**
+     * Initializes a new instance of that class.
+     *
+     * @param {any} innerError The inner error.
+     */
+    public constructor(public readonly innerError: any) {
+        super();
+    }
 }

@@ -13,13 +13,18 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions } from '../types';
+import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions, ParseErrorHandler } from '../types';
+import { ParseError } from '../errors/parse';
 import { isNil, readStreamWithLimit, withEntityTooLarge } from '../utils';
 
 /**
  * Options for 'json()' function.
  */
 export interface IJsonOptions extends IHttpBodyParserOptions {
+    /**
+     * A custom parse error handler.
+     */
+    onParsingFailed?: ParseErrorHandler | null;
 }
 
 /**
@@ -69,9 +74,9 @@ export interface IJsonOptions extends IHttpBodyParserOptions {
  * ```
  */
 export function json(): HttpMiddleware;
-export function json(limit: number, onLimitReached?: HttpRequestHandler | null): HttpMiddleware;
+export function json(limit: number, onLimitReached?: HttpRequestHandler | null, onParsingFailed?: ParseErrorHandler | null): HttpMiddleware;
 export function json(options: IJsonOptions | null): HttpMiddleware;
-export function json(optionsOrLimit?: number | IJsonOptions | null, onLimitReached?: HttpRequestHandler | null): HttpMiddleware {
+export function json(optionsOrLimit?: number | IJsonOptions | null, onLimitReached?: HttpRequestHandler | null, onParsingFailed?: ParseErrorHandler | null): HttpMiddleware {
     if (typeof optionsOrLimit === 'number') {
         // [0] number
         // [1] HttpRequestHandler
@@ -81,10 +86,12 @@ export function json(optionsOrLimit?: number | IJsonOptions | null, onLimitReach
         };
 
         optionsOrLimit.onLimitReached = onLimitReached;
+        optionsOrLimit.onParsingFailed = onParsingFailed;
     }
 
     const limit = optionsOrLimit?.limit;
     onLimitReached = optionsOrLimit?.onLimitReached;
+    onParsingFailed = optionsOrLimit?.onParsingFailed;
 
     if (!isNil(limit)) {
         if (typeof limit !== 'number') {
@@ -98,6 +105,14 @@ export function json(optionsOrLimit?: number | IJsonOptions | null, onLimitReach
         }
     }
 
+    if (isNil(onParsingFailed)) {
+        onParsingFailed = require('.').defaultParseErrorHandler;
+    } else {
+        if (typeof onParsingFailed !== 'function') {
+            throw new TypeError('onParsingFailed must be of type function');
+        }
+    }
+
     return withEntityTooLarge(async (request, response, next) => {
         try {
             request.body = JSON.parse(
@@ -105,13 +120,7 @@ export function json(optionsOrLimit?: number | IJsonOptions | null, onLimitReach
             );
         } catch (error) {
             if (error instanceof SyntaxError) {
-                if (!response.headersSent) {
-                    response.writeHead(400, {
-                        'Content-Length': '0'
-                    });
-                }
-
-                response.end();
+                await onParsingFailed!(new ParseError(error), request, response);
                 return;
             }
 

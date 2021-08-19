@@ -399,14 +399,18 @@ export {
     HttpRequestHandler,
     HttpRequestPath,
     NextFunction,
-    IHttpServer,
+    IHttpBodyParserOptions,
     IHttpRequest,
+    IHttpRequestHandlerOptions,
     IHttpResponse,
-    IHttpRequestHandlerOptions
+    IHttpServer,
+    ParseErrorHandler
 } from './types';
 
 export {
     buffer,
     json
 } from './middlewares';
+
+export * from './errors';
 // EXPORTS

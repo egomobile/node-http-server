@@ -72,7 +72,7 @@ describe('json() middleware', () => {
             expect(data.length).toBe(0);
         });
 
-        it.each(routePaths)(`should return 400 when do a ${methodName} request with invalid data`, async (path) => {
+        it.each(routePaths)(`should return 400 when do a ${methodName} request with invalid data and a default 'parse error' handler`, async (path) => {
             const server = createServer();
 
             (server as any)[method](path, [
@@ -91,6 +91,41 @@ describe('json() middleware', () => {
             const data = response.body;
             expect(Buffer.isBuffer(data)).toBe(true);
             expect(data.length).toBe(0);
+        });
+
+        it.each(routePaths)(`should return 402 when do a ${methodName} request with invalid data and a custom 'parse error' handler`, async (path) => {
+            const server = createServer();
+
+            (server as any)[method](path, [
+                json({
+                    onParsingFailed: async (error, request, response) => {
+                        const errorMessage = Buffer.from('PARSE ERROR: ' + String(error.innerError));
+
+                        if (!response.headersSent) {
+                            response.writeHead(402);
+                        }
+
+                        response.write(errorMessage);
+                        response.end();
+                    }
+                })
+            ], async (request: IHttpRequest, response: IHttpResponse) => {
+                response.write(
+                    JSON.stringify(request.body)
+                );
+            });
+
+            const response = await (request(server) as any)[method]('/')
+                .send('{ x: \' }')
+                .parse(binaryParser)
+                .expect(402);
+
+            const data = response.body;
+            expect(Buffer.isBuffer(data)).toBe(true);
+
+            const str: string = data.toString('utf8');
+            expect(typeof str).toBe('string');
+            expect(str).toBe('PARSE ERROR: SyntaxError: Unexpected token x in JSON at position 2');
         });
     });
 });

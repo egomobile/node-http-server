@@ -14,6 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import type { ParseError } from '../errors/parse';
 
 /**
  * A HTTP error handler.
@@ -509,3 +510,12 @@ export interface IHttpServer {
  * A next function.
  */
 export type NextFunction = () => void;
+
+/**
+ * A handler, that is executed, if data could not be parsed.
+ *
+ * @param {ParseError} error The thrown error.
+ * @param {IHttpRequest} request The request context.
+ * @param {IHttpResponse} response The response context.
+ */
+export type ParseErrorHandler = (error: ParseError, request: IHttpRequest, response: IHttpResponse) => Promise<any>;
