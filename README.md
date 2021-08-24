@@ -135,7 +135,7 @@ async function main() {
         request.foo += 3;
       },
     ],
-    async (request, response) => {
+    async (request: any, response) => {
       // request.foo === '1a23'
     }
   );
