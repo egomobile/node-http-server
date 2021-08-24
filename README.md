@@ -76,7 +76,7 @@ async function main() {
   // string and writes it to 'body' prop of 'request' object
   // with a default limit of 1284 MB
   app.put("/", [json()], async (request, response) => {
-    response.write("Hello: " + request.body!.toString("ascii"));
+    response.write("Hello: " + JSON.stringify(request.body, null, 2));
   });
 
   // ...
