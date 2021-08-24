@@ -14,9 +14,9 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { EntityTooLargeError } from './errors';
-import type { HttpMiddleware, HttpRequestHandler, Nilable } from './types';
+import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, Nilable } from './types';
 
-interface ICreateWithEntityTooLargeAction {
+interface ICreateWithEntityTooLargeActionOptions {
     action: HttpMiddleware;
     onLimitReached: HttpRequestHandler;
 }
@@ -114,8 +114,8 @@ export function withEntityTooLarge(
     });
 }
 
-function createWithEntityTooLargeAction({ action, onLimitReached }: ICreateWithEntityTooLargeAction) {
-    return async (request, response, next) => {
+function createWithEntityTooLargeAction({ action, onLimitReached }: ICreateWithEntityTooLargeActionOptions) {
+    return async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
         try {
             await action(request, response, next);
         } catch (error) {
