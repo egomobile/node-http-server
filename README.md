@@ -194,4 +194,4 @@ main().catch(console.error);
 
 ## Documentation
 
-The API documentation can be found [here](https://egomobile.github.io/http-server/).
+The API documentation can be found [here](https://egomobile.github.io/node-http-server/).
