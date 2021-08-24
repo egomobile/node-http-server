@@ -1,5 +1,5 @@
 # Change Log (@egomobile/http-server)
 
-## 0.0.0
+## 0.1.0
 
-- [not released yet]
+- initial release
