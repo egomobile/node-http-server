@@ -111,10 +111,6 @@ export interface IHttpRequest extends IncomingMessage {
      */
     body?: any;
     /**
-     * List of parameters, if parsed.
-     */
-    params?: Record<string, string>;
-    /**
      * List of query parameters, if parsed.
      */
     query?: ParsedUrlQuery;
