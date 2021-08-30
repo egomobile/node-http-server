@@ -5,6 +5,7 @@
 - add `query()` middleware
 - fix `params()` path validator
 - fix README
+- fixes in path validation
 
 ## 0.2.2
 

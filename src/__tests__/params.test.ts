@@ -14,7 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import request from 'supertest';
-import { params } from '../middlewares';
+import { params } from '../validators';
 import { IHttpRequest, IHttpResponse } from '../types';
 import { binaryParser, createServer } from './utils';
 

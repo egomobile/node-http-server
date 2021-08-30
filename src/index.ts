@@ -20,7 +20,7 @@
 import { createServer as createHttpServer, IncomingMessage, Server, ServerResponse } from 'http';
 import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction, Nilable, Optional } from './types';
 import type { GroupedHttpRequestHandlers } from './types/internal';
-import { asAsync, isNil } from './utils';
+import { asAsync, getUrlWithoutQuery, isNil } from './utils';
 
 /**
  * The default HTTP error handler.
@@ -353,11 +353,11 @@ function endRequest(response: ServerResponse) {
 }
 
 function isPathValidByRegex(path: RegExp) {
-    return (req: IncomingMessage) => path.test(req.url!);
+    return (req: IncomingMessage) => path.test(getUrlWithoutQuery(req.url)!);
 }
 
 function isPathValidByString(path: string) {
-    return (req: IncomingMessage) => req.url === path;
+    return (req: IncomingMessage) => getUrlWithoutQuery(req.url) === path;
 }
 
 function logError(error: any) {

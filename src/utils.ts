@@ -14,7 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { EntityTooLargeError } from './errors';
-import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, Nilable } from './types';
+import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, Nilable, Optional } from './types';
 
 interface ICreateWithEntityTooLargeActionOptions {
     action: HttpMiddleware;
@@ -29,6 +29,19 @@ export function asAsync<TFunc extends Function = Function>(func: Function): TFun
     return (async function (...args: any[]) {
         return func(...args);
     }) as any;
+}
+
+export function getUrlWithoutQuery(url: Optional<string>): Optional<string> {
+    if (!url) {
+        return url;
+    }
+
+    const qMark = url.indexOf('?');
+    if (qMark > -1) {
+        url = url.substr(0, qMark);
+    }
+
+    return url;
 }
 
 export function isNil(val: unknown): val is (null | undefined) {
