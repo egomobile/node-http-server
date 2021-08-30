@@ -509,7 +509,7 @@ export interface IHttpServer {
 /**
  * A next function.
  *
- * @param {any} [any] The error, if occurred.
+ * @param {any} [error] The error, if occurred.
  */
 export type NextFunction = (error?: any) => void;
 
