@@ -38,8 +38,6 @@ async function main() {
   // s. https://github.com/lukeed/regexparam
   // for more information about the string format
   app.get(params("/foo/:bar/baz"), async (request, response) => {
-    const name: string = request.body!.toString("utf8");
-
     response.write("BAR: " + request.params!.bar);
   });
 

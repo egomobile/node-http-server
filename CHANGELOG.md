@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-server)
 
-## 0.2.0
+## 0.2.1
 
 - add `params()` middleware
 - `next()` function of a middleware can receive an error object now
