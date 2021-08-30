@@ -17,7 +17,7 @@ npm install --save @egomobile/http-server
 ### Quick example
 
 ```typescript
-import createServer, { buffer } from "@egomobile/http-server";
+import createServer, { buffer, params } from "@egomobile/http-server";
 
 async function main() {
   const app = createServer();
@@ -32,6 +32,15 @@ async function main() {
 
     response.write("Hello: " + name);
     // no response.end() is required here
+  });
+
+  // parameters require a special middleware here
+  // s. https://github.com/lukeed/regexparam
+  // for more information about the string format
+  app.get(params("/foo/:bar/baz"), async (request, response) => {
+    const name: string = request.body!.toString("utf8");
+
+    response.write("BAR: " + request.params!.bar);
   });
 
   await app.listen();
@@ -118,9 +127,11 @@ async function main() {
   app.use(
     async (request: any, response, next) => {
       request.foo = "1";
+      next();
     },
     async (request: any, response, next) => {
       request.foo += "a";
+      next();
     }
   );
 
@@ -130,9 +141,11 @@ async function main() {
     [
       async (request: any, response, next) => {
         request.foo += 2;
+        next();
       },
       async (request: any, response, next) => {
         request.foo += 3;
+        next();
       },
     ],
     async (request: any, response) => {
@@ -191,6 +204,12 @@ async function main() {
 
 main().catch(console.error);
 ```
+
+## Credits
+
+The module makes use of:
+
+- [regexparam](https://github.com/lukeed/regexparam) by [Luke Edwards](https://github.com/lukeed)
 
 ## Documentation
 

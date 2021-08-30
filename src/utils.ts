@@ -21,6 +21,16 @@ interface ICreateWithEntityTooLargeActionOptions {
     onLimitReached: HttpRequestHandler;
 }
 
+export function asAsync<TFunc extends Function = Function>(func: Function): TFunc {
+    if (func.constructor.name === 'AsyncFunction') {
+        return func as TFunc;
+    }
+
+    return (async function (...args: any[]) {
+        return func(...args);
+    }) as any;
+}
+
 export function isNil(val: unknown): val is (null | undefined) {
     return val === null ||
         typeof val === 'undefined';
