@@ -434,8 +434,12 @@ export {
     json,
     IBufferOptions,
     IJsonOptions,
-    params
+    query
 } from './middlewares';
+
+export {
+    params
+} from './validators';
 
 export * from './errors';
 // EXPORTS

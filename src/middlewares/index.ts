@@ -55,4 +55,4 @@ export const defaultParseErrorHandler: ParseErrorHandler = async (error, request
 
 export * from './buffer';
 export * from './json';
-export * from './params';
+export * from './query';

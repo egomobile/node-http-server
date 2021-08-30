@@ -1,3 +1,4 @@
+import { ParsedUrlQuery } from 'querystring';
 
 declare module 'http' {
     export interface IncomingMessage {
@@ -6,8 +7,12 @@ declare module 'http' {
          */
         body?: any;
         /**
-         * List of parameters.
+         * List of parameters, if parsed.
          */
         params?: Record<string, string>;
+        /**
+         * List of query parameters, if parsed.
+         */
+        query?: ParsedUrlQuery;
     }
 }

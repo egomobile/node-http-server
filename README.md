@@ -17,7 +17,7 @@ npm install --save @egomobile/http-server
 ### Quick example
 
 ```typescript
-import createServer, { buffer, params } from "@egomobile/http-server";
+import createServer, { buffer, params, query } from "@egomobile/http-server";
 
 async function main() {
   const app = createServer();
@@ -34,11 +34,18 @@ async function main() {
     // no response.end() is required here
   });
 
-  // parameters require a special middleware here
+  // parameters require a special path validator here
   // s. https://github.com/lukeed/regexparam
   // for more information about the string format
   app.get(params("/foo/:bar/baz"), async (request, response) => {
     response.write("BAR: " + request.params!.bar);
+  });
+
+  // parse query parameters from URL
+  // and write them to 'query' prop of 'request' object
+  app.get("/foo", [query()] async (request, response) => {
+    response.write(" BAR: " + request.query!.bar);
+    response.write(" BAZ: " + request.query!.baz);
   });
 
   await app.listen();
@@ -81,7 +88,7 @@ async function main() {
 
   // loads the whole request, parses the content as UTF-8 JSON
   // string and writes it to 'body' prop of 'request' object
-  // with a default limit of 1284 MB
+  // with a default limit of 128 MB
   app.put("/", [json()], async (request, response) => {
     response.write("Hello: " + JSON.stringify(request.body, null, 2));
   });

@@ -36,7 +36,14 @@ export function params(path: string): HttpPathValidator {
 
     return (req: IncomingMessage) => {
         try {
-            const params = exec(req.url || '', result);
+            let url = req.url || '';
+
+            const qMark = url.indexOf('?');
+            if (qMark > -1) {
+                url = url.substr(0, qMark);
+            }
+
+            const params = exec(url, result);
             if (params) {
                 req.params = params;
 
