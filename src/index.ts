@@ -20,7 +20,7 @@
 import { createServer as createHttpServer, IncomingMessage, Server, ServerResponse } from 'http';
 import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction, Nilable, Optional } from './types';
 import type { GroupedHttpRequestHandlers } from './types/internal';
-import { isNil } from './utils';
+import { asAsync, isNil } from './utils';
 
 /**
  * The default HTTP error handler.
@@ -152,6 +152,9 @@ export const createServer = (): IHttpServer => {
                 throw new TypeError('handler must be a function');
             }
 
+            // keep sure to have an async function here
+            handler = asAsync<HttpRequestHandler>(handler);
+
             let options: IHttpRequestHandlerOptions;
             if (optionsOrMiddlewares) {
                 if (Array.isArray(optionsOrMiddlewares)) {
@@ -225,7 +228,8 @@ export const createServer = (): IHttpServer => {
             throw new TypeError('handler must be a function');
         }
 
-        errorHandler = handler;
+        // keep sure to have an async function here
+        errorHandler = asAsync(handler);
 
         return server;
     };
@@ -235,7 +239,8 @@ export const createServer = (): IHttpServer => {
             throw new TypeError('handler must be a function');
         }
 
-        notFoundHandler = handler;
+        // keep sure to have an async function here
+        notFoundHandler = asAsync(handler);
 
         return server;
     };
@@ -246,7 +251,9 @@ export const createServer = (): IHttpServer => {
             throw new TypeError('middlewares must be a list of functions');
         }
 
-        globalMiddleWares.push(...moreMiddlewares);
+        // keep sure to have an async functions here
+        globalMiddleWares.push(...moreMiddlewares.map(mw => asAsync<HttpMiddleware>(mw)));
+
         recompileHandlers();
 
         return server;
@@ -362,28 +369,40 @@ function mergeHandler(
     middlewares: HttpMiddleware[],
     getErrorHandler: () => HttpErrorHandler
 ): HttpRequestHandler {
-    return async function (request, response) {
+    return function (request, response) {
         return new Promise<any>((resolve, reject) => {
-            let i = -1;
+            const handleError = (error: any) => asAsync<HttpErrorHandler>(getErrorHandler())(
+                error, request, response
+            );
 
-            const handleError = (error: any) => getErrorHandler()(error, request, response);
+            try {
+                let i = -1;
 
-            const next: NextFunction = () => {
-                const mw = middlewares[++i];
+                const next: NextFunction = (error?) => {
+                    if (error) {
+                        handleError(error)
+                            .catch(reject);
+                    } else {
+                        const mw = middlewares[++i];
 
-                if (mw) {
-                    mw(request, response, next)
-                        .catch(handleError)
-                        .catch(reject);
-                } else {
-                    handler(request, response)
-                        .then(resolve)
-                        .catch(handleError)
-                        .catch(reject);
-                }
-            };
+                        if (mw) {
+                            mw(request, response, next)
+                                .catch(handleError)
+                                .catch(reject);
+                        } else {
+                            handler(request, response)
+                                .then(resolve)
+                                .catch(handleError)
+                                .catch(reject);
+                        }
+                    }
+                };
 
-            next();
+                next();
+            } catch (ex) {
+                handleError(ex)
+                    .catch(reject);
+            }
         });
     };
 }

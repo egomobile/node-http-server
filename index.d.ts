@@ -5,5 +5,9 @@ declare module 'http' {
          * The body, if parsed.
          */
         body?: any;
+        /**
+         * List of parameters.
+         */
+        params?: Record<string, string>;
     }
 }

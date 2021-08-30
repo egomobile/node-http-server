@@ -23,7 +23,7 @@ import type { ParseError } from '../errors/parse';
  * @param {IncomingMessage} request The request context.
  * @param {ServerResponse} response The response context.
  */
-export type HttpErrorHandler = (error: any, request: IncomingMessage, response: ServerResponse) => Promise<any>;
+export type HttpErrorHandler = (error: any, request: IncomingMessage, response: ServerResponse) => any;
 
 /**
  * A middleware.
@@ -32,7 +32,7 @@ export type HttpErrorHandler = (error: any, request: IncomingMessage, response: 
  * @param {IHttpResponse} response The response context.
  * @param {NextFunction} next The next function.
  */
-export type HttpMiddleware = (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => Promise<any>;
+export type HttpMiddleware = (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => any;
 
 /**
  * A 'not found' handler.
@@ -40,7 +40,7 @@ export type HttpMiddleware = (request: IHttpRequest, response: IHttpResponse, ne
  * @param {IncomingMessage} request The request context.
  * @param {ServerResponse} response The response context.
  */
-export type HttpNotFoundHandler = (request: IncomingMessage, response: ServerResponse) => Promise<any>;
+export type HttpNotFoundHandler = (request: IncomingMessage, response: ServerResponse) => any;
 
 /**
  * Request handler options or one or more middleware(s).
@@ -62,7 +62,7 @@ export type HttpPathValidator = (request: IncomingMessage) => boolean;
  * @param {IHttpResponse} request The request context.
  * @param {Response} response The response context.
  */
-export type HttpRequestHandler = (request: IHttpRequest, response: IHttpResponse) => Promise<any>;
+export type HttpRequestHandler = (request: IHttpRequest, response: IHttpResponse) => any;
 
 /**
  * A possible value for a request path.
@@ -508,8 +508,10 @@ export interface IHttpServer {
 
 /**
  * A next function.
+ *
+ * @param {any} [any] The error, if occurred.
  */
-export type NextFunction = () => void;
+export type NextFunction = (error?: any) => void;
 
 /**
  * A type, that can also be (null) or (undefined).
