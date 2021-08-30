@@ -14,6 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import type { ParsedUrlQuery } from 'querystring';
 import type { ParseError } from '../errors/parse';
 
 /**
@@ -105,6 +106,18 @@ export interface IHttpRequestHandlerOptions {
  * A HTTP request.
  */
 export interface IHttpRequest extends IncomingMessage {
+    /**
+     * The body, if parsed.
+     */
+    body?: any;
+    /**
+     * List of parameters, if parsed.
+     */
+    params?: Record<string, string>;
+    /**
+     * List of query parameters, if parsed.
+     */
+    query?: ParsedUrlQuery;
 }
 
 /**
