@@ -428,8 +428,13 @@ export {
 
 export {
     buffer,
+    defaultBodyLimit,
+    defaultLimitReachedHandler,
     defaultParseErrorHandler,
-    json
+    json,
+    IBufferOptions,
+    IJsonOptions,
+    params
 } from './middlewares';
 
 export * from './errors';
