@@ -21,6 +21,21 @@ import type { HttpMiddleware } from '../types';
  * from URL and writes the data to 'query' property
  * of request context as key/value pairs.
  *
+ * @example
+ * ```
+ * import assert from 'assert'
+ * import createServer, { IHttpRequest, IHttpResponse, query } from '@egomobile/http-server'
+ *
+ * const app = createServer()
+ *
+ * // try to access via: /?foo=bar
+ * app.get('/', [query()], async (request: IHttpRequest, response: IHttpResponse) => {
+ *     assert.strictEqual(typeof request.query!.foo, 'string')
+ * })
+ *
+ * await app.listen()
+ * ```
+ *
  * @returns {HttpMiddleware} The new middleware.
  */
 export function query(): HttpMiddleware {

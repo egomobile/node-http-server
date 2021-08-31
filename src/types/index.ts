@@ -396,7 +396,7 @@ export interface IHttpServer {
      *
      * @example
      * ```
-     * import createServer, { json, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+     * import createServer, { IHttpRequest, IHttpResponse } from '@egomobile/http-server'
      *
      * const app = createServer()
      *
@@ -411,7 +411,7 @@ export interface IHttpServer {
      *
      *     response.write(errorMessage)
      *     response.end()
-     * });
+     * })
      *
      * app.get('/', async (request: IHttpRequest, response: IHttpResponse) => {
      *     throw new Error('Something went wrong')
@@ -431,7 +431,7 @@ export interface IHttpServer {
      *
      * @example
      * ```
-     * import createServer, { json, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+     * import createServer, { IHttpRequest, IHttpResponse } from '@egomobile/http-server'
      *
      * const app = createServer()
      *
@@ -446,11 +446,9 @@ export interface IHttpServer {
      *
      *     response.write(errorMessage)
      *     response.end()
-     * });
-     *
-     * app.get('/', async (request: IHttpRequest, response: IHttpResponse) => {
-     *     throw new Error('Something went wrong')
      * })
+     *
+     * // ... your routes
      *
      * await app.listen()
      * ```

@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-server)
 
-## 0.3.0
+## 0.3.1
 
 - add `query()` middleware
 - fix `params()` path validator

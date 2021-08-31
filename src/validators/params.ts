@@ -28,6 +28,21 @@ interface RegexParamResult {
  * from the path and writes the data to 'params' property
  * of request context as key/value pairs.
  *
+ * @example
+ * ```
+ * import assert from 'assert'
+ * import createServer, { IHttpRequest, IHttpResponse, params } from '@egomobile/http-server'
+ *
+ * const app = createServer()
+ *
+ * app.get(params('/dirs/:dir/files/:file'), async (request: IHttpRequest, response: IHttpResponse) => {
+ *     assert.strictEqual(typeof request.params!.dir, 'string')
+ *     assert.strictEqual(typeof request.params!.file, 'string')
+ * })
+ *
+ * await app.listen()
+ * ```
+ *
  * @param {string} path The path with parameters.
  *
  * @returns {HttpPathValidator} The new path validator.
