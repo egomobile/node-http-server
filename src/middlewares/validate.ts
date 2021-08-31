@@ -73,6 +73,7 @@ export interface IValidateOptions {
  *     assert.strictEqual(body.name.length > 0, true)
  *   }
  * })
+ *
  * // ...
  * ```
  */
