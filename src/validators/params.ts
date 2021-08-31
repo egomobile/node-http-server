@@ -16,6 +16,7 @@
 import type { IncomingMessage } from 'http';
 import { parse } from 'regexparam';
 import type { HttpPathValidator, Nullable } from '../types';
+import { getUrlWithoutQuery } from '../utils';
 
 interface RegexParamResult {
     keys: string[];
@@ -36,7 +37,9 @@ export function params(path: string): HttpPathValidator {
 
     return (req: IncomingMessage) => {
         try {
-            const params = exec(req.url || '', result);
+            const url = getUrlWithoutQuery(req.url) || '';
+
+            const params = exec(url, result);
             if (params) {
                 req.params = params;
 

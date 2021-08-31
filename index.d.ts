@@ -1,12 +1,8 @@
 
 declare module 'http' {
     export interface IncomingMessage {
-        /**
-         * The body, if parsed.
-         */
-        body?: any;
-        /**
-         * List of parameters.
+        /*
+         * List of parameters, if parsed.
          */
         params?: Record<string, string>;
     }
