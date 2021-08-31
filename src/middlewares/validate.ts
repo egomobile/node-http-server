@@ -24,7 +24,7 @@ interface ICreateMiddlewareOptions {
 }
 
 /**
- * Options for 'json()' function.
+ * Options for 'validate()' function.
  */
 export interface IValidateOptions {
     /**
@@ -34,15 +34,16 @@ export interface IValidateOptions {
 }
 
 /**
- * Creates a middleware, that reads the whole input of the request stream
- * and writes data to 'body' property of the request
- * context as buffer.
+ * Creates a middleware, that validates the data of the 'body' property
+ * inside the 'request' object with the help of a joi schema.
  *
  * @param {AnySchema} schema The schema to use.
  * @param {Nilable<ValidationFailedHandler>} [onValidationFailed] The handler, that is executed, if data is invalid.
  * @param {Nilable<IValidateOptions>} [options] Custom options.
  *
  * @returns {HttpMiddleware} The new middleware.
+ *
+ * @see https://www.npmjs.com/package/joi
  *
  * @example
  * ```
