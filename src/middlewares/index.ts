@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpRequestHandler, ParseErrorHandler } from '../types';
+import type { HttpRequestHandler, ParseErrorHandler, ValidationFailedHandler } from '../types';
 
 /**
  * Default limit of a body parser: 128 MB
@@ -53,6 +53,24 @@ export const defaultParseErrorHandler: ParseErrorHandler = async (error, request
     response.end();
 };
 
+/**
+ * The default 'parse error' handler.
+ *
+ * @param {ParseError} error The error.
+ * @param {IncomingMessage} request The request context.
+ * @param {ServerResponse} response The response context.
+ */
+export const defaultValidationFailedHandler: ValidationFailedHandler = async (error, request, response) => {
+    if (!response.headersSent) {
+        response.writeHead(400, {
+            'Content-Length': '0'
+        });
+    }
+
+    response.end();
+};
+
 export * from './buffer';
 export * from './json';
 export * from './query';
+export * from './validate';

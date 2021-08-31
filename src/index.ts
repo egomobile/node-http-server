@@ -17,6 +17,7 @@
 
 /// <reference path="../index.d.ts" />
 
+import joi from 'joi';
 import { createServer as createHttpServer, IncomingMessage, Server, ServerResponse } from 'http';
 import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction, Nilable, Optional } from './types';
 import type { GroupedHttpRequestHandlers } from './types/internal';
@@ -423,7 +424,8 @@ export {
     IHttpRequestHandlerOptions,
     IHttpResponse,
     IHttpServer,
-    ParseErrorHandler
+    ParseErrorHandler,
+    ValidationFailedHandler
 } from './types';
 
 export {
@@ -431,10 +433,13 @@ export {
     defaultBodyLimit,
     defaultLimitReachedHandler,
     defaultParseErrorHandler,
+    defaultValidationFailedHandler,
     json,
     IBufferOptions,
     IJsonOptions,
-    query
+    IValidateOptions,
+    query,
+    validate
 } from './middlewares';
 
 export {
@@ -442,4 +447,31 @@ export {
 } from './validators';
 
 export * from './errors';
+
+export const schema = joi;
+
+export type {
+    AlternativesSchema,
+    AnySchema,
+    ArraySchema,
+    BinarySchema,
+    BooleanSchema,
+    DateSchema,
+    FunctionSchema,
+    LinkSchema,
+    NumberSchema,
+    ObjectPropertiesSchema,
+    ObjectSchema,
+    SchemaInternals,
+    StrictSchemaMap,
+    PartialSchemaMap,
+    StringSchema,
+    ExtensionBoundSchema,
+    SymbolSchema,
+    SchemaLike,
+    SchemaLikeWithoutArray,
+    SchemaMap,
+    SchemaFunction,
+    Schema
+} from 'joi';
 // EXPORTS

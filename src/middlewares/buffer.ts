@@ -17,7 +17,7 @@ import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions, Nilabl
 import { isNil, readStreamWithLimit, withEntityTooLarge } from '../utils';
 
 /**
- * Options for 'json()' function.
+ * Options for 'buffer()' function.
  */
 export interface IBufferOptions extends IHttpBodyParserOptions {
 }
@@ -34,7 +34,7 @@ interface ICreateMiddlewareOptions {
  *
  * @param {number} [limit] The limit in MB.
  * @param {Nilable<HttpRequestHandler>} [onLimitReached] The custom handler, that is invoked, when limit has been reached.
- * @param {Nilable<IJsonOptions>} [options] Custom options.
+ * @param {Nilable<IBufferOptions>} [options] Custom options.
  *
  * @returns {HttpMiddleware} The new middleware.
  *
@@ -95,7 +95,7 @@ export function buffer(optionsOrLimit?: Nilable<IBufferOptions | number>, onLimi
     }
 
     if (!isNil(onLimitReached)) {
-        if (typeof onLimitReached !== 'number') {
+        if (typeof onLimitReached !== 'function') {
             throw new TypeError('onLimitReached must be of type function');
         }
     }
