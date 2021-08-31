@@ -27,6 +27,9 @@ interface ICreateMiddlewareOptions {
  * Options for 'json()' function.
  */
 export interface IValidateOptions {
+    /**
+     * The custom error handler.
+     */
     onValidationFailed?: Nilable<ValidationFailedHandler>;
 }
 
