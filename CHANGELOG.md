@@ -1,5 +1,12 @@
 # Change Log (@egomobile/http-server)
 
+## 0.4.0
+
+- add `validate()` middleware
+- add `schema` namespace as [joi](https://www.npmjs.com/package/joi) alias
+- fix documentation
+- bugfixes
+
 ## 0.3.1
 
 - add `query()` middleware

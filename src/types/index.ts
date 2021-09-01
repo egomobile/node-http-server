@@ -14,6 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { IncomingMessage, ServerResponse } from 'http';
+import type { ValidationError as JoiValidationError } from 'joi';
 import type { ParsedUrlQuery } from 'querystring';
 import type { ParseError } from '../errors/parse';
 
@@ -543,3 +544,12 @@ export type Optional<T extends any = any> = T | undefined;
  * @param {IHttpResponse} response The response context.
  */
 export type ParseErrorHandler = (error: ParseError, request: IHttpRequest, response: IHttpResponse) => Promise<any>;
+
+/**
+ * A handler, that is executed, if data is invalid.
+ *
+ * @param {JoiValidationError} error The error information.
+ * @param {IHttpRequest} request The request context.
+ * @param {IHttpResponse} response The response context.
+ */
+export type ValidationFailedHandler = (error: JoiValidationError, request: IHttpRequest, response: IHttpResponse) => any;
