@@ -299,7 +299,7 @@ async function main() {
   app.setErrorHandler(prettyErrors());
 
   app.get("/", async (request, response) => {
-    throw new Error("Something went wrong!");
+    throw new Error("Oops! Something went wrong!");
   });
 
   // ...
