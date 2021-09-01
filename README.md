@@ -99,6 +99,40 @@ async function main() {
 main().catch(console.error);
 ```
 
+#### validate
+
+```typescript
+import createServer, { json, schema, validate } from "@egomobile/http-server";
+
+interface IMySchema {
+  email: string;
+  name?: string;
+}
+
+// s. https://joi.dev/ for more information
+const mySchema = schema.object({
+  email: schema.string().strict().trim().email().required(),
+  name: schema.string().strict().trim().min(1).optional(),
+});
+
+async function main() {
+  // ...
+
+  // loads the whole request, parses the content as UTF-8 JSON
+  // string and writes it to 'body' prop of 'request' object
+  // with a default limit of 128 MB
+  app.patch("/", [json(), validate(mySchema)], async (request, response) => {
+    const body: IMySchema = request.body;
+
+    // TODO: your code
+  });
+
+  // ...
+}
+
+main().catch(console.error);
+```
+
 #### 3rd party modules
 
 ```typescript
@@ -214,6 +248,7 @@ main().catch(console.error);
 
 The module makes use of:
 
+- [joi](https://joi.dev/) by [Sideway Inc.](https://github.com/sideway)
 - [regexparam](https://github.com/lukeed/regexparam) by [Luke Edwards](https://github.com/lukeed)
 
 ## Documentation
