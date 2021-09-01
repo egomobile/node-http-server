@@ -133,6 +133,28 @@ async function main() {
 main().catch(console.error);
 ```
 
+#### cookies
+
+```typescript
+import createServer, { cookies } from "@egomobile/http-server";
+
+async function main() {
+  // ...
+
+  // parses the content of 'Cookie' HTTP header
+  // and makes it available as key/value pairs
+  // in 'cookies' property of 'request' object
+  app.delete("/", [cookies()], async (request, response) => {
+    response.write(" FOO: " + request.cookies!.foo);
+    response.write(" BAZ: " + request.cookies!.baz);
+  });
+
+  // ...
+}
+
+main().catch(console.error);
+```
+
 #### 3rd party modules
 
 ```typescript

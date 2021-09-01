@@ -30,7 +30,7 @@ import type { HttpMiddleware } from '../types';
  *
  * // try to access via: /?foo=bar
  * app.get('/', [query()], async (request: IHttpRequest, response: IHttpResponse) => {
- *     assert.strictEqual(typeof request.query!.foo, 'string')
+ *   assert.strictEqual(typeof request.query!.foo, 'string')
  * })
  *
  * await app.listen()

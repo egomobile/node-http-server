@@ -106,11 +106,15 @@ export interface IHttpRequestHandlerOptions {
 /**
  * A HTTP request.
  */
-export interface IHttpRequest extends IncomingMessage {
+export interface IHttpRequest<TBody extends any = any> extends IncomingMessage {
     /**
      * The body, if parsed.
      */
-    body?: any;
+    body?: TBody;
+    /**
+     * List of cookies, if parsed.
+     */
+    cookies?: Record<string, string>;
     /**
      * List of query parameters, if parsed.
      */

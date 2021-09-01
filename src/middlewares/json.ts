@@ -53,30 +53,30 @@ export interface IJsonOptions extends IHttpBodyParserOptions {
  * const app = createServer()
  *
  * async function handleLimitReached(request: IHttpRequest, response: IHttpResponse) {
- *     request.writeHead(400)
- *     request.write('Input is too big')
+ *   request.writeHead(400)
+ *   request.write('Input is too big')
  * }
  *
  * // maximum input size: 128 MB
  * app.post('/', json(), async (request: IHttpRequest, response: IHttpResponse) => {
- *     assert.strictEqual(typeof request.body, 'object')
+ *   assert.strictEqual(typeof request.body, 'object')
  * })
  *
  * // maximum input size: 256 MB
  * app.put('/', json(256), async (request: IHttpRequest, response: IHttpResponse) => {
- *     assert.strictEqual(typeof request.body, 'object')
+ *   assert.strictEqual(typeof request.body, 'object')
  * })
  *
  * // maximum input size: 384 MB
  * app.patch('/', json({ limit: 402653184 }), async (request: IHttpRequest, response: IHttpResponse) => {
- *     assert.strictEqual(typeof request.body, 'object')
+ *   assert.strictEqual(typeof request.body, 'object')
  * })
  *
  * // custom error handler
  * app.delete('/', json({ limit: 1048576, onLimitReached: handleLimitReached }), async (request: IHttpRequest, response: IHttpResponse) => {
  * // alternative:
  * // app.delete('/', json(1, handleLimitReached), async (request: IHttpRequest, response: IHttpResponse) => {
- *     assert.strictEqual(typeof request.body, 'object')
+ *   assert.strictEqual(typeof request.body, 'object')
  * })
  * ```
  */

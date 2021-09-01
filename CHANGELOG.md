@@ -1,5 +1,12 @@
 # Change Log (@egomobile/http-server)
 
+## 0.5.0
+
+- add `cookies()` middleware
+- cleanup documentation
+- add optional `TBody` type parameter to `IHttpRequest` interface to describe body property
+- `npm update`
+
 ## 0.4.0
 
 - add `validate()` middleware

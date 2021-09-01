@@ -430,6 +430,7 @@ export {
 
 export {
     buffer,
+    cookies,
     defaultBodyLimit,
     defaultLimitReachedHandler,
     defaultParseErrorHandler,
