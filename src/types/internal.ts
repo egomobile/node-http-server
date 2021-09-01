@@ -9,7 +9,7 @@ export interface IInitControllerMethodActionContext {
     controller: IHttpController;
     controllerClass: Constructor<IHttpController>;
     fullFilePath: string;
-    method: HttpRequestHandler;
+    method: Function;
     relativeFilePath: string;
     server: IHttpServer;
 }

@@ -21,7 +21,7 @@ import { asAsync } from '../utils';
 import { params } from '../validators';
 
 interface ICreateControllerMethodRequestHandlerOptions {
-    method: HttpRequestHandler;
+    method: Function;
 }
 
 export interface ICreateHttpMethodDecoratorOptions {
