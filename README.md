@@ -155,6 +155,27 @@ async function main() {
 main().catch(console.error);
 ```
 
+#### lang
+
+```typescript
+import createServer, { lang } from "@egomobile/http-server";
+
+async function main() {
+  // ...
+
+  // parses the content of 'Accept-Language' HTTP header
+  // and makes the best matching, supported language available
+  // in 'lang' property of 'request' object
+  app.get("/docs", [lang("de", "en")], async (request, response) => {
+    response.write("lang: " + request.lang);
+  });
+
+  // ...
+}
+
+main().catch(console.error);
+```
+
 #### 3rd party modules
 
 ```typescript

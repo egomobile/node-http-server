@@ -115,6 +115,10 @@ export interface IHttpRequest<TBody extends any = any> extends IncomingMessage {
      */
     cookies?: Record<string, string>;
     /**
+     * The current language, if parsed.
+     */
+    lang?: Nullable<string>;
+    /**
      * List of query parameters, if parsed.
      */
     query?: URLSearchParams;

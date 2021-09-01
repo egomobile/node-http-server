@@ -435,10 +435,11 @@ export {
     defaultLimitReachedHandler,
     defaultParseErrorHandler,
     defaultValidationFailedHandler,
-    json,
     IBufferOptions,
     IJsonOptions,
     IValidateOptions,
+    json,
+    lang,
     query,
     validate
 } from './middlewares';
