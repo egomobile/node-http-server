@@ -23,13 +23,13 @@ describe('Simple request with url query parameters', () => {
         const methodName = method.toUpperCase();
 
         it(`should return 200 when do a ${methodName} request with a 'bar' query parameter in URL`, async () => {
-            const expectedResult = 'object:bar=baz;baz=undefined';
+            const expectedResult = 'object:bar=baz;baz=null';
 
             const server = createServer();
 
             (server as any)[method]('/foo', [query()], async (req: IHttpRequest, resp: IHttpResponse) => {
                 resp.write(
-                    `${typeof req.query}:bar=${req.query!.bar};baz=${req.query!.baz}`
+                    `${typeof req.query}:bar=${req.query!.get('bar')};baz=${req.query!.get('baz')}`
                 );
             });
 

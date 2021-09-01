@@ -15,7 +15,6 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import type { ValidationError as JoiValidationError } from 'joi';
-import type { ParsedUrlQuery } from 'querystring';
 import type { ParseError } from '../errors/parse';
 
 /**
@@ -118,7 +117,7 @@ export interface IHttpRequest<TBody extends any = any> extends IncomingMessage {
     /**
      * List of query parameters, if parsed.
      */
-    query?: ParsedUrlQuery;
+    query?: URLSearchParams;
 }
 
 /**

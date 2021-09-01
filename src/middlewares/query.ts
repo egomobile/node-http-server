@@ -13,7 +13,6 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import querystring from 'querystring';
 import type { HttpMiddleware } from '../types';
 
 /**
@@ -30,7 +29,7 @@ import type { HttpMiddleware } from '../types';
  *
  * // try to access via: /?foo=bar
  * app.get('/', [query()], async (request: IHttpRequest, response: IHttpResponse) => {
- *   assert.strictEqual(typeof request.query!.foo, 'string')
+ *   assert.strictEqual(typeof request.query!.get('foo'), 'string')
  * })
  *
  * await app.listen()
@@ -40,8 +39,6 @@ import type { HttpMiddleware } from '../types';
  */
 export function query(): HttpMiddleware {
     return async (request, response, next) => {
-        request.query = {};
-
         try {
             if (request.url?.length) {
                 let qs = '';
@@ -52,10 +49,14 @@ export function query(): HttpMiddleware {
                 }
 
                 if (qs.length) {
-                    request.query = querystring.parse(qs);
+                    request.query = new URLSearchParams(qs);
                 }
             }
         } catch { }
+
+        if (!request.query) {
+            request.query = new URLSearchParams();
+        }
 
         next();
     };

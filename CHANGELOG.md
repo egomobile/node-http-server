@@ -2,6 +2,7 @@
 
 ## 0.5.0
 
+- **BREAKING CHANGE**: replace use of [querystring](https://nodejs.org/api/querystring.html) with [URLSearchParams](https://nodejs.org/api/url.html#url_class_urlsearchparams)
 - add `cookies()` middleware
 - cleanup documentation
 - add optional `TBody` type parameter to `IHttpRequest` interface to describe body property
