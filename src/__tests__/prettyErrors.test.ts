@@ -31,7 +31,7 @@ describe('error handlers with pretty output', () => {
             expect(Buffer.isBuffer(data)).toBe(true);
             expect(data.length > 0).toBe(true);
 
-            expect(response.headers['Content-Type']).toBe('text/html; charset=utf-8');
+            expect(response.headers['content-type']).toBe('text/html; charset=utf-8');
         });
 
         it.each(routePaths)(`should return 400 with a HTML page, when do a ${methodName} request and a custom status code`, async (path) => {
@@ -52,7 +52,7 @@ describe('error handlers with pretty output', () => {
             expect(Buffer.isBuffer(data)).toBe(true);
             expect(data.length > 0).toBe(true);
 
-            expect(response.headers['Content-Type']).toBe('text/html; charset=utf-8');
+            expect(response.headers['content-type']).toBe('text/html; charset=utf-8');
         });
 
         it.each(routePaths)(`should return 403 with a HTML page, when do a ${methodName} request and a custom status code provider`, async (path) => {
@@ -73,7 +73,7 @@ describe('error handlers with pretty output', () => {
             expect(Buffer.isBuffer(data)).toBe(true);
             expect(data.length > 0).toBe(true);
 
-            expect(response.headers['Content-Type']).toBe('text/html; charset=utf-8');
+            expect(response.headers['content-type']).toBe('text/html; charset=utf-8');
         });
     });
 });

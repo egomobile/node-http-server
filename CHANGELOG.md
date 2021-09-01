@@ -3,6 +3,7 @@
 ## 0.6.0
 
 - add `prettyErrors()` error handler
+- fix tests
 
 ## 0.5.0
 

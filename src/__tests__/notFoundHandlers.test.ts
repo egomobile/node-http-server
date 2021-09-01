@@ -30,6 +30,8 @@ describe('\'not found\' handlers', () => {
         });
 
         it.each(routePaths)(`should return 400, when do a ${methodName} request with a custom 'not found' handler`, async (path) => {
+            const expectedResult = Buffer.from('/foo not found', 'utf8');
+
             const server = createServer();
 
             (server as any)[method](path, async (request: IHttpRequest, response: IHttpResponse) => {
@@ -37,11 +39,13 @@ describe('\'not found\' handlers', () => {
             });
 
             server.setNotFoundHandler(async (request, response) => {
+                const errorMessage = Buffer.from(`${request.url} not found`, 'utf8');
+
                 if (!response.headersSent) {
                     response.writeHead(400);
                 }
 
-                response.write(`${request.url} not found`);
+                response.write(errorMessage);
                 response.end();
             });
 
@@ -52,11 +56,11 @@ describe('\'not found\' handlers', () => {
 
             const data = response.body;
             expect(Buffer.isBuffer(data)).toBe(true);
-            expect(data.length).toBe(43);
+            expect(data.length).toBe(expectedResult.length);
 
             const str: string = data.toString('utf8');
             expect(typeof str).toBe('string');
-            expect(str).toBe('/foo not found');
+            expect(str).toBe(expectedResult.toString('utf8'));
         });
     });
 });
