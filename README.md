@@ -295,7 +295,6 @@ import createServer, { prettyErrors } from "@egomobile/http-server";
 async function main() {
   // ...
 
-  // custom error handler
   app.setErrorHandler(prettyErrors());
 
   app.get("/", async (request, response) => {
