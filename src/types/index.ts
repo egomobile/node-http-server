@@ -18,6 +18,15 @@ import type { ValidationError as JoiValidationError } from 'joi';
 import type { ParseError } from '../errors/parse';
 
 /**
+ * Returns a status code from an error object.
+ *
+ * @param {any} error The error object.
+ *
+ * @returns {number} The status code.
+ */
+export type GetStatusCodeFromError = (error: any) => number;
+
+/**
  * A HTTP error handler.
  *
  * @param {any} error The error.
