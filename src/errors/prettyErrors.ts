@@ -34,6 +34,23 @@ export interface IPrettyErrorsOptions {
  *
  * @param {Nilable<IPrettyErrorsOptions>} [options] Custom options.
  *
+ * @see https://github.com/poppinss/youch
+ *
+ * @example
+ * ```
+ * import createServer, { prettyErrors } from '@egomobile/http-server'
+ *
+ * const app = createServer()
+ *
+ * app.get('/', async (request, response) => {
+ *   throw new ReferenceError('Oops! Something went wrong!')
+ * })
+ *
+ * app.setErrorHandler(prettyErrors())
+ *
+ * await app.listen()
+ * ```
+ *
  * @returns {HttpErrorHandler} The new handler.
  */
 export function prettyErrors(): HttpErrorHandler;
