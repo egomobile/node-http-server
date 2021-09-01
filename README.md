@@ -287,12 +287,37 @@ async function main() {
 main().catch(console.error);
 ```
 
+### Pretty error pages
+
+```typescript
+import createServer, { prettyErrors } from "@egomobile/http-server";
+
+async function main() {
+  // ...
+
+  app.setErrorHandler(prettyErrors());
+
+  app.get("/", async (request, response) => {
+    throw new Error("Oops! Something went wrong!");
+  });
+
+  // ...
+}
+
+main().catch(console.error);
+```
+
+A possible result could be:
+
+<kbd><img src="./assets/screenshot.png" /></kbd>
+
 ## Credits
 
 The module makes use of:
 
 - [joi](https://joi.dev/) by [Sideway Inc.](https://github.com/sideway)
 - [regexparam](https://github.com/lukeed/regexparam) by [Luke Edwards](https://github.com/lukeed)
+- [Youch!](https://github.com/poppinss/youch) by [Poppinss](https://github.com/poppinss)
 
 ## Documentation
 

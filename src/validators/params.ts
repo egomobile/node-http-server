@@ -28,6 +28,8 @@ interface RegexParamResult {
  * from the path and writes the data to 'params' property
  * of request context as key/value pairs.
  *
+ * @see https://github.com/lukeed/regexparam
+ *
  * @example
  * ```
  * import assert from 'assert'
