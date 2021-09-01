@@ -169,18 +169,20 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                     }
 
                     const initMethodActions: Nilable<InitControllerMethodAction[]> = (propValue as any)[INIT_CONTROLLER_METHOD_ACTIONS];
-                    if (initMethodActions) {
-                        initMethodActions.forEach(action => {
-                            action({
-                                controller,
-                                controllerClass: cls['class'],
-                                fullFilePath: cls.file.fullPath,
-                                method: propValue as HttpRequestHandler,
-                                relativeFilePath: cls.file.relativePath,
-                                server
-                            });
-                        });
+                    if (!initMethodActions?.length) {
+                        return;
                     }
+
+                    initMethodActions.forEach(action => {
+                        action({
+                            controller,
+                            controllerClass: cls['class'],
+                            fullFilePath: cls.file.fullPath,
+                            method: propValue as HttpRequestHandler,
+                            relativeFilePath: cls.file.relativePath,
+                            server
+                        });
+                    });
                 }
             });
         });
