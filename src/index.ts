@@ -22,6 +22,7 @@ import { createServer as createHttpServer, IncomingMessage, Server, ServerRespon
 import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction, Nilable, Optional } from './types';
 import type { GroupedHttpRequestHandlers } from './types/internal';
 import { asAsync, getUrlWithoutQuery, isNil } from './utils';
+import { setupHttpServerControllerMethod } from './controllers/factories';
 
 /**
  * The default HTTP error handler.
@@ -315,6 +316,8 @@ export const createServer = (): IHttpServer => {
 
     (server as any).isEgoHttpServer = true;
 
+    setupHttpServerControllerMethod(server);
+
     resetInstance();
 
     return server;
@@ -411,19 +414,32 @@ function mergeHandler(
 
 // EXPORTS
 export {
+    Constructor,
+    ControllerRouteOptions,
+    ControllerRouteOptionsValue,
+    ControllerRoutePath,
+    ControllerRouteWithBodyOptions,
+    GetStatusCodeFromError,
     HttpErrorHandler,
+    HttpMethod,
     HttpMiddleware,
     HttpNotFoundHandler,
     HttpOptionsOrMiddlewares,
     HttpPathValidator,
     HttpRequestHandler,
     HttpRequestPath,
-    NextFunction,
+    IControllersOptions,
+    IHttpController,
+    IHttpControllerOptions,
     IHttpBodyParserOptions,
     IHttpRequest,
     IHttpRequestHandlerOptions,
     IHttpResponse,
     IHttpServer,
+    NextFunction,
+    Nilable,
+    Nullable,
+    Optional,
     ParseErrorHandler,
     ValidationFailedHandler
 } from './types';
@@ -449,6 +465,7 @@ export {
 } from './validators';
 
 export * from './errors';
+export * from './controllers';
 
 export const schema = joi;
 

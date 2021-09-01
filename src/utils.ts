@@ -13,8 +13,10 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import fs from 'fs';
+import path from 'path';
 import { EntityTooLargeError } from './errors';
-import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, Nilable, Optional } from './types';
+import type { Constructor, HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, Nilable, Optional } from './types';
 
 interface ICreateWithEntityTooLargeActionOptions {
     action: HttpMiddleware;
@@ -31,6 +33,34 @@ export function asAsync<TFunc extends Function = Function>(func: Function): TFun
     }) as any;
 }
 
+export function getAllClassProps(startClass: any): string[] {
+    const props: string[] = [];
+
+    if (startClass instanceof Function) {
+        let currentClass = startClass;
+
+        while (currentClass) {
+            if (currentClass.prototype) {
+                for (const propName of Object.getOwnPropertyNames(currentClass.prototype)) {
+                    if (!props.includes(propName)) {
+                        props.unshift(propName);
+                    }
+                }
+            }
+
+            const parentClass = Object.getPrototypeOf(currentClass);
+
+            if (parentClass && parentClass !== Object && parentClass.name) {
+                currentClass = parentClass;
+            } else {
+                break;
+            }
+        }
+    }
+
+    return props;
+}
+
 export function getUrlWithoutQuery(url: Optional<string>): Optional<string> {
     if (!url) {
         return url;
@@ -42,6 +72,10 @@ export function getUrlWithoutQuery(url: Optional<string>): Optional<string> {
     }
 
     return url;
+}
+
+export function isClass<T extends any = any>(maybeClass: any): maybeClass is Constructor<T> {
+    return typeof maybeClass?.constructor === 'function';
 }
 
 export function isNil(val: unknown): val is (null | undefined) {
@@ -122,6 +156,23 @@ export function readStreamWithLimit(
         });
     });
 };
+
+export function walkDirSync(dir: string, action: (file: string, stats: fs.Stats) => void) {
+    for (const item of fs.readdirSync(dir)) {
+        if (item.trimStart().startsWith('_')) {
+            continue;  // ignore items with beginning _
+        }
+
+        const fullPath = path.join(dir, item);
+        const stats = fs.statSync(fullPath);
+
+        if (stats.isDirectory()) {
+            walkDirSync(fullPath, action);
+        } else if (stats.isFile()) {
+            action(fullPath, stats);
+        }
+    }
+}
 
 export function withEntityTooLarge(
     action: HttpMiddleware,

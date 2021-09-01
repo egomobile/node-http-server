@@ -77,7 +77,7 @@ function exec(path: string, result: RegexParamResult): Nullable<Record<string, s
     const paramList: Record<string, string> = {};
 
     for (let i = 0; i < result.keys.length; i++) {
-        paramList[result.keys[i]] = matches[i + 1];
+        paramList[result.keys[i]] = decodeURIComponent(matches[i + 1]);
     }
 
     return paramList;

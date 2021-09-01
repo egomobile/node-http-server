@@ -1,6 +1,6 @@
 {
     "name": "@egomobile/http-server",
-    "version": "0.6.0",
+    "version": "0.7.0",
     "description": "Very fast alternative HTTP server to Express, with simple routing and middleware support and which is compatible with Node.js 12 or later.",
     "main": "lib/index.js",
     "engines": {
@@ -55,12 +55,14 @@
     "dependencies": {
         "@types/node": "^12.20.23",
         "joi": "^17.4.2",
+        "minimatch": "^3.0.4",
         "regexparam": "^2.0.0",
         "youch": "^2.2.2"
     },
     "devDependencies": {
         "@egomobile/tsconfig": "^5.0.0",
         "@types/jest": "^26.0.24",
+        "@types/minimatch": "^3.0.5",
         "@types/supertest": "^2.0.11",
         "babel-jest": "^27.1.0",
         "del-cli": "^4.0.1",

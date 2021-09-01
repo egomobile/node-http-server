@@ -1,5 +1,10 @@
 # Change Log (@egomobile/http-server)
 
+## 0.7.0
+
+- implement controller framework, which can be initialized by `controllers()` method of an `IHttpServer` instance
+- fix `params()` path validator
+
 ## 0.6.0
 
 - add `prettyErrors()` error handler

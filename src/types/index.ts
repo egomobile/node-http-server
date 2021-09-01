@@ -18,6 +18,42 @@ import type { ValidationError as JoiValidationError } from 'joi';
 import type { ParseError } from '../errors/parse';
 
 /**
+ * Describes a constructor.
+ */
+export type Constructor<T extends any = any> = (new (...args: any[]) => T);
+
+/**
+ * Options for a controller route without a body.
+ */
+export interface ControllerRouteOptions {
+    /**
+     * The custom path.
+     */
+    path?: Nilable<ControllerRoutePath>;
+    /**
+     * One or more middlewares for the route.
+     */
+    use?: Nilable<HttpMiddleware | HttpMiddleware[]>;
+}
+
+/**
+ * Options for a controller route with a body.
+ */
+export interface ControllerRouteWithBodyOptions extends ControllerRouteOptions {
+}
+
+/**
+ * Options for a controller route decorator.
+ */
+export type ControllerRouteOptionsValue<TOptions extends ControllerRouteOptions = ControllerRouteOptions>
+    = ControllerRoutePath | TOptions;
+
+/**
+ * A possible value for a path of a controller route.
+ */
+export type ControllerRoutePath = string;
+
+/**
  * Returns a status code from an error object.
  *
  * @param {any} error The error object.
@@ -34,6 +70,11 @@ export type GetStatusCodeFromError = (error: any) => number;
  * @param {ServerResponse} response The response context.
  */
 export type HttpErrorHandler = (error: any, request: IncomingMessage, response: ServerResponse) => any;
+
+/**
+ * A possible value for a HTTP method.
+ */
+export type HttpMethod = 'connect' | 'delete' | 'get' | 'head' | 'options' | 'patch' | 'post' | 'put' | 'trace';
 
 /**
  * A middleware.
@@ -80,6 +121,22 @@ export type HttpRequestHandler = (request: IHttpRequest, response: IHttpResponse
 export type HttpRequestPath = string | RegExp | HttpPathValidator;
 
 /**
+ * Options for 'controllers()' method of 'IHttpServer' instance.
+ */
+export interface IControllersOptions {
+    /**
+     * The custom file patterns.
+     *
+     * @see https://www.npmjs.com/package/minimatch
+     */
+    patterns?: string | string[];
+    /**
+     * The custom root directory. Default: 'controllers'
+     */
+    rootDir?: string;
+}
+
+/**
  * Options for 'body()' function.
  */
 export interface IHttpBodyParserOptions {
@@ -92,6 +149,42 @@ export interface IHttpBodyParserOptions {
      * A custom handler, to tell the client, that the body is too big.
      */
     onLimitReached?: Nilable<HttpRequestHandler>;
+}
+
+/**
+ * A HTTP controller.
+ */
+export interface IHttpController<TApp extends any = IHttpServer> {
+    /**
+     * The underlying app instance.
+     */
+    readonly __app: TApp;
+    /**
+     * The full path of the underlying file.
+     */
+    readonly __file: string;
+    /**
+     * The relative path of the underlying file.
+     */
+    readonly __path: string;
+}
+
+/**
+ * Options for a controller instance.
+ */
+export interface IHttpControllerOptions<TApp extends any = IHttpServer> {
+    /**
+     * The underlying app.
+     */
+    app: TApp;
+    /**
+     * The full path of the underlying file.
+     */
+    file: string;
+    /**
+     * The relative path of the underlying file.
+     */
+    path: string;
 }
 
 /**
@@ -204,6 +297,32 @@ export interface IHttpServer {
      */
     connect(path: HttpRequestPath, handler: HttpRequestHandler): this;
     connect(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
+
+    /**
+     * Loads an initializes the controllers from and inside a root directory.
+     *
+     * @example
+     * ```
+     * import createServer from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * // scans the subdirectory 'controllers' of the current process'
+     * // working directory for JavaScript and/or TypeScript files,
+     * // which do not start with _ and have a class as default export,
+     * // that is marked with @Controller decorator
+     * // and creates instances from that classes, which will be autmatically
+     * // mapped as handlers for 'app' instance
+     * app.controllers()
+     *
+     * await app.listen()
+     * ```
+     *
+     * @param {string} [rootDir] The custom root directory.
+     * @param {IControllersOptions} options Custom options.
+     */
+    controllers(rootDir?: string): this;
+    controllers(options: IControllersOptions): this;
 
     /**
      * Registers a route for a DELETE request.

@@ -316,6 +316,7 @@ A possible result could be:
 The module makes use of:
 
 - [joi](https://joi.dev/) by [Sideway Inc.](https://github.com/sideway)
+- [minimatch](https://github.com/isaacs/minimatch) by [isaacs](https://github.com/isaacs)
 - [regexparam](https://github.com/lukeed/regexparam) by [Luke Edwards](https://github.com/lukeed)
 - [Youch!](https://github.com/poppinss/youch) by [Poppinss](https://github.com/poppinss)
 
