@@ -14,26 +14,33 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import request from 'supertest';
-import { query } from '../middlewares';
-import { IHttpRequest, IHttpResponse } from '../types';
+import { cookies } from '../middlewares';
+import { HttpRequestPath, IHttpRequest, IHttpResponse } from '../types';
 import { binaryParser, createServer } from './utils';
 
-describe('Simple request with url query parameters', () => {
+const routePaths: HttpRequestPath[] = [
+    '/',
+    (request) => request.url === '/',
+    /^(\/)$/i
+];
+
+describe('Simple request with cookies', () => {
     ['get', 'delete', 'options', 'patch', 'put', 'post', 'trace'].forEach(method => {
         const methodName = method.toUpperCase();
 
-        it(`should return 200 when do a ${methodName} request with a 'bar' query parameter in URL`, async () => {
-            const expectedResult = 'object:bar=baz;baz=null';
+        it.each(routePaths)(`should return 200 when do a ${methodName} request with a 'bar' query parameter in URL`, async (path) => {
+            const expectedResult = 'object:foo=bar;baz=MKTM';
 
             const server = createServer();
 
-            (server as any)[method]('/foo', [query()], async (req: IHttpRequest, resp: IHttpResponse) => {
+            (server as any)[method](path, [cookies()], async (req: IHttpRequest, resp: IHttpResponse) => {
                 resp.write(
-                    `${typeof req.query}:bar=${req.query!.get('bar')};baz=${req.query!.get('baz')}`
+                    `${typeof req.cookies}:foo=${req.cookies!.foo};baz=${req.cookies!.baz}`
                 );
             });
 
-            const response = await (request(server) as any)[method]('/foo?bar=baz')
+            const response = await (request(server) as any)[method]('/')
+                .set('Cookie', 'foo=bar; baz=MKTM')
                 .send()
                 .parse(binaryParser)
                 .expect(200);

@@ -71,6 +71,8 @@ export const defaultValidationFailedHandler: ValidationFailedHandler = async (er
 };
 
 export * from './buffer';
+export * from './cookies';
 export * from './json';
+export * from './lang';
 export * from './query';
 export * from './validate';

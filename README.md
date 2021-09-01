@@ -133,6 +133,49 @@ async function main() {
 main().catch(console.error);
 ```
 
+#### cookies
+
+```typescript
+import createServer, { cookies } from "@egomobile/http-server";
+
+async function main() {
+  // ...
+
+  // parses the content of 'Cookie' HTTP header
+  // and makes it available as key/value pairs
+  // in 'cookies' property of 'request' object
+  app.delete("/", [cookies()], async (request, response) => {
+    response.write(" FOO: " + request.cookies!.foo);
+    response.write(" BAZ: " + request.cookies!.baz);
+  });
+
+  // ...
+}
+
+main().catch(console.error);
+```
+
+#### lang
+
+```typescript
+import createServer, { lang } from "@egomobile/http-server";
+
+async function main() {
+  // ...
+
+  // parses the content of 'Accept-Language' HTTP header
+  // and makes the best matching, supported language available
+  // in 'lang' property of 'request' object
+  app.get("/docs", [lang("de", "en")], async (request, response) => {
+    response.write("lang: " + request.lang);
+  });
+
+  // ...
+}
+
+main().catch(console.error);
+```
+
 #### 3rd party modules
 
 ```typescript

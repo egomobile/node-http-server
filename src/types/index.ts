@@ -15,7 +15,6 @@
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import type { ValidationError as JoiValidationError } from 'joi';
-import type { ParsedUrlQuery } from 'querystring';
 import type { ParseError } from '../errors/parse';
 
 /**
@@ -106,15 +105,23 @@ export interface IHttpRequestHandlerOptions {
 /**
  * A HTTP request.
  */
-export interface IHttpRequest extends IncomingMessage {
+export interface IHttpRequest<TBody extends any = any> extends IncomingMessage {
     /**
      * The body, if parsed.
      */
-    body?: any;
+    body?: TBody;
+    /**
+     * List of cookies, if parsed.
+     */
+    cookies?: Record<string, string>;
+    /**
+     * The current language, if parsed.
+     */
+    lang?: Nullable<string>;
     /**
      * List of query parameters, if parsed.
      */
-    query?: ParsedUrlQuery;
+    query?: URLSearchParams;
 }
 
 /**

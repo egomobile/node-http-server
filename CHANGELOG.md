@@ -1,5 +1,13 @@
 # Change Log (@egomobile/http-server)
 
+## 0.5.0
+
+- **BREAKING CHANGE**: replace use of [querystring](https://nodejs.org/api/querystring.html) with [URLSearchParams](https://nodejs.org/api/url.html#url_class_urlsearchparams)
+- add `cookies()` and `lang()` middlewares
+- cleanup documentation
+- add optional `TBody` type parameter to `IHttpRequest` interface to describe body property
+- `npm update`
+
 ## 0.4.0
 
 - add `validate()` middleware
