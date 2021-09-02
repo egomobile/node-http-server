@@ -96,10 +96,10 @@ function createHandler({ getStatusCode }: ICreateHandlerOptions): HttpErrorHandl
         );
 
         if (!response.headersSent) {
-            response.setHeader('Content-Type', 'text/html; charset=utf-8');
-            response.setHeader('Content-Length', String(html.length));
-
-            response.writeHead(getStatusCode(error));
+            response.writeHead(getStatusCode(error), {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Content-Length': String(html.length)
+            });
         }
 
         response.write(html);
