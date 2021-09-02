@@ -15,9 +15,9 @@
 
 import path from 'path';
 import { INIT_CONTROLLER_METHOD_ACTIONS } from '../constants';
-import type { ControllerRouteOptionsValue, ControllerRouteWithBodyOptions, HttpMethod, HttpRequestHandler, HttpRequestPath, Nilable } from '../types';
+import type { ControllerRouteOptionsValue, ControllerRouteWithBodyOptions, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, Nilable } from '../types';
 import type { InitControllerMethodAction } from '../types/internal';
-import { asAsync } from '../utils';
+import { asAsync, isNil } from '../utils';
 import { params } from '../validators';
 
 interface ICreateControllerMethodRequestHandlerOptions {
@@ -33,6 +33,7 @@ interface ICreateInitControllerMethodActionOptions {
     controllerMethod: string;
     controllerRouterPath: Nilable<string>;
     httpMethod: HttpMethod;
+    middlewares: HttpMiddleware[];
 }
 
 function createControllerMethodRequestHandler({ method }: ICreateControllerMethodRequestHandlerOptions): HttpRequestHandler {
@@ -45,21 +46,32 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
     return function (target, methodName, descriptor) {
         const method = getMethodOrThrow(descriptor);
 
+        const decoratorOptions: Nilable<ControllerRouteWithBodyOptions> =
+            typeof options.decoratorOptions === 'string' ? {
+                path: options.decoratorOptions
+            } : options.decoratorOptions;
+
         let initActions: Nilable<InitControllerMethodAction[]> = (method as any)[INIT_CONTROLLER_METHOD_ACTIONS];
         if (!initActions) {
             (method as any)[INIT_CONTROLLER_METHOD_ACTIONS] = initActions = [];
         }
 
+        const middlewares = (
+            Array.isArray(decoratorOptions?.use) ?
+                decoratorOptions!.use :
+                [decoratorOptions?.use]
+        ).filter(mw => !isNil(mw)) as HttpMiddleware[];
+
         initActions.push(createInitControllerMethodAction({
             controllerMethod: String(methodName).trim(),
+            controllerRouterPath: decoratorOptions?.path,
             httpMethod: options.name,
-            controllerRouterPath: typeof options.decoratorOptions === 'string' ?
-                options.decoratorOptions : options.decoratorOptions?.path
+            middlewares
         }));
     };
 }
 
-function createInitControllerMethodAction({ controllerMethod, controllerRouterPath, httpMethod }: ICreateInitControllerMethodActionOptions): InitControllerMethodAction {
+function createInitControllerMethodAction({ controllerMethod, controllerRouterPath, httpMethod, middlewares }: ICreateInitControllerMethodActionOptions): InitControllerMethodAction {
     return ({ relativeFilePath, method, server }) => {
         const dir = path.dirname(relativeFilePath);
         const fileName = path.basename(relativeFilePath, path.extname(relativeFilePath));
@@ -78,12 +90,13 @@ function createInitControllerMethodAction({ controllerMethod, controllerRouterPa
         }
 
         routerPath = normalizeRouterPath(routerPath);
+        routerPath = routerPath.split('/@').join('/:');
 
-        if (routerPath.includes('/@')) {
-            routerPath = params(routerPath.split('/@').join('/:'));
+        if (routerPath.includes('/:')) {
+            routerPath = params(routerPath);
         }
 
-        (server as any)[httpMethod](routerPath, createControllerMethodRequestHandler({
+        (server as any)[httpMethod](routerPath, middlewares, createControllerMethodRequestHandler({
             method
         }));
     };

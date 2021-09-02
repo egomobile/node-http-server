@@ -45,4 +45,44 @@ describe('controllers', () => {
         expect(str.length).toBe(expectedResult.length);
         expect(str).toBe(expectedResult);
     });
+
+    it.each(['/test/foo%20baz', '/test/foo%20baz/bar'])('should return 200 when do a GET request for existing TestController which uses parameters', async (p) => {
+        const expectedResult = 'test:' + p + ':foo baz';
+
+        const server = createServerAndInitControllers();
+
+        const response = await request(server).get(p)
+            .send()
+            .parse(binaryParser)
+            .expect(200);
+
+        const data = response.body;
+        expect(Buffer.isBuffer(data)).toBe(true);
+
+        const str = data.toString('utf8');
+
+        expect(typeof str).toBe('string');
+        expect(str.length).toBe(expectedResult.length);
+        expect(str).toBe(expectedResult);
+    });
+
+    it.each(['/baz', '/baz/bar', '/baz/foo'])('should return 200 when do a GET request for existing BazController which uses middlewares', async (p) => {
+        const expectedResult = 'baz:' + p + ':21';
+
+        const server = createServerAndInitControllers();
+
+        const response = await request(server).get(p)
+            .send()
+            .parse(binaryParser)
+            .expect(200);
+
+        const data = response.body;
+        expect(Buffer.isBuffer(data)).toBe(true);
+
+        const str = data.toString('utf8');
+
+        expect(typeof str).toBe('string');
+        expect(str.length).toBe(expectedResult.length);
+        expect(str).toBe(expectedResult);
+    });
 });
