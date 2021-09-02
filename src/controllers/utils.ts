@@ -16,14 +16,14 @@
 import path from 'path';
 import type { Nilable } from '../types';
 
-export function getActionList<TAction extends Function = Function>(obj: any, key: PropertyKey): TAction[] {
-    let actionList: Nilable<TAction[]> = obj[key];
+export function getListFromObject<T extends any = any>(obj: any, key: PropertyKey): T[] {
+    let list: Nilable<T[]> = obj[key];
 
-    if (!obj[key]) {
-        obj[key] = actionList = [];
+    if (!list) {
+        obj[key] = list = [];
     }
 
-    return actionList!;
+    return list;
 }
 
 export function getMethodOrThrow<T extends Function = Function>(descriptor: PropertyDescriptor): T {

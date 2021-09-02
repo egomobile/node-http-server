@@ -174,7 +174,7 @@ export interface IControllersOptions {
      */
     rootDir?: string;
     /**
-     *
+     * Options to setup Swagger UI.
      */
     swagger?: ControllersSwaggerOptionsValue;
 }
@@ -184,9 +184,13 @@ export interface IControllersOptions {
  */
 export interface IControllersSwaggerOptions {
     /**
+     * The base path. Default: /swagger
+     */
+    basePath?: string;
+    /**
      * The base document.
      */
-    baseDoc: ControllersSwaggerBaseDocument;
+    document: ControllersSwaggerBaseDocument;
 }
 
 /**

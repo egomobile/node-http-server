@@ -18,7 +18,7 @@
 
 import { ERROR_HANDLER, SETUP_ERROR_HANDLER } from '../constants';
 import type { InitControllerErrorHandlerAction } from '../types/internal';
-import { getActionList, getMethodOrThrow } from './utils';
+import { getListFromObject, getMethodOrThrow } from './utils';
 
 /**
  * Add a method of a controller as an error handler.
@@ -55,7 +55,7 @@ export function ErrorHandler(): MethodDecorator {
     return function (target, methodName, descriptor) {
         const method = getMethodOrThrow(descriptor);
 
-        getActionList<InitControllerErrorHandlerAction>(method, SETUP_ERROR_HANDLER).push(
+        getListFromObject<InitControllerErrorHandlerAction>(method, SETUP_ERROR_HANDLER).push(
             ({ controller }) => {
                 if ((controller as any)[ERROR_HANDLER]) {
                     throw new Error(`Cannot redefine ${String(methodName)} method as controllers error handler`);

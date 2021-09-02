@@ -6,6 +6,26 @@ export type GroupedHttpRequestHandlers = {
     [method: string]: RequestHandlerContext[];
 };
 
+export interface IControllerClass {
+    class: Constructor<IHttpController>;
+    file: IControllerFile;
+}
+
+export interface IControllerContext {
+    controllers: IControllerInfo[];
+    swagger?: OpenAPIV3.Document;
+}
+
+export interface IControllerFile {
+    fullPath: string;
+    relativePath: string;
+}
+
+export interface IControllerInfo {
+    controller: IHttpController;
+    controllerClass: IControllerClass;
+}
+
 export interface IInitControllerMethodActionContext {
     controller: IHttpController;
     controllerClass: Constructor<IHttpController>;

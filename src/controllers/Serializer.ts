@@ -18,7 +18,7 @@
 
 import { RESPONSE_SERIALIZER, SETUP_RESPONSE_SERIALIZER } from '../constants';
 import type { InitControllerSerializerAction } from '../types/internal';
-import { getActionList, getMethodOrThrow } from './utils';
+import { getListFromObject, getMethodOrThrow } from './utils';
 
 /**
  * Add a method of a controller as a response serializer.
@@ -59,7 +59,7 @@ export function Serializer(): MethodDecorator {
     return function (target, methodName, descriptor) {
         const method = getMethodOrThrow(descriptor);
 
-        getActionList<InitControllerSerializerAction>(method, SETUP_RESPONSE_SERIALIZER).push(
+        getListFromObject<InitControllerSerializerAction>(method, SETUP_RESPONSE_SERIALIZER).push(
             ({ controller }) => {
                 if ((controller as any)[RESPONSE_SERIALIZER]) {
                     throw new Error(`Cannot redefine ${String(methodName)} method as controllers serializer`);

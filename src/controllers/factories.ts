@@ -18,26 +18,16 @@ import minimatch from 'minimatch';
 import path from 'path';
 import { OpenAPIV3 } from 'openapi-types';
 import { isSchema } from 'joi';
-import { ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_SERVER_CONTROLLER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER } from '../constants';
+import { CONTROLLERS_CONTEXES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_SERVER_CONTROLLER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER } from '../constants';
 import { buffer, json, validate } from '../middlewares';
-import type { Constructor, ControllerRouteOptionsValue, GetterFunc, HttpErrorHandler, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer } from '../types';
-import type { InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction } from '../types/internal';
+import type { ControllerRouteOptionsValue, GetterFunc, HttpErrorHandler, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer } from '../types';
+import type { IControllerClass, IControllerContext, IControllerFile, InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction } from '../types/internal';
 import { asAsync, getAllClassProps, isClass, isNil, walkDirSync } from '../utils';
 import { params } from '../validators/params';
-import { getActionList, getMethodOrThrow, normalizeRouterPath } from './utils';
+import { getListFromObject, getMethodOrThrow, normalizeRouterPath } from './utils';
 import { setupSwaggerUIForServerControllers } from '../swagger';
 
 type GetContollerValue<TValue extends any = any> = (controller: IHttpController, server: IHttpServer) => TValue;
-
-interface IControllerClass {
-    class: Constructor<IHttpController>;
-    file: IControllerFile;
-}
-
-interface IControllerFile {
-    fullPath: string;
-    relativePath: string;
-}
 
 interface ICreateControllerMethodRequestHandlerOptions {
     getError: GetterFunc<HttpErrorHandler>;
@@ -145,7 +135,7 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
             }
         }
 
-        getActionList<InitControllerMethodAction>(method, INIT_CONTROLLER_METHOD_ACTIONS).push(
+        getListFromObject<InitControllerMethodAction>(method, INIT_CONTROLLER_METHOD_ACTIONS).push(
             createInitControllerMethodAction({
                 controllerMethodName: String(methodName).trim(),
                 controllerRouterPath: decoratorOptions?.path,
@@ -232,6 +222,10 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
     server.controllers = (...args: any[]) => {
         const isTypeScript = __filename.endsWith('.ts');
 
+        const newControllersContext: IControllerContext = {
+            controllers: []
+        };
+
         let options: Nilable<IControllersOptions>;
 
         if (args.length) {
@@ -250,11 +244,16 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
             options = {};
         }
 
-
         let swagger: Nilable<IControllersSwaggerOptions>;
         if (!isNil(options.swagger)) {
             if (options.swagger !== false) {
                 if (typeof options.swagger === 'object') {
+                    if (!isNil(options.swagger.basePath)) {
+                        if (typeof options.swagger.basePath !== 'string') {
+                            throw new TypeError('options.swagger.basePath must be of type string');
+                        }
+                    }
+
                     swagger = options.swagger;
                 } else {
                     throw new TypeError('options.swagger must be of type object or must be the value false');
@@ -263,7 +262,7 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
         }
 
         const swaggerDoc: OpenAPIV3.Document = {
-            ...(swagger?.baseDoc ? swagger.baseDoc : {
+            ...(swagger?.document ? swagger.document : {
                 info: {
                     title: 'OpenAPI documentation with @egomobile/http-server by e.GO Mobile',
                     version: '0.0.1'
@@ -388,7 +387,7 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                         return;
                     }
 
-                    getActionList<InitControllerMethodAction>(propValue, INIT_CONTROLLER_METHOD_ACTIONS).forEach(action => {
+                    getListFromObject<InitControllerMethodAction>(propValue, INIT_CONTROLLER_METHOD_ACTIONS).forEach(action => {
                         action({
                             controller,
                             controllerClass: cls['class'],
@@ -399,30 +398,41 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                         });
                     });
 
-                    getActionList<InitControllerErrorHandlerAction>(propValue, SETUP_ERROR_HANDLER).forEach((action) => {
+                    getListFromObject<InitControllerErrorHandlerAction>(propValue, SETUP_ERROR_HANDLER).forEach((action) => {
                         action({
                             controller
                         });
                     });
 
-                    getActionList<InitControllerSerializerAction>(propValue, SETUP_RESPONSE_SERIALIZER).forEach((action) => {
+                    getListFromObject<InitControllerSerializerAction>(propValue, SETUP_RESPONSE_SERIALIZER).forEach((action) => {
                         action({
                             controller
                         });
                     });
 
-                    getActionList<InitControllerMethodSwaggerAction>(propValue, INIT_SERVER_CONTROLLER_ACTIONS).forEach(action => {
+                    getListFromObject<InitControllerMethodSwaggerAction>(propValue, INIT_SERVER_CONTROLLER_ACTIONS).forEach(action => {
                         action({
                             apiDocument: swaggerDoc
                         });
                     });
                 }
             });
+
+            newControllersContext.controllers.push({
+                controller,
+                controllerClass: cls
+            });
         });
 
         if (swagger) {
             setupSwaggerUIForServerControllers(server, swaggerDoc, swagger);
+
+            newControllersContext.swagger = swaggerDoc;
         }
+
+        getListFromObject<IControllerContext>(server, CONTROLLERS_CONTEXES).push(
+            newControllersContext
+        );
 
         return server;
     };

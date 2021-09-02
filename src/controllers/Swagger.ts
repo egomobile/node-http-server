@@ -22,7 +22,7 @@ import { toSwaggerPath } from '../swagger/utils';
 import { HttpMethod, Nilable } from '../types';
 import type { InitControllerMethodSwaggerAction, ISwaggerMethodInfo } from '../types/internal';
 import { sortObjectByKeys } from '../utils';
-import { getActionList, getMethodOrThrow } from './utils';
+import { getListFromObject, getMethodOrThrow } from './utils';
 
 /**
  * Add a method of a controller as a response serializer.
@@ -70,7 +70,7 @@ export function Swagger(doc: OpenAPIV3.OperationObject): MethodDecorator {
     return function (target, methodName, descriptor) {
         const method = getMethodOrThrow(descriptor);
 
-        getActionList<InitControllerMethodSwaggerAction>(method, INIT_SERVER_CONTROLLER_ACTIONS).push(
+        getListFromObject<InitControllerMethodSwaggerAction>(method, INIT_SERVER_CONTROLLER_ACTIONS).push(
             ({ apiDocument }) => {
                 if ((method as any)[SWAGGER_METHOD_INFO]) {
                     throw new Error(`Cannot redefine Swagger definition of ${String(methodName)}`);

@@ -22,9 +22,8 @@ import { normalizeRouterPath } from '../controllers/utils';
 import type { IControllersSwaggerOptions, IHttpServer } from '../types';
 import { createSwaggerPathValidator, getSwaggerDocsBasePath } from './utils';
 
-const pathToSwaggerUi: string = path.resolve(
-    require('swagger-ui-dist').absolutePath()
-);
+const pathToSwaggerUi: string = require('swagger-ui-dist').absolutePath();
+
 const indexHtmlFilePath = path.join(pathToSwaggerUi, 'index.html');
 
 const { readFile, stat } = fs.promises;
@@ -34,9 +33,7 @@ export function setupSwaggerUIForServerControllers(
     document: OpenAPIV3.Document,
     options: IControllersSwaggerOptions
 ) {
-    const docsPathPath = '/swagger';
-
-    const basePath = getSwaggerDocsBasePath(docsPathPath);
+    const basePath = getSwaggerDocsBasePath(options.basePath);
     const basePathWithSuffix = basePath + (basePath.endsWith('/') ? '' : '/');
 
     const documentJson = Buffer.from(JSON.stringify(document), 'utf8');
@@ -47,7 +44,7 @@ export function setupSwaggerUIForServerControllers(
 
     const indexHtmlContent = Buffer.from(indexHtml(), 'utf8');
 
-    server.get(createSwaggerPathValidator(docsPathPath), async (request, response) => {
+    server.get(createSwaggerPathValidator(options.basePath), async (request, response) => {
         try {
             if (request.url === basePath) {
                 response.writeHead(301, {

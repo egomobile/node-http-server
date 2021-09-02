@@ -30,13 +30,10 @@ export function getSwaggerDocsBasePath(basePath: Nilable<string>): string {
         basePath = '';
     }
 
-    if (typeof basePath !== 'string') {
-        throw new TypeError('basePath must be of type string');
-    }
-
     basePath = basePath.trim();
+
     if (basePath === '') {
-        return '/_docs';
+        return '/swagger';
     }
 
     return normalizeRouterPath(basePath);
