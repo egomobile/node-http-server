@@ -27,6 +27,10 @@ export type Constructor<T extends any = any> = (new (...args: any[]) => T);
  */
 export interface ControllerRouteOptions {
     /**
+     * The custom error handler.
+     */
+    onError?: Nilable<HttpErrorHandler>;
+    /**
      * The custom path.
      */
     path?: Nilable<ControllerRoutePath>;
@@ -61,6 +65,13 @@ export type ControllerRoutePath = string;
  * @returns {number} The status code.
  */
 export type GetStatusCodeFromError = (error: any) => number;
+
+/**
+ * A function, that returns / provides a value.
+ *
+ * @returns {TValue} The value.
+ */
+export type GetterFunc<TValue extends any = any> = () => TValue;
 
 /**
  * A HTTP error handler.
@@ -346,6 +357,11 @@ export interface IHttpServer {
      */
     delete(path: HttpRequestPath, handler: HttpRequestHandler): this;
     delete(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
+
+    /**
+     * Gets the current error handler.
+     */
+    readonly errorHandler: HttpErrorHandler;
 
     /**
      * Registers a route for a GET request.

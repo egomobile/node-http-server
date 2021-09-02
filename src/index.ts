@@ -316,6 +316,10 @@ export const createServer = (): IHttpServer => {
 
     (server as any).isEgoHttpServer = true;
 
+    Object.defineProperty(server, 'errorHandler', {
+        get: () => errorHandler
+    });
+
     setupHttpServerControllerMethod(server);
 
     resetInstance();
@@ -420,6 +424,7 @@ export {
     ControllerRoutePath,
     ControllerRouteWithBodyOptions,
     GetStatusCodeFromError,
+    GetterFunc,
     HttpErrorHandler,
     HttpMethod,
     HttpMiddleware,

@@ -17,10 +17,13 @@ import fs from 'fs';
 import minimatch from 'minimatch';
 import path from 'path';
 import { INIT_CONTROLLER_METHOD_ACTIONS, IS_CONTROLLER_CLASS } from '../constants';
-import type { Constructor, IControllersOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable } from '../types';
+import type { Constructor, ControllerRouteOptionsValue, ControllerRouteWithBodyOptions, GetterFunc, HttpErrorHandler, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllersOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable } from '../types';
 import type { InitControllerMethodAction } from '../types/internal';
-import { getAllClassProps, isClass, isNil, walkDirSync } from '../utils';
-import { normalizeRouterPath } from './utils';
+import { asAsync, getAllClassProps, isClass, isNil, walkDirSync } from '../utils';
+import { params } from '../validators/params';
+import { getMethodOrThrow, normalizeRouterPath } from './utils';
+
+type GetServerValue<TValue extends any = any> = (server: IHttpServer) => TValue;
 
 interface IControllerClass {
     class: Constructor<IHttpController>;
@@ -30,6 +33,104 @@ interface IControllerClass {
 interface IControllerFile {
     fullPath: string;
     relativePath: string;
+}
+
+interface ICreateControllerMethodRequestHandlerOptions {
+    getError: GetterFunc<HttpErrorHandler>;
+    method: Function;
+}
+
+export interface ICreateHttpMethodDecoratorOptions {
+    decoratorOptions: Nilable<ControllerRouteOptionsValue<ControllerRouteWithBodyOptions>>;
+    name: HttpMethod;
+}
+
+interface ICreateInitControllerMethodActionOptions {
+    controllerMethod: string;
+    controllerRouterPath: Nilable<string>;
+    getError: GetServerValue<HttpErrorHandler>;
+    httpMethod: HttpMethod;
+    middlewares: HttpMiddleware[];
+}
+
+function createControllerMethodRequestHandler({ getError, method }: ICreateControllerMethodRequestHandlerOptions): HttpRequestHandler {
+    method = asAsync<HttpRequestHandler>(method);
+
+    return async (request, response) => {
+        try {
+            await method(request, response);
+        } catch (error) {
+            await getError()(error, request, response);
+        }
+    };
+}
+
+export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOptions): MethodDecorator {
+    const decoratorOptions: Nilable<ControllerRouteWithBodyOptions> =
+        typeof options.decoratorOptions === 'string' ? {
+            path: options.decoratorOptions
+        } : options.decoratorOptions;
+
+    if (!isNil(decoratorOptions?.onError)) {
+        if (typeof decoratorOptions!.onError !== 'function') {
+            throw new TypeError('decoratorOptions.onError must be of type function');
+        }
+    }
+
+    return function (target, methodName, descriptor) {
+        const method = getMethodOrThrow(descriptor);
+
+        let initActions: Nilable<InitControllerMethodAction[]> = (method as any)[INIT_CONTROLLER_METHOD_ACTIONS];
+        if (!initActions) {
+            (method as any)[INIT_CONTROLLER_METHOD_ACTIONS] = initActions = [];
+        }
+
+        const middlewares = (
+            Array.isArray(decoratorOptions?.use) ?
+                decoratorOptions!.use :
+                [decoratorOptions?.use]
+        ).filter(mw => !isNil(mw)) as HttpMiddleware[];
+
+        initActions.push(createInitControllerMethodAction({
+            controllerMethod: String(methodName).trim(),
+            controllerRouterPath: decoratorOptions?.path,
+            httpMethod: options.name,
+            middlewares,
+            getError: (server) => decoratorOptions?.onError || server.errorHandler
+        }));
+    };
+}
+
+function createInitControllerMethodAction({ controllerMethod, controllerRouterPath, getError, httpMethod, middlewares }: ICreateInitControllerMethodActionOptions): InitControllerMethodAction {
+    return ({ relativeFilePath, method, server }) => {
+        const dir = path.dirname(relativeFilePath);
+        const fileName = path.basename(relativeFilePath, path.extname(relativeFilePath));
+
+        let routerPath: HttpRequestPath = dir;
+        if (fileName !== 'index') {
+            routerPath += `/${fileName}`;
+        }
+
+        if (controllerRouterPath?.length) {
+            routerPath += normalizeRouterPath(controllerRouterPath);
+        } else {
+            if (controllerMethod.length && controllerMethod !== 'index') {
+                routerPath += `/${controllerMethod}`;
+            }
+        }
+
+        routerPath = normalizeRouterPath(routerPath);
+        routerPath = routerPath.split('/@').join('/:');
+
+        if (routerPath.includes('/:')) {
+            routerPath = params(routerPath);
+        }
+
+        (server as any)[httpMethod](routerPath, middlewares, createControllerMethodRequestHandler({
+            getError: () => getError(server),
+            method
+        }));
+    };
 }
 
 export function setupHttpServerControllerMethod(server: IHttpServer) {
