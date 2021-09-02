@@ -446,6 +446,7 @@ export {
     Nullable,
     Optional,
     ParseErrorHandler,
+    ResponseSerializer,
     ValidationFailedHandler
 } from './types';
 
@@ -474,7 +475,7 @@ export * from './controllers';
 
 export const schema = joi;
 
-export type {
+export {
     AlternativesSchema,
     AnySchema,
     ArraySchema,
@@ -482,6 +483,7 @@ export type {
     BooleanSchema,
     DateSchema,
     FunctionSchema,
+    isSchema,
     LinkSchema,
     NumberSchema,
     ObjectPropertiesSchema,

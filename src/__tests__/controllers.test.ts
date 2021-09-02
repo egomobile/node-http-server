@@ -86,7 +86,7 @@ describe('controllers', () => {
         expect(str).toBe(expectedResult);
     });
 
-    it.each(['/test3'])('should return 400 when do a GET request for existing Test3Controller', async (p) => {
+    it.each(['/test3'])('should return 400 when do a GET request for existing Test3Controller with custom error handler', async (p) => {
         const expectedResult = 'ERROR: ' + p + ' Something went wrong!';
 
         const server = createServerAndInitControllers();
@@ -104,6 +104,26 @@ describe('controllers', () => {
         expect(typeof str).toBe('string');
         expect(str.length).toBe(expectedResult.length);
         expect(str).toBe(expectedResult);
+    });
+
+    it.each(['/test4'])('should return 200 when do a GET request for existing Test4Controller with custom serializer', async (p) => {
+        const expectedObject = {
+            success: true,
+            data: 'foo'
+        };
+
+        const server = createServerAndInitControllers();
+
+        const response = await request(server).get(p)
+            .send()
+            .expect(200);
+
+        const data = response.body;
+        expect(typeof data).toBe('object');
+
+        expect(response.headers['content-type']).toBe('application/json; charset=utf-8');
+
+        expect(data).toMatchObject(expectedObject);
     });
 
     it.each(['/baz', '/baz/bar', '/baz/foo'])('should return 200 when do a GET request for existing BazController which uses middlewares', async (p) => {

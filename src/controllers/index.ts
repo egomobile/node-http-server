@@ -46,5 +46,15 @@ export abstract class ControllerBase<TApp extends any = IHttpServer> implements 
     public readonly __path: string;
 }
 
+export * from './CONNECT';
 export * from './Controller';
+export * from './DELETE';
+export * from './ErrorHandler';
 export * from './GET';
+export * from './HEAD';
+export * from './OPTIONS';
+export * from './PATCH';
+export * from './POST';
+export * from './PUT';
+export * from './Serializer';
+export * from './TRACE';

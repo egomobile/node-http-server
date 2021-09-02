@@ -120,6 +120,10 @@ export interface IControllerRouteOptions {
      */
     path?: Nilable<ControllerRoutePath>;
     /**
+     * The custom serializer.
+     */
+    serializer?: Nilable<ResponseSerializer>;
+    /**
      * One or more middlewares for the route.
      */
     use?: Nilable<HttpMiddleware | HttpMiddleware[]>;
@@ -708,6 +712,17 @@ export type Optional<T extends any = any> = T | undefined;
  * @param {IHttpResponse} response The response context.
  */
 export type ParseErrorHandler = (error: ParseError, request: IHttpRequest, response: IHttpResponse) => Promise<any>;
+
+/**
+ * A function, that serializes something for the response
+ * and sends it.
+ *
+ * @param {TResult} result The result to serialize.
+ * @param {IHttpRequest} request The request context.
+ * @param {IHttpResponse} response The response context.
+ */
+export type ResponseSerializer<TResult extends any = any> =
+    (result: TResult, request: IHttpRequest, response: IHttpResponse) => any;
 
 /**
  * A handler, that is executed, if data is invalid.

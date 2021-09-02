@@ -18,9 +18,15 @@ export interface IInitControllerErrorHandlerActionContext {
     controller: IHttpController<IHttpServer>;
 }
 
+export interface IInitControllerSerializerActionContext {
+    controller: IHttpController<IHttpServer>;
+}
+
 export type InitControllerMethodAction = (context: IInitControllerMethodActionContext) => void;
 
 export type InitControllerErrorHandlerAction = (context: IInitControllerErrorHandlerActionContext) => void;
+
+export type InitControllerSerializerAction = (context: IInitControllerSerializerActionContext) => void;
 
 export interface RequestHandlerContext {
     end: (response: ServerResponse) => void;

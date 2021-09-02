@@ -17,10 +17,10 @@ import fs from 'fs';
 import { isSchema } from 'joi';
 import minimatch from 'minimatch';
 import path from 'path';
-import { ERROR_HANDLER, INIT_CONTROLLER_METHOD_ACTIONS, IS_CONTROLLER_CLASS, SETUP_ERROR_HANDLER } from '../constants';
+import { ERROR_HANDLER, INIT_CONTROLLER_METHOD_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER } from '../constants';
 import { buffer, json, validate } from '../middlewares';
-import type { Constructor, ControllerRouteOptionsValue, GetterFunc, HttpErrorHandler, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable } from '../types';
-import type { InitControllerErrorHandlerAction, InitControllerMethodAction } from '../types/internal';
+import type { Constructor, ControllerRouteOptionsValue, GetterFunc, HttpErrorHandler, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer } from '../types';
+import type { InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerSerializerAction } from '../types/internal';
 import { asAsync, getAllClassProps, isClass, isNil, walkDirSync } from '../utils';
 import { params } from '../validators/params';
 import { getActionList, getMethodOrThrow, normalizeRouterPath } from './utils';
@@ -39,7 +39,7 @@ interface IControllerFile {
 
 interface ICreateControllerMethodRequestHandlerOptions {
     getError: GetterFunc<HttpErrorHandler>;
-    method: Function;
+    handler: HttpRequestHandler;
 }
 
 export interface ICreateHttpMethodDecoratorOptions {
@@ -48,19 +48,20 @@ export interface ICreateHttpMethodDecoratorOptions {
 }
 
 interface ICreateInitControllerMethodActionOptions {
-    controllerMethod: string;
+    controllerMethodName: string;
     controllerRouterPath: Nilable<string>;
     getError: GetContollerValue<HttpErrorHandler>;
     httpMethod: HttpMethod;
     middlewares: HttpMiddleware[];
+    serializer: Nilable<ResponseSerializer>;
 }
 
-function createControllerMethodRequestHandler({ getError, method }: ICreateControllerMethodRequestHandlerOptions): HttpRequestHandler {
-    method = asAsync<HttpRequestHandler>(method);
+function createControllerMethodRequestHandler({ getError, handler }: ICreateControllerMethodRequestHandlerOptions): HttpRequestHandler {
+    handler = asAsync<HttpRequestHandler>(handler);
 
     return async (request, response) => {
         try {
-            await method(request, response);
+            await handler(request, response);
         } catch (error) {
             await getError()(error, request, response);
         }
@@ -97,6 +98,12 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
         }
     }
 
+    if (!isNil(decoratorOptions?.serializer)) {
+        if (typeof decoratorOptions!.serializer !== 'function') {
+            throw new TypeError('decoratorOptions.serializer must be of type function');
+        }
+    }
+
     return function (target, methodName, descriptor) {
         const method = getMethodOrThrow(descriptor);
 
@@ -129,19 +136,27 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
 
         getActionList<InitControllerMethodAction>(method, INIT_CONTROLLER_METHOD_ACTIONS).push(
             createInitControllerMethodAction({
-                controllerMethod: String(methodName).trim(),
+                controllerMethodName: String(methodName).trim(),
                 controllerRouterPath: decoratorOptions?.path,
                 httpMethod: options.name,
                 middlewares,
                 getError: (controller, server) => decoratorOptions?.onError ||
                     (controller as any)[ERROR_HANDLER] ||
-                    server.errorHandler
+                    server.errorHandler,
+                serializer: decoratorOptions?.serializer
             })
         );
     };
 }
 
-function createInitControllerMethodAction({ controllerMethod, controllerRouterPath, getError, httpMethod, middlewares }: ICreateInitControllerMethodActionOptions): InitControllerMethodAction {
+function createInitControllerMethodAction({
+    controllerMethodName,
+    controllerRouterPath,
+    getError,
+    httpMethod,
+    middlewares,
+    serializer
+}: ICreateInitControllerMethodActionOptions): InitControllerMethodAction {
     return ({ controller, relativeFilePath, method, server }) => {
         const dir = path.dirname(relativeFilePath);
         const fileName = path.basename(relativeFilePath, path.extname(relativeFilePath));
@@ -154,8 +169,8 @@ function createInitControllerMethodAction({ controllerMethod, controllerRouterPa
         if (controllerRouterPath?.length) {
             routerPath += normalizeRouterPath(controllerRouterPath);
         } else {
-            if (controllerMethod.length && controllerMethod !== 'index') {
-                routerPath += `/${controllerMethod}`;
+            if (controllerMethodName.length && controllerMethodName !== 'index') {
+                routerPath += `/${controllerMethodName}`;
             }
         }
 
@@ -168,8 +183,29 @@ function createInitControllerMethodAction({ controllerMethod, controllerRouterPa
 
         (server as any)[httpMethod](routerPath, middlewares, createControllerMethodRequestHandler({
             getError: () => getError(controller, server),
-            method
+            handler: createRequestHandlerWithSerializer(
+                method as HttpRequestHandler,
+                () => serializer ||
+                    (controller as any)[RESPONSE_SERIALIZER]
+            )
         }));
+    };
+}
+
+function createRequestHandlerWithSerializer(handler: HttpRequestHandler, getSerializer: GetterFunc<Nilable<ResponseSerializer>>): HttpRequestHandler {
+    handler = asAsync(handler);
+
+    return async (request, response) => {
+        const serializer = getSerializer();
+
+        if (serializer) {
+            await serializer(
+                await handler(request, response),
+                request, response
+            );
+        } else {
+            await handler(request, response);
+        }
     };
 }
 
@@ -321,6 +357,12 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                     });
 
                     getActionList<InitControllerErrorHandlerAction>(propValue, SETUP_ERROR_HANDLER).forEach((action) => {
+                        action({
+                            controller
+                        });
+                    });
+
+                    getActionList<InitControllerSerializerAction>(propValue, SETUP_RESPONSE_SERIALIZER).forEach((action) => {
                         action({
                             controller
                         });

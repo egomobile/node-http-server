@@ -16,52 +16,56 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { ERROR_HANDLER, SETUP_ERROR_HANDLER } from '../constants';
-import { InitControllerErrorHandlerAction } from '../types/internal';
+import { RESPONSE_SERIALIZER, SETUP_RESPONSE_SERIALIZER } from '../constants';
+import { InitControllerSerializerAction } from '../types/internal';
 import { getActionList, getMethodOrThrow } from './utils';
 
 /**
- * Add a method of a controller as an error handler.
+ * Add a method of a controller as a response serializer.
  *
  * @example
  * ```
- * import { Controller, ControllerBase, ErrorHandler, GET, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+ * import { Controller, ControllerBase, GET, IHttpRequest, IHttpResponse, Serializer } from '@egomobile/http-server'
  *
  * @Controller()
  * export default class MyController extends ControllerBase {
  *   @GET()
  *   async index(request: IHttpRequest, response: IHttpResponse) {
- *     throw new Error('Something went wrong!')
+ *     // this will be serialized and send
+ *     // by 'serializeResponse()' method (s. below)
+ *     return {
+ *        success: true,
+ *        data: 'foo'
+ *     }
  *   }
  *
- *   @ErrorHandler()  // mark that method as default error handler
- *                    // inside that controller
- *   async handleError(error: any, request: IHttpRequest, response: IHttpResponse) {
- *     const errorMessage = Buffer.from('ERROR: ' + String(error), 'utf8')
+ *   @Serializer()  // mark that method as default serializer
+ *                  // inside that controller
+ *   async serializeResponse(result: any, request: IHttpRequest, response: IHttpResponse) {
+ *     const jsonResponse = Buffer.from(JSON.stringify(result), 'utf8')
  *
- *     response.writeHead(500, {
- *       'Content-Length': String(errorMessage.length)
- *     })
- *     response.write(errorMessage)
- *
- *     response.end()
+ *     response.writeHead(200, {
+ *       'Content-Length': String(jsonResponse.length),
+ *       'Content-Type': 'application/json; charset=utf-8'
+ *     });
+ *     response.write(jsonResponse)
  *   }
  * }
  * ```
  *
  * @returns {MethodDecorator} The new decorator function.
  */
-export function ErrorHandler(): MethodDecorator {
+export function Serializer(): MethodDecorator {
     return function (target, methodName, descriptor) {
         const method = getMethodOrThrow(descriptor);
 
-        getActionList<InitControllerErrorHandlerAction>(method, SETUP_ERROR_HANDLER).push(
+        getActionList<InitControllerSerializerAction>(method, SETUP_RESPONSE_SERIALIZER).push(
             ({ controller }) => {
-                if ((controller as any)[ERROR_HANDLER]) {
-                    throw new Error(`Cannot redefine ${String(methodName)} method as controllers error handler`);
+                if ((controller as any)[RESPONSE_SERIALIZER]) {
+                    throw new Error(`Cannot redefine ${String(methodName)} method as controllers serializer`);
                 }
 
-                (controller as any)[ERROR_HANDLER] = method;
+                (controller as any)[RESPONSE_SERIALIZER] = method;
             }
         );
     };
