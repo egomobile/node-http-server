@@ -33,6 +33,25 @@ export function asAsync<TFunc extends Function = Function>(func: Function): TFun
     }) as any;
 }
 
+export function compareValues<T>(x: T, y: T): number {
+    return compareValuesBy(x, y, item => item);
+}
+
+export function compareValuesBy<T1, T2>(x: T1, y: T1, selector: (item: T1) => T2): number {
+    const valX = selector(x);
+    const valY = selector(y);
+
+    if (valX !== valY) {
+        if (valX < valY) {
+            return -1;
+        }
+
+        return 1;  // valX > valY
+    }
+
+    return 0;
+}
+
 export function getAllClassProps(startClass: any): string[] {
     const props: string[] = [];
 
@@ -155,7 +174,23 @@ export function readStreamWithLimit(
             }
         });
     });
-};
+}
+
+export function sortObjectByKeys<T extends any = any>(obj: T): T {
+    if (isNil(obj)) {
+        return obj;
+    }
+
+    const storedKeys = Object.keys(obj as any)
+        .sort((x, y) => compareValuesBy(x, y, k => k.toLowerCase().trim()));
+
+    const newObj: any = {};
+    storedKeys.forEach(key => {
+        newObj[key] = (obj as any)[key];
+    });
+
+    return newObj;
+}
 
 export function walkDirSync(dir: string, action: (file: string, stats: fs.Stats) => void) {
     for (const item of fs.readdirSync(dir)) {

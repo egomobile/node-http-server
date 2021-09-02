@@ -14,16 +14,18 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import fs from 'fs';
-import { isSchema } from 'joi';
 import minimatch from 'minimatch';
 import path from 'path';
-import { ERROR_HANDLER, INIT_CONTROLLER_METHOD_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER } from '../constants';
+import { OpenAPIV3 } from 'openapi-types';
+import { isSchema } from 'joi';
+import { ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_SERVER_CONTROLLER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER } from '../constants';
 import { buffer, json, validate } from '../middlewares';
-import type { Constructor, ControllerRouteOptionsValue, GetterFunc, HttpErrorHandler, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer } from '../types';
-import type { InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerSerializerAction } from '../types/internal';
+import type { Constructor, ControllerRouteOptionsValue, GetterFunc, HttpErrorHandler, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer } from '../types';
+import type { InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction } from '../types/internal';
 import { asAsync, getAllClassProps, isClass, isNil, walkDirSync } from '../utils';
 import { params } from '../validators/params';
 import { getActionList, getMethodOrThrow, normalizeRouterPath } from './utils';
+import { setupSwaggerUIForServerControllers } from '../swagger';
 
 type GetContollerValue<TValue extends any = any> = (controller: IHttpController, server: IHttpServer) => TValue;
 
@@ -107,6 +109,15 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
     return function (target, methodName, descriptor) {
         const method = getMethodOrThrow(descriptor);
 
+        let httpMethods: Nilable<HttpMethod[]> = (method as any)[HTTP_METHODS];
+        if (!httpMethods) {
+            (method as any)[HTTP_METHODS] = httpMethods = [];
+        }
+        if (!httpMethods.includes(options.name)) {
+            httpMethods.push(options.name);
+        }
+        httpMethods.sort();
+
         const middlewares = (
             Array.isArray(decoratorOptions?.use) ?
                 decoratorOptions!.use :
@@ -177,6 +188,14 @@ function createInitControllerMethodAction({
         routerPath = normalizeRouterPath(routerPath);
         routerPath = routerPath.split('/@').join('/:');
 
+        let allRouterPaths: Nilable<string[]> = (method as any)[ROUTER_PATHS];
+        if (!allRouterPaths) {
+            (method as any)[ROUTER_PATHS] = allRouterPaths = [];
+        }
+        if (!allRouterPaths.includes(routerPath)) {
+            allRouterPaths.push(routerPath);
+        }
+
         if (routerPath.includes('/:')) {
             routerPath = params(routerPath);
         }
@@ -230,6 +249,30 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
         if (!options) {
             options = {};
         }
+
+
+        let swagger: Nilable<IControllersSwaggerOptions>;
+        if (!isNil(options.swagger)) {
+            if (options.swagger !== false) {
+                if (typeof options.swagger === 'object') {
+                    swagger = options.swagger;
+                } else {
+                    throw new TypeError('options.swagger must be of type object or must be the value false');
+                }
+            }
+        }
+
+        const swaggerDoc: OpenAPIV3.Document = {
+            ...(swagger?.baseDoc ? swagger.baseDoc : {
+                info: {
+                    title: 'OpenAPI documentation with @egomobile/http-server by e.GO Mobile',
+                    version: '0.0.1'
+                }
+            }),
+
+            openapi: '3.0.3',
+            paths: {}
+        };
 
         let rootDir: string;
         if (isNil(options.rootDir)) {
@@ -367,9 +410,19 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                             controller
                         });
                     });
+
+                    getActionList<InitControllerMethodSwaggerAction>(propValue, INIT_SERVER_CONTROLLER_ACTIONS).forEach(action => {
+                        action({
+                            apiDocument: swaggerDoc
+                        });
+                    });
                 }
             });
         });
+
+        if (swagger) {
+            setupSwaggerUIForServerControllers(server, swaggerDoc, swagger);
+        }
 
         return server;
     };

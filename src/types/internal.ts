@@ -1,4 +1,5 @@
 import type { ServerResponse } from 'http';
+import { OpenAPIV3 } from 'openapi-types';
 import type { Constructor, HttpPathValidator, HttpRequestHandler, IHttpController, IHttpServer } from '.';
 
 export type GroupedHttpRequestHandlers = {
@@ -22,11 +23,22 @@ export interface IInitControllerSerializerActionContext {
     controller: IHttpController<IHttpServer>;
 }
 
+export interface IInitControllerMethodSwaggerActionContext {
+    apiDocument: OpenAPIV3.Document;
+}
+
 export type InitControllerMethodAction = (context: IInitControllerMethodActionContext) => void;
 
 export type InitControllerErrorHandlerAction = (context: IInitControllerErrorHandlerActionContext) => void;
 
 export type InitControllerSerializerAction = (context: IInitControllerSerializerActionContext) => void;
+
+export type InitControllerMethodSwaggerAction = (context: IInitControllerMethodSwaggerActionContext) => void;
+
+export interface ISwaggerMethodInfo {
+    doc: OpenAPIV3.PathItemObject;
+    method: Function;
+}
 
 export interface RequestHandlerContext {
     end: (response: ServerResponse) => void;

@@ -17,7 +17,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { ERROR_HANDLER, SETUP_ERROR_HANDLER } from '../constants';
-import { InitControllerErrorHandlerAction } from '../types/internal';
+import type { InitControllerErrorHandlerAction } from '../types/internal';
 import { getActionList, getMethodOrThrow } from './utils';
 
 /**

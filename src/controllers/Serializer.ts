@@ -17,7 +17,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { RESPONSE_SERIALIZER, SETUP_RESPONSE_SERIALIZER } from '../constants';
-import { InitControllerSerializerAction } from '../types/internal';
+import type { InitControllerSerializerAction } from '../types/internal';
 import { getActionList, getMethodOrThrow } from './utils';
 
 /**

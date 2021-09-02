@@ -14,8 +14,12 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 export const ERROR_HANDLER = Symbol('ERROR_HANDLER');
+export const HTTP_METHODS = Symbol('HTTP_METHODS');
 export const INIT_CONTROLLER_METHOD_ACTIONS = Symbol('INIT_CONTROLLER_METHOD_ACTIONS');
+export const INIT_SERVER_CONTROLLER_ACTIONS = Symbol('INIT_SERVER_CONTROLLER_ACTIONS');
 export const IS_CONTROLLER_CLASS = Symbol('IS_CONTROLLER_CLASS');
 export const RESPONSE_SERIALIZER = Symbol('RESPONSE_SERIALIZER');
+export const ROUTER_PATHS = Symbol('ROUTER_PATHS');
 export const SETUP_ERROR_HANDLER = Symbol('SETUP_ERROR_HANDLER');
 export const SETUP_RESPONSE_SERIALIZER = Symbol('SETUP_RESPONSE_SERIALIZER');
+export const SWAGGER_METHOD_INFO = Symbol('SWAGGER_METHOD_INFO');

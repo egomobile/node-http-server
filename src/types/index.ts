@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import { OpenAPIV3 } from 'openapi-types';
 import type { IncomingMessage, ServerResponse } from 'http';
 import type { AnySchema, ValidationError as JoiValidationError } from 'joi';
 import type { ParseError } from '../errors/parse';
@@ -32,6 +33,16 @@ export type ControllerRouteOptionsValue<TOptions extends IControllerRouteOptions
  * A possible value for a path of a controller route.
  */
 export type ControllerRoutePath = string;
+
+/**
+ * Base document of an 'IControllersSwaggerOptions' object.
+ */
+export type ControllersSwaggerBaseDocument = Pick<Pick<OpenAPIV3.Document, Exclude<keyof OpenAPIV3.Document, 'paths'>>, Exclude<keyof Pick<OpenAPIV3.Document, Exclude<keyof OpenAPIV3.Document, 'paths'>>, 'openapi'>>;
+
+/**
+ * Possible values for Swagger options for controllers.
+ */
+export type ControllersSwaggerOptionsValue = IControllersSwaggerOptions | false;
 
 /**
  * Returns a status code from an error object.
@@ -162,6 +173,20 @@ export interface IControllersOptions {
      * The custom root directory. Default: 'controllers'
      */
     rootDir?: string;
+    /**
+     *
+     */
+    swagger?: ControllersSwaggerOptionsValue;
+}
+
+/**
+ * Swagger options for controllers.
+ */
+export interface IControllersSwaggerOptions {
+    /**
+     * The base document.
+     */
+    baseDoc: ControllersSwaggerBaseDocument;
 }
 
 /**
