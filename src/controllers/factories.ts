@@ -17,7 +17,7 @@ import fs from 'fs';
 import minimatch from 'minimatch';
 import path from 'path';
 import { INIT_CONTROLLER_METHOD_ACTIONS, IS_CONTROLLER_CLASS } from '../constants';
-import type { Constructor, HttpRequestHandler, IControllersOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable } from '../types';
+import type { Constructor, IControllersOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable } from '../types';
 import type { InitControllerMethodAction } from '../types/internal';
 import { getAllClassProps, isClass, isNil, walkDirSync } from '../utils';
 import { normalizeRouterPath } from './utils';
@@ -178,7 +178,7 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                             controller,
                             controllerClass: cls['class'],
                             fullFilePath: cls.file.fullPath,
-                            method: propValue as HttpRequestHandler,
+                            method: propValue,
                             relativeFilePath: cls.file.relativePath,
                             server
                         });

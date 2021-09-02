@@ -99,7 +99,7 @@ async function main() {
 main().catch(console.error);
 ```
 
-#### validate
+#### validate()
 
 ```typescript
 import createServer, { json, schema, validate } from "@egomobile/http-server";
@@ -133,7 +133,7 @@ async function main() {
 main().catch(console.error);
 ```
 
-#### cookies
+#### cookies()
 
 ```typescript
 import createServer, { cookies } from "@egomobile/http-server";
@@ -155,7 +155,7 @@ async function main() {
 main().catch(console.error);
 ```
 
-#### lang
+#### lang()
 
 ```typescript
 import createServer, { lang } from "@egomobile/http-server";
