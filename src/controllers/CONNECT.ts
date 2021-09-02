@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { ControllerRouteWithBodyOptions, Nilable } from '../types';
+import type { ControllerRouteOptionsValue, IControllerRouteWithBodyOptions, Nilable } from '../types';
 import { createHttpMethodDecorator } from './factories';
 
 /**
@@ -50,7 +50,7 @@ import { createHttpMethodDecorator } from './factories';
  *
  * @returns {MethodDecorator} The new decorator function.
  */
-export function CONNECT(options?: Nilable<ControllerRouteWithBodyOptions>): MethodDecorator {
+export function CONNECT(options?: Nilable<ControllerRouteOptionsValue<IControllerRouteWithBodyOptions>>): MethodDecorator {
     return createHttpMethodDecorator({
         decoratorOptions: options,
         name: 'connect'

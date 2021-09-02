@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { ControllerRouteWithBodyOptions, Nilable } from '../types';
+import type { ControllerRouteOptionsValue, IControllerRouteWithBodyOptions, Nilable } from '../types';
 import { createHttpMethodDecorator } from './factories';
 
 /**
@@ -46,11 +46,11 @@ import { createHttpMethodDecorator } from './factories';
  * }
  * ```
  *
- * @param {Nilable<ControllerRouteOptionsValue>} [options] Custom options.
+ * @param {Nilable<ControllerRouteOptionsValue<IControllerRouteWithBodyOptions>>} [options] Custom options.
  *
  * @returns {MethodDecorator} The new decorator function.
  */
-export function DELETE(options?: Nilable<ControllerRouteWithBodyOptions>): MethodDecorator {
+export function DELETE(options?: Nilable<ControllerRouteOptionsValue<IControllerRouteWithBodyOptions>>): MethodDecorator {
     return createHttpMethodDecorator({
         decoratorOptions: options,
         name: 'delete'
