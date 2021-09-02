@@ -14,7 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { IncomingMessage, ServerResponse } from 'http';
-import type { ValidationError as JoiValidationError } from 'joi';
+import type { AnySchema, ValidationError as JoiValidationError } from 'joi';
 import type { ParseError } from '../errors/parse';
 
 /**
@@ -23,33 +23,9 @@ import type { ParseError } from '../errors/parse';
 export type Constructor<T extends any = any> = (new (...args: any[]) => T);
 
 /**
- * Options for a controller route without a body.
- */
-export interface ControllerRouteOptions {
-    /**
-     * The custom error handler.
-     */
-    onError?: Nilable<HttpErrorHandler>;
-    /**
-     * The custom path.
-     */
-    path?: Nilable<ControllerRoutePath>;
-    /**
-     * One or more middlewares for the route.
-     */
-    use?: Nilable<HttpMiddleware | HttpMiddleware[]>;
-}
-
-/**
- * Options for a controller route with a body.
- */
-export interface ControllerRouteWithBodyOptions extends ControllerRouteOptions {
-}
-
-/**
  * Options for a controller route decorator.
  */
-export type ControllerRouteOptionsValue<TOptions extends ControllerRouteOptions = ControllerRouteOptions>
+export type ControllerRouteOptionsValue<TOptions extends IControllerRouteOptions = IControllerRouteOptions>
     = ControllerRoutePath | TOptions;
 
 /**
@@ -130,6 +106,43 @@ export type HttpRequestHandler = (request: IHttpRequest, response: IHttpResponse
  * A possible value for a request path.
  */
 export type HttpRequestPath = string | RegExp | HttpPathValidator;
+
+/**
+ * Options for a controller route without a body.
+ */
+export interface IControllerRouteOptions {
+    /**
+     * The custom error handler.
+     */
+    onError?: Nilable<HttpErrorHandler>;
+    /**
+     * The custom path.
+     */
+    path?: Nilable<ControllerRoutePath>;
+    /**
+     * One or more middlewares for the route.
+     */
+    use?: Nilable<HttpMiddleware | HttpMiddleware[]>;
+}
+
+/**
+ * Options for a controller route with a body.
+ */
+export interface IControllerRouteWithBodyOptions extends IControllerRouteOptions {
+    /**
+     * The limit in bytes for the input data.
+     *
+     * If that value is defined, but no schema, the input data will be downloaded
+     * and written as Buffer using 'buffer()' middleware.
+     */
+    limit?: Nilable<number>;
+    /**
+     * The object schema to validate.
+     *
+     * 'json()' is used to parse the input.
+     */
+    schema?: Nilable<AnySchema>;
+}
 
 /**
  * Options for 'controllers()' method of 'IHttpServer' instance.

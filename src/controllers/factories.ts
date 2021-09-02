@@ -14,10 +14,12 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import fs from 'fs';
+import { isSchema } from 'joi';
 import minimatch from 'minimatch';
 import path from 'path';
 import { ERROR_HANDLER, INIT_CONTROLLER_METHOD_ACTIONS, IS_CONTROLLER_CLASS, SETUP_ERROR_HANDLER } from '../constants';
-import type { Constructor, ControllerRouteOptionsValue, ControllerRouteWithBodyOptions, GetterFunc, HttpErrorHandler, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllersOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable } from '../types';
+import { buffer, json, validate } from '../middlewares';
+import type { Constructor, ControllerRouteOptionsValue, GetterFunc, HttpErrorHandler, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable } from '../types';
 import type { InitControllerErrorHandlerAction, InitControllerMethodAction } from '../types/internal';
 import { asAsync, getAllClassProps, isClass, isNil, walkDirSync } from '../utils';
 import { params } from '../validators/params';
@@ -41,7 +43,7 @@ interface ICreateControllerMethodRequestHandlerOptions {
 }
 
 export interface ICreateHttpMethodDecoratorOptions {
-    decoratorOptions: Nilable<ControllerRouteOptionsValue<ControllerRouteWithBodyOptions>>;
+    decoratorOptions: Nilable<ControllerRouteOptionsValue<IControllerRouteWithBodyOptions>>;
     name: HttpMethod;
 }
 
@@ -66,14 +68,32 @@ function createControllerMethodRequestHandler({ getError, method }: ICreateContr
 }
 
 export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOptions): MethodDecorator {
-    const decoratorOptions: Nilable<ControllerRouteWithBodyOptions> =
+    const decoratorOptions: Nilable<IControllerRouteWithBodyOptions> =
         typeof options.decoratorOptions === 'string' ? {
             path: options.decoratorOptions
         } : options.decoratorOptions;
 
+    if (!isNil(decoratorOptions?.limit)) {
+        if (typeof decoratorOptions!.limit !== 'number') {
+            throw new TypeError('decoratorOptions.limit must be of type number');
+        }
+    }
+
+    if (!isNil(decoratorOptions?.path)) {
+        if (typeof decoratorOptions!.path !== 'string') {
+            throw new TypeError('decoratorOptions.path must be of type string');
+        }
+    }
+
     if (!isNil(decoratorOptions?.onError)) {
         if (typeof decoratorOptions!.onError !== 'function') {
             throw new TypeError('decoratorOptions.onError must be of type function');
+        }
+    }
+
+    if (!isNil(decoratorOptions?.schema)) {
+        if (!isSchema(decoratorOptions!.schema)) {
+            throw new TypeError('decoratorOptions.schema must be a Joi object');
         }
     }
 
@@ -85,6 +105,27 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                 decoratorOptions!.use :
                 [decoratorOptions?.use]
         ).filter(mw => !isNil(mw)) as HttpMiddleware[];
+
+        if (decoratorOptions?.schema) {
+            if (['get', 'head', 'options'].includes(options.name)) {
+                throw new Error(`Cannot use schema with ${options.name.toUpperCase()} requests`);
+            }
+
+            middlewares.push(
+                json({
+                    limit: decoratorOptions?.limit
+                }),
+                validate(decoratorOptions?.schema)
+            );
+        } else {
+            if (typeof decoratorOptions?.limit === 'number') {
+                middlewares.push(
+                    buffer({
+                        limit: decoratorOptions.limit
+                    }),
+                );
+            }
+        }
 
         getActionList<InitControllerMethodAction>(method, INIT_CONTROLLER_METHOD_ACTIONS).push(
             createInitControllerMethodAction({

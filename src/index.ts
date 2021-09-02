@@ -419,10 +419,8 @@ function mergeHandler(
 // EXPORTS
 export {
     Constructor,
-    ControllerRouteOptions,
     ControllerRouteOptionsValue,
     ControllerRoutePath,
-    ControllerRouteWithBodyOptions,
     GetStatusCodeFromError,
     GetterFunc,
     HttpErrorHandler,
@@ -433,6 +431,8 @@ export {
     HttpPathValidator,
     HttpRequestHandler,
     HttpRequestPath,
+    IControllerRouteOptions,
+    IControllerRouteWithBodyOptions,
     IControllersOptions,
     IHttpController,
     IHttpControllerOptions,
