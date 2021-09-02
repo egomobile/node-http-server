@@ -12,4 +12,9 @@ export default class IndexController extends ControllerBase {
     async foo(request: IHttpRequest, response: IHttpResponse) {
         response.write('bar:' + request.url);
     }
+
+    @GET('/bar')
+    async getBar(request: IHttpRequest, response: IHttpResponse) {
+        response.write('bar:' + request.url);
+    }
 }

@@ -31,6 +31,7 @@ export interface ICreateHttpMethodDecoratorOptions {
 
 interface ICreateInitControllerMethodActionOptions {
     controllerMethod: string;
+    controllerRouterPath: Nilable<string>;
     httpMethod: HttpMethod;
 }
 
@@ -51,12 +52,14 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
 
         initActions.push(createInitControllerMethodAction({
             controllerMethod: String(methodName).trim(),
-            httpMethod: options.name
+            httpMethod: options.name,
+            controllerRouterPath: typeof options.decoratorOptions === 'string' ?
+                options.decoratorOptions : options.decoratorOptions?.path
         }));
     };
 }
 
-function createInitControllerMethodAction({ controllerMethod, httpMethod }: ICreateInitControllerMethodActionOptions): InitControllerMethodAction {
+function createInitControllerMethodAction({ controllerMethod, controllerRouterPath, httpMethod }: ICreateInitControllerMethodActionOptions): InitControllerMethodAction {
     return ({ relativeFilePath, method, server }) => {
         const dir = path.dirname(relativeFilePath);
         const fileName = path.basename(relativeFilePath, path.extname(relativeFilePath));
@@ -65,8 +68,13 @@ function createInitControllerMethodAction({ controllerMethod, httpMethod }: ICre
         if (fileName !== 'index') {
             routerPath += `/${fileName}`;
         }
-        if (controllerMethod.length && controllerMethod !== 'index') {
-            routerPath += `/${controllerMethod}`;
+
+        if (controllerRouterPath?.length) {
+            routerPath += normalizeRouterPath(controllerRouterPath);
+        } else {
+            if (controllerMethod.length && controllerMethod !== 'index') {
+                routerPath += `/${controllerMethod}`;
+            }
         }
 
         routerPath = normalizeRouterPath(routerPath);

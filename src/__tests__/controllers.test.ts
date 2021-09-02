@@ -26,7 +26,7 @@ function createServerAndInitControllers() {
 }
 
 describe('controllers', () => {
-    it.each(['/', '/foo'])('should return 200 when do a GET request for existing IndexController', async (p) => {
+    it.each(['/', '/bar', '/foo'])('should return 200 when do a GET request for existing IndexController', async (p) => {
         const expectedResult = 'bar:' + p;
 
         const server = createServerAndInitControllers();
