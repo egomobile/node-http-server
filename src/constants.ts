@@ -13,6 +13,10 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+export const ERROR_HANDLER = Symbol('ERROR_HANDLER');
+
 export const INIT_CONTROLLER_METHOD_ACTIONS = Symbol('INIT_CONTROLLER_METHOD_ACTIONS');
 
 export const IS_CONTROLLER_CLASS = Symbol('IS_CONTROLLER_CLASS');
+
+export const SETUP_ERROR_HANDLER = Symbol('SETUP_ERROR_HANDLER');

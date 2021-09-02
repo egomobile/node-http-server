@@ -24,8 +24,7 @@ import { isClass } from '../utils';
  *
  * @example
  * ```
- * import { Controller, IHttpRequest, IHttpResponse } from '../src';
- * import { ControllerBase, GET } from '../src/controllers';
+ * import { Controller, ControllerBase, GET, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
  *
  * @Controller()  // all default class exports have to be
  *                // marked with that decorator

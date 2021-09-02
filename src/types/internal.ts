@@ -14,7 +14,13 @@ export interface IInitControllerMethodActionContext {
     server: IHttpServer;
 }
 
+export interface IInitControllerErrorHandlerActionContext {
+    controller: IHttpController<IHttpServer>;
+}
+
 export type InitControllerMethodAction = (context: IInitControllerMethodActionContext) => void;
+
+export type InitControllerErrorHandlerAction = (context: IInitControllerErrorHandlerActionContext) => void;
 
 export interface RequestHandlerContext {
     end: (response: ServerResponse) => void;

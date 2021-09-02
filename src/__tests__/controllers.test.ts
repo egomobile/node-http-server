@@ -86,6 +86,26 @@ describe('controllers', () => {
         expect(str).toBe(expectedResult);
     });
 
+    it.each(['/test3'])('should return 400 when do a GET request for existing Test3Controller', async (p) => {
+        const expectedResult = 'ERROR: ' + p + ' Something went wrong!';
+
+        const server = createServerAndInitControllers();
+
+        const response = await request(server).get(p)
+            .send()
+            .parse(binaryParser)
+            .expect(400);
+
+        const data = response.body;
+        expect(Buffer.isBuffer(data)).toBe(true);
+
+        const str = data.toString('utf8');
+
+        expect(typeof str).toBe('string');
+        expect(str.length).toBe(expectedResult.length);
+        expect(str).toBe(expectedResult);
+    });
+
     it.each(['/baz', '/baz/bar', '/baz/foo'])('should return 200 when do a GET request for existing BazController which uses middlewares', async (p) => {
         const expectedResult = 'baz:' + p + ':21';
 

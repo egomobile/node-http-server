@@ -26,8 +26,7 @@ import { createHttpMethodDecorator } from './factories';
  * ```
  * // index.ts
  *
- * import { Controller, IHttpRequest, IHttpResponse } from '../src';
- * import { ControllerBase, DELETE } from '../src/controllers';
+ * import { Controller, ControllerBase, DELETE, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
  *
  * @Controller()
  * export default class IndexController extends ControllerBase {

@@ -16,14 +16,14 @@
 import fs from 'fs';
 import minimatch from 'minimatch';
 import path from 'path';
-import { INIT_CONTROLLER_METHOD_ACTIONS, IS_CONTROLLER_CLASS } from '../constants';
+import { ERROR_HANDLER, INIT_CONTROLLER_METHOD_ACTIONS, IS_CONTROLLER_CLASS, SETUP_ERROR_HANDLER } from '../constants';
 import type { Constructor, ControllerRouteOptionsValue, ControllerRouteWithBodyOptions, GetterFunc, HttpErrorHandler, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllersOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable } from '../types';
-import type { InitControllerMethodAction } from '../types/internal';
+import type { InitControllerErrorHandlerAction, InitControllerMethodAction } from '../types/internal';
 import { asAsync, getAllClassProps, isClass, isNil, walkDirSync } from '../utils';
 import { params } from '../validators/params';
-import { getMethodOrThrow, normalizeRouterPath } from './utils';
+import { getActionList, getMethodOrThrow, normalizeRouterPath } from './utils';
 
-type GetServerValue<TValue extends any = any> = (server: IHttpServer) => TValue;
+type GetContollerValue<TValue extends any = any> = (controller: IHttpController, server: IHttpServer) => TValue;
 
 interface IControllerClass {
     class: Constructor<IHttpController>;
@@ -48,7 +48,7 @@ export interface ICreateHttpMethodDecoratorOptions {
 interface ICreateInitControllerMethodActionOptions {
     controllerMethod: string;
     controllerRouterPath: Nilable<string>;
-    getError: GetServerValue<HttpErrorHandler>;
+    getError: GetContollerValue<HttpErrorHandler>;
     httpMethod: HttpMethod;
     middlewares: HttpMiddleware[];
 }
@@ -80,29 +80,28 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
     return function (target, methodName, descriptor) {
         const method = getMethodOrThrow(descriptor);
 
-        let initActions: Nilable<InitControllerMethodAction[]> = (method as any)[INIT_CONTROLLER_METHOD_ACTIONS];
-        if (!initActions) {
-            (method as any)[INIT_CONTROLLER_METHOD_ACTIONS] = initActions = [];
-        }
-
         const middlewares = (
             Array.isArray(decoratorOptions?.use) ?
                 decoratorOptions!.use :
                 [decoratorOptions?.use]
         ).filter(mw => !isNil(mw)) as HttpMiddleware[];
 
-        initActions.push(createInitControllerMethodAction({
-            controllerMethod: String(methodName).trim(),
-            controllerRouterPath: decoratorOptions?.path,
-            httpMethod: options.name,
-            middlewares,
-            getError: (server) => decoratorOptions?.onError || server.errorHandler
-        }));
+        getActionList<InitControllerMethodAction>(method, INIT_CONTROLLER_METHOD_ACTIONS).push(
+            createInitControllerMethodAction({
+                controllerMethod: String(methodName).trim(),
+                controllerRouterPath: decoratorOptions?.path,
+                httpMethod: options.name,
+                middlewares,
+                getError: (controller, server) => decoratorOptions?.onError ||
+                    (controller as any)[ERROR_HANDLER] ||
+                    server.errorHandler
+            })
+        );
     };
 }
 
 function createInitControllerMethodAction({ controllerMethod, controllerRouterPath, getError, httpMethod, middlewares }: ICreateInitControllerMethodActionOptions): InitControllerMethodAction {
-    return ({ relativeFilePath, method, server }) => {
+    return ({ controller, relativeFilePath, method, server }) => {
         const dir = path.dirname(relativeFilePath);
         const fileName = path.basename(relativeFilePath, path.extname(relativeFilePath));
 
@@ -127,7 +126,7 @@ function createInitControllerMethodAction({ controllerMethod, controllerRouterPa
         }
 
         (server as any)[httpMethod](routerPath, middlewares, createControllerMethodRequestHandler({
-            getError: () => getError(server),
+            getError: () => getError(controller, server),
             method
         }));
     };
@@ -269,12 +268,7 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                         return;
                     }
 
-                    const initMethodActions: Nilable<InitControllerMethodAction[]> = (propValue as any)[INIT_CONTROLLER_METHOD_ACTIONS];
-                    if (!initMethodActions?.length) {
-                        return;
-                    }
-
-                    initMethodActions.forEach(action => {
+                    getActionList<InitControllerMethodAction>(propValue, INIT_CONTROLLER_METHOD_ACTIONS).forEach(action => {
                         action({
                             controller,
                             controllerClass: cls['class'],
@@ -282,6 +276,12 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                             method: propValue,
                             relativeFilePath: cls.file.relativePath,
                             server
+                        });
+                    });
+
+                    getActionList<InitControllerErrorHandlerAction>(propValue, SETUP_ERROR_HANDLER).forEach((action) => {
+                        action({
+                            controller
                         });
                     });
                 }
