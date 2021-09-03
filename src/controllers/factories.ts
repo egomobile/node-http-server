@@ -18,14 +18,15 @@ import minimatch from 'minimatch';
 import path from 'path';
 import { OpenAPIV3 } from 'openapi-types';
 import { isSchema } from 'joi';
-import { CONTROLLERS_CONTEXES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_SERVER_CONTROLLER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER } from '../constants';
+import { CONTROLLERS_CONTEXES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_SERVER_CONTROLLER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SWAGGER_METHOD_INFO } from '../constants';
 import { buffer, json, validate } from '../middlewares';
 import type { ControllerRouteOptionsValue, GetterFunc, HttpErrorHandler, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer } from '../types';
-import type { IControllerClass, IControllerContext, IControllerFile, InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction } from '../types/internal';
-import { asAsync, getAllClassProps, isClass, isNil, walkDirSync } from '../utils';
+import type { IControllerClass, IControllerContext, IControllerFile, InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, ISwaggerMethodInfo } from '../types/internal';
+import { asAsync, getAllClassProps, isClass, isNil, sortObjectByKeys, walkDirSync } from '../utils';
 import { params } from '../validators/params';
 import { getListFromObject, getMethodOrThrow, normalizeRouterPath } from './utils';
 import { setupSwaggerUIForServerControllers } from '../swagger';
+import { toSwaggerPath } from '../swagger/utils';
 
 type GetContollerValue<TValue extends any = any> = (controller: IHttpController, server: IHttpServer) => TValue;
 
@@ -46,6 +47,12 @@ interface ICreateInitControllerMethodActionOptions {
     httpMethod: HttpMethod;
     middlewares: HttpMiddleware[];
     serializer: Nilable<ResponseSerializer>;
+}
+
+interface ICreateInitControllerMethodSwaggerActionOptions {
+    doc: OpenAPIV3.OperationObject;
+    method: Function;
+    methodName: string | symbol;
 }
 
 function createControllerMethodRequestHandler({ getError, handler }: ICreateControllerMethodRequestHandlerOptions): HttpRequestHandler {
@@ -135,6 +142,12 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
             }
         }
 
+        if (decoratorOptions?.documentation) {
+            if (typeof decoratorOptions.documentation !== 'object') {
+                throw new TypeError('decoratorOptions.documentation must be of type object');
+            }
+        }
+
         getListFromObject<InitControllerMethodAction>(method, INIT_CONTROLLER_METHOD_ACTIONS).push(
             createInitControllerMethodAction({
                 controllerMethodName: String(methodName).trim(),
@@ -147,6 +160,16 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                 serializer: decoratorOptions?.serializer
             })
         );
+
+        if (decoratorOptions?.documentation) {
+            getListFromObject<InitControllerMethodSwaggerAction>(method, INIT_SERVER_CONTROLLER_ACTIONS).push(
+                createInitControllerMethodSwaggerAction({
+                    doc: decoratorOptions.documentation,
+                    method,
+                    methodName
+                })
+            );
+        }
     };
 }
 
@@ -198,6 +221,52 @@ function createInitControllerMethodAction({
                     (controller as any)[RESPONSE_SERIALIZER]
             )
         }));
+    };
+}
+
+function createInitControllerMethodSwaggerAction({ doc, method, methodName }: ICreateInitControllerMethodSwaggerActionOptions): InitControllerMethodSwaggerAction {
+    return ({ apiDocument }) => {
+        if ((method as any)[SWAGGER_METHOD_INFO]) {
+            throw new Error(`Cannot redefine OpenAPI definition of ${String(methodName)}`);
+        }
+
+        const info: ISwaggerMethodInfo = {
+            doc,
+            method
+        };
+
+        (method as any)[SWAGGER_METHOD_INFO] = info;
+
+        const routerPaths: Nilable<string[]> = (method as any)[ROUTER_PATHS];
+        if (routerPaths?.length) {
+            const httpMethods: Nilable<HttpMethod[]> = (method as any)[HTTP_METHODS];
+
+            let paths = apiDocument.paths!;
+
+            if (httpMethods?.length) {
+                routerPaths.forEach(routerPath => {
+                    const swaggerPath = toSwaggerPath(routerPath);
+
+                    httpMethods!.forEach(httpMethod => {
+                        let pathObj: any = paths[swaggerPath];
+                        if (!pathObj) {
+                            pathObj = {};
+                        }
+
+                        let methodObj: any = pathObj[httpMethod];
+                        if (methodObj) {
+                            throw new Error(`Cannot reset documentation for route ${routerPath} (${httpMethod.toUpperCase()})`);
+                        }
+
+                        pathObj[httpMethod] = doc;
+
+                        paths[swaggerPath] = sortObjectByKeys(pathObj);
+                    });
+                });
+            }
+
+            apiDocument.paths = sortObjectByKeys(paths);
+        }
     };
 }
 

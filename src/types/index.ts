@@ -123,6 +123,10 @@ export type HttpRequestPath = string | RegExp | HttpPathValidator;
  */
 export interface IControllerRouteOptions {
     /**
+     * Optional Swagger documentation.
+     */
+    documentation?: Nilable<OpenAPIV3.OperationObject>;
+    /**
      * The custom error handler.
      */
     onError?: Nilable<HttpErrorHandler>;
