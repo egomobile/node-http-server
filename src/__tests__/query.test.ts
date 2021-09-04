@@ -23,7 +23,7 @@ describe('Simple request with url query parameters', () => {
         const methodName = method.toUpperCase();
 
         it(`should return 200 when do a ${methodName} request with a 'bar' query parameter in URL`, async () => {
-            const expectedResult = 'object:bar=baz;baz=null';
+            const expectedResult = 'object:bar=baz zab;baz=null';
 
             const server = createServer();
 
@@ -33,7 +33,7 @@ describe('Simple request with url query parameters', () => {
                 );
             });
 
-            const response = await (request(server) as any)[method]('/foo?bar=baz')
+            const response = await (request(server) as any)[method]('/foo?bar=baz%20zab')
                 .send()
                 .parse(binaryParser)
                 .expect(200);
