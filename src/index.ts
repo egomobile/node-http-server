@@ -416,60 +416,10 @@ function mergeHandler(
 }
 
 
-// EXPORTS
-export {
-    Constructor,
-    ControllerRouteOptionsValue,
-    ControllerRoutePath,
-    GetStatusCodeFromError,
-    GetterFunc,
-    HttpErrorHandler,
-    HttpMethod,
-    HttpMiddleware,
-    HttpNotFoundHandler,
-    HttpOptionsOrMiddlewares,
-    HttpPathValidator,
-    HttpRequestHandler,
-    HttpRequestPath,
-    IControllerRouteOptions,
-    IControllerRouteWithBodyOptions,
-    IControllersOptions,
-    IHttpController,
-    IHttpControllerOptions,
-    IHttpBodyParserOptions,
-    IHttpRequest,
-    IHttpRequestHandlerOptions,
-    IHttpResponse,
-    IHttpServer,
-    NextFunction,
-    Nilable,
-    Nullable,
-    Optional,
-    ParseErrorHandler,
-    ResponseSerializer,
-    ValidationFailedHandler
-} from './types';
-
-export {
-    buffer,
-    cookies,
-    defaultBodyLimit,
-    defaultLimitReachedHandler,
-    defaultParseErrorHandler,
-    defaultValidationFailedHandler,
-    IBufferOptions,
-    IJsonOptions,
-    IValidateOptions,
-    json,
-    lang,
-    query,
-    validate
-} from './middlewares';
-
-export {
-    params
-} from './validators';
-
+// <EXPORTS>
+export * from './types';
+export * from './middlewares';
+export * from './validators';
 export * from './errors';
 export * from './controllers';
 
@@ -500,4 +450,4 @@ export {
     SchemaFunction,
     Schema
 } from 'joi';
-// EXPORTS
+// </EXPORTS>
