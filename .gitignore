@@ -4,3 +4,4 @@ node_modules/
 /docs
 /lib
 /sandbox.http
+/sandbox/**/*

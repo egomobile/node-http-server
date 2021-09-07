@@ -22,6 +22,7 @@ import { createServer as createHttpServer, IncomingMessage, Server, ServerRespon
 import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction, Nilable, Optional } from './types';
 import type { GroupedHttpRequestHandlers } from './types/internal';
 import { asAsync, getUrlWithoutQuery, isNil } from './utils';
+import { setupHttpServerControllerMethod } from './controllers/factories';
 
 /**
  * The default HTTP error handler.
@@ -315,6 +316,12 @@ export const createServer = (): IHttpServer => {
 
     (server as any).isEgoHttpServer = true;
 
+    Object.defineProperty(server, 'errorHandler', {
+        get: () => errorHandler
+    });
+
+    setupHttpServerControllerMethod(server);
+
     resetInstance();
 
     return server;
@@ -409,50 +416,16 @@ function mergeHandler(
 }
 
 
-// EXPORTS
-export {
-    HttpErrorHandler,
-    HttpMiddleware,
-    HttpNotFoundHandler,
-    HttpOptionsOrMiddlewares,
-    HttpPathValidator,
-    HttpRequestHandler,
-    HttpRequestPath,
-    NextFunction,
-    IHttpBodyParserOptions,
-    IHttpRequest,
-    IHttpRequestHandlerOptions,
-    IHttpResponse,
-    IHttpServer,
-    ParseErrorHandler,
-    ValidationFailedHandler
-} from './types';
-
-export {
-    buffer,
-    cookies,
-    defaultBodyLimit,
-    defaultLimitReachedHandler,
-    defaultParseErrorHandler,
-    defaultValidationFailedHandler,
-    IBufferOptions,
-    IJsonOptions,
-    IValidateOptions,
-    json,
-    lang,
-    query,
-    validate
-} from './middlewares';
-
-export {
-    params
-} from './validators';
-
+// <EXPORTS>
+export * from './types';
+export * from './middlewares';
+export * from './validators';
 export * from './errors';
+export * from './controllers';
 
 export const schema = joi;
 
-export type {
+export {
     AlternativesSchema,
     AnySchema,
     ArraySchema,
@@ -460,6 +433,7 @@ export type {
     BooleanSchema,
     DateSchema,
     FunctionSchema,
+    isSchema,
     LinkSchema,
     NumberSchema,
     ObjectPropertiesSchema,
@@ -476,4 +450,8 @@ export type {
     SchemaFunction,
     Schema
 } from 'joi';
-// EXPORTS
+
+export {
+    OpenAPIV3
+} from 'openapi-types';
+// </EXPORTS>

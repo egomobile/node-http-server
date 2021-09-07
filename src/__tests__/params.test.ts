@@ -125,7 +125,7 @@ describe('Simple request with parameters', () => {
         });
 
         it(`should return 200 when do a ${methodName} request with 'dirs' and 'files' parts, and 'foo' parameter in path`, async () => {
-            const expectedResult = '3333';
+            const expectedResult = '33 33@';
 
             const server = createServer();
 
@@ -133,7 +133,7 @@ describe('Simple request with parameters', () => {
                 resp.write(req.params!.foo);
             });
 
-            const response = await (request(server) as any)[method]('/dirs/3333/files')
+            const response = await (request(server) as any)[method]('/dirs/33%2033%40/files')
                 .send()
                 .parse(binaryParser)
                 .expect(200);

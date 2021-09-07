@@ -13,9 +13,56 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import type { OpenAPIV3 } from 'openapi-types';
 import type { IncomingMessage, ServerResponse } from 'http';
-import type { ValidationError as JoiValidationError } from 'joi';
+import type { AnySchema, ValidationError as JoiValidationError } from 'joi';
 import type { ParseError } from '../errors/parse';
+
+/**
+ * Describes a constructor.
+ */
+export type Constructor<T extends any = any> = (new (...args: any[]) => T);
+
+/**
+ * A possible value for a first argument of a HTTP method / controller route decorator
+ * like GET() or POST().
+ */
+export type ControllerRouteArgument1<TOptions extends IControllerRouteOptions = IControllerRouteOptions>
+    = number | string | AnySchema | TOptions | HttpMiddleware[];
+
+/**
+ * A possible value for a second argument of a HTTP method / controller route decorator
+ * like GET() or POST().
+ */
+export type ControllerRouteArgument2
+    = AnySchema | HttpMiddleware[] | number | Nilable<HttpInputDataFormat>;
+
+/**
+ * A possible value for a third argument of a HTTP method / controller route decorator
+ * like GET() or POST().
+ */
+export type ControllerRouteArgument3
+    = number;
+
+/**
+ * A possible value for a path of a controller route.
+ */
+export type ControllerRoutePath = string;
+
+/**
+ * Base document of an 'IControllersSwaggerOptions' object.
+ */
+export type ControllersSwaggerBaseDocument = Pick<Pick<OpenAPIV3.Document, Exclude<keyof OpenAPIV3.Document, 'paths'>>, Exclude<keyof Pick<OpenAPIV3.Document, Exclude<keyof OpenAPIV3.Document, 'paths'>>, 'openapi'>>;
+
+/**
+ * Possible values for Swagger options for controllers.
+ */
+export type ControllersSwaggerOptionsValue = IControllersSwaggerOptions | false;
+
+/**
+ * A method / function, that updates the documentation of a route / controller method, e.g.
+ */
+export type DocumentationUpdater = (context: IDocumentationUpdaterContext) => any;
 
 /**
  * Returns a status code from an error object.
@@ -27,6 +74,13 @@ import type { ParseError } from '../errors/parse';
 export type GetStatusCodeFromError = (error: any) => number;
 
 /**
+ * A function, that returns / provides a value.
+ *
+ * @returns {TValue} The value.
+ */
+export type GetterFunc<TValue extends any = any> = () => TValue;
+
+/**
  * A HTTP error handler.
  *
  * @param {any} error The error.
@@ -34,6 +88,25 @@ export type GetStatusCodeFromError = (error: any) => number;
  * @param {ServerResponse} response The response context.
  */
 export type HttpErrorHandler = (error: any, request: IncomingMessage, response: ServerResponse) => any;
+
+/**
+ * The format of the input data of a HTTP request.
+ */
+export enum HttpInputDataFormat {
+    /**
+     * Binary.
+     */
+    Binary = 1,
+    /**
+     * JSON
+     */
+    JSON = 2,
+}
+
+/**
+ * A possible value for a HTTP method.
+ */
+export type HttpMethod = 'connect' | 'delete' | 'get' | 'head' | 'options' | 'patch' | 'post' | 'put' | 'trace';
 
 /**
  * A middleware.
@@ -80,6 +153,107 @@ export type HttpRequestHandler = (request: IHttpRequest, response: IHttpResponse
 export type HttpRequestPath = string | RegExp | HttpPathValidator;
 
 /**
+ * Options for a controller route without a body.
+ */
+export interface IControllerRouteOptions {
+    /**
+     * Optional Swagger documentation.
+     */
+    documentation?: Nilable<OpenAPIV3.OperationObject>;
+    /**
+     * The custom error handler.
+     */
+    onError?: Nilable<HttpErrorHandler>;
+    /**
+     * The custom path.
+     */
+    path?: Nilable<ControllerRoutePath>;
+    /**
+     * The custom serializer.
+     */
+    serializer?: Nilable<ResponseSerializer>;
+    /**
+     * One or more middlewares for the route.
+     */
+    use?: Nilable<HttpMiddleware | HttpMiddleware[]>;
+}
+
+/**
+ * Options for a controller route with a body.
+ */
+export interface IControllerRouteWithBodyOptions extends IControllerRouteOptions {
+    /**
+     * The expected data of the input format.
+     */
+    format?: Nilable<HttpInputDataFormat>;
+    /**
+     * The limit in bytes for the input data.
+     *
+     * If that value is defined, but no schema, the input data will be downloaded
+     * and written as Buffer using 'buffer()' middleware.
+     */
+    limit?: Nilable<number>;
+    /**
+     * The object schema to validate.
+     *
+     * 'json()' is used to parse the input.
+     */
+    schema?: Nilable<AnySchema>;
+}
+
+/**
+ * Options for 'controllers()' method of 'IHttpServer' instance.
+ */
+export interface IControllersOptions {
+    /**
+     * The custom file patterns.
+     *
+     * @see https://www.npmjs.com/package/minimatch
+     */
+    patterns?: Nilable<string | string[]>;
+    /**
+     * The custom root directory. Default: 'controllers'
+     */
+    rootDir?: Nilable<string>;
+    /**
+     * Options to setup Swagger UI.
+     */
+    swagger?: Nilable<ControllersSwaggerOptionsValue>;
+}
+
+/**
+ * Swagger options for controllers.
+ */
+export interface IControllersSwaggerOptions {
+    /**
+     * The base path. Default: /swagger
+     */
+    basePath?: Nilable<string>;
+    /**
+     * The base document.
+     */
+    document: ControllersSwaggerBaseDocument;
+}
+
+/**
+ * Context of a method, that updates the documentation of a route / controller method.
+ */
+export interface IDocumentationUpdaterContext {
+    /**
+     * The underlying documentation.
+     */
+    documentation: OpenAPIV3.OperationObject;
+    /**
+     * The HTTP method.
+     */
+    method: Uppercase<HttpMethod>;
+    /**
+     * The path of the route.
+     */
+    path: HttpRequestPath;
+}
+
+/**
  * Options for 'body()' function.
  */
 export interface IHttpBodyParserOptions {
@@ -92,6 +266,42 @@ export interface IHttpBodyParserOptions {
      * A custom handler, to tell the client, that the body is too big.
      */
     onLimitReached?: Nilable<HttpRequestHandler>;
+}
+
+/**
+ * A HTTP controller.
+ */
+export interface IHttpController<TApp extends any = IHttpServer> {
+    /**
+     * The underlying app instance.
+     */
+    readonly __app: TApp;
+    /**
+     * The full path of the underlying file.
+     */
+    readonly __file: string;
+    /**
+     * The relative path of the underlying file.
+     */
+    readonly __path: string;
+}
+
+/**
+ * Options for a controller instance.
+ */
+export interface IHttpControllerOptions<TApp extends any = IHttpServer> {
+    /**
+     * The underlying app.
+     */
+    app: TApp;
+    /**
+     * The full path of the underlying file.
+     */
+    file: string;
+    /**
+     * The relative path of the underlying file.
+     */
+    path: string;
 }
 
 /**
@@ -118,19 +328,19 @@ export interface IHttpRequest<TBody extends any = any> extends IncomingMessage {
     /**
      * The body, if parsed.
      */
-    body?: TBody;
+    body?: Optional<TBody>;
     /**
      * List of cookies, if parsed.
      */
-    cookies?: Record<string, string>;
+    cookies?: Optional<Record<string, string>>;
     /**
      * The current language, if parsed.
      */
-    lang?: Nullable<string>;
+    lang?: Nilable<string>;
     /**
      * List of query parameters, if parsed.
      */
-    query?: URLSearchParams;
+    query?: Optional<URLSearchParams>;
 }
 
 /**
@@ -206,6 +416,33 @@ export interface IHttpServer {
     connect(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
 
     /**
+     * Loads an initializes the controllers from and inside a root directory.
+     *
+     * @example
+     * ```
+     * import createServer from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * // scans the subdirectory 'controllers' of the current process'
+     * // working directory for JavaScript and/or TypeScript files,
+     * // which do not start with _ and have a class as default export,
+     * // that is marked with @Controller decorator
+     * // and creates instances from that classes, which will be autmatically
+     * // mapped as handlers for 'app' instance
+     * app.controllers()
+     *
+     * await app.listen()
+     * ```
+     *
+     * @param {Nilable<string>} [rootDir] The custom root directory.
+     * @param {Nilable<IControllersOptions>} [options] Custom options.
+     */
+    controllers(): this;
+    controllers(rootDir: Nilable<string>): this;
+    controllers(options: Nilable<IControllersOptions>): this;
+
+    /**
      * Registers a route for a DELETE request.
      *
      * @param {HttpRequestPath} path The path.
@@ -227,6 +464,11 @@ export interface IHttpServer {
      */
     delete(path: HttpRequestPath, handler: HttpRequestHandler): this;
     delete(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
+
+    /**
+     * Gets the current error handler.
+     */
+    readonly errorHandler: HttpErrorHandler;
 
     /**
      * Registers a route for a GET request.
@@ -358,7 +600,7 @@ export interface IHttpServer {
     /**
      * The current TCP port or (undefined) if server is not running.
      */
-    readonly port?: number;
+    readonly port?: Optional<number>;
 
     /**
      * Registers a route for a POST request.
@@ -533,9 +775,9 @@ export interface IHttpServer {
 /**
  * A next function.
  *
- * @param {any} [error] The error, if occurred.
+ * @param {Optional<any>} [error] The error, if occurred.
  */
-export type NextFunction = (error?: any) => void;
+export type NextFunction = (error?: Optional<any>) => void;
 
 /**
  * A type, that can also be (null) or (undefined).
@@ -560,6 +802,17 @@ export type Optional<T extends any = any> = T | undefined;
  * @param {IHttpResponse} response The response context.
  */
 export type ParseErrorHandler = (error: ParseError, request: IHttpRequest, response: IHttpResponse) => Promise<any>;
+
+/**
+ * A function, that serializes something for the response
+ * and sends it.
+ *
+ * @param {TResult} result The result to serialize.
+ * @param {IHttpRequest} request The request context.
+ * @param {IHttpResponse} response The response context.
+ */
+export type ResponseSerializer<TResult extends any = any> =
+    (result: TResult, request: IHttpRequest, response: IHttpResponse) => any;
 
 /**
  * A handler, that is executed, if data is invalid.

@@ -1,5 +1,13 @@
 # Change Log (@egomobile/http-server)
 
+## 0.7.0
+
+- implement controller framework, similar to [express-controllers](https://github.com/egodigital/express-controllers):
+  - decorators for `CONNECT`, `DELETE`, `GET`, `HEAD`, `OPTIONS`, `PATCH`, `POST`, `PUT`, `TRACE` HTTP methods
+  - decorators for setting up custom, controller-wide serializers and error handlers
+- code cleanups and improvements
+- bugfixes
+
 ## 0.6.0
 
 - add `prettyErrors()` error handler

@@ -13,8 +13,10 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import fs from 'fs';
+import path from 'path';
 import { EntityTooLargeError } from './errors';
-import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, Nilable, Optional } from './types';
+import type { Constructor, HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, Nilable, Optional } from './types';
 
 interface ICreateWithEntityTooLargeActionOptions {
     action: HttpMiddleware;
@@ -31,6 +33,53 @@ export function asAsync<TFunc extends Function = Function>(func: Function): TFun
     }) as any;
 }
 
+export function compareValues<T>(x: T, y: T): number {
+    return compareValuesBy(x, y, item => item);
+}
+
+export function compareValuesBy<T1, T2>(x: T1, y: T1, selector: (item: T1) => T2): number {
+    const valX = selector(x);
+    const valY = selector(y);
+
+    if (valX !== valY) {
+        if (valX < valY) {
+            return -1;
+        }
+
+        return 1;  // valX > valY
+    }
+
+    return 0;
+}
+
+export function getAllClassProps(startClass: any): string[] {
+    const props: string[] = [];
+
+    if (startClass instanceof Function) {
+        let currentClass = startClass;
+
+        while (currentClass) {
+            if (currentClass.prototype) {
+                for (const propName of Object.getOwnPropertyNames(currentClass.prototype)) {
+                    if (!props.includes(propName)) {
+                        props.unshift(propName);
+                    }
+                }
+            }
+
+            const parentClass = Object.getPrototypeOf(currentClass);
+
+            if (parentClass && parentClass !== Object && parentClass.name) {
+                currentClass = parentClass;
+            } else {
+                break;
+            }
+        }
+    }
+
+    return props;
+}
+
 export function getUrlWithoutQuery(url: Optional<string>): Optional<string> {
     if (!url) {
         return url;
@@ -44,9 +93,21 @@ export function getUrlWithoutQuery(url: Optional<string>): Optional<string> {
     return url;
 }
 
+export function isClass<T extends any = any>(maybeClass: any): maybeClass is Constructor<T> {
+    return typeof maybeClass?.constructor === 'function';
+}
+
 export function isNil(val: unknown): val is (null | undefined) {
     return val === null ||
         typeof val === 'undefined';
+}
+
+export function limitToBytes(limit?: Nilable<number>): Nilable<number> {
+    if (isNil(limit)) {
+        return limit;
+    }
+
+    return limit * 1048576;
 }
 
 export function readStream(stream: NodeJS.ReadableStream) {
@@ -121,7 +182,40 @@ export function readStreamWithLimit(
             }
         });
     });
-};
+}
+
+export function sortObjectByKeys<T extends any = any>(obj: T): T {
+    if (isNil(obj)) {
+        return obj;
+    }
+
+    const storedKeys = Object.keys(obj as any)
+        .sort((x, y) => compareValuesBy(x, y, k => k.toLowerCase().trim()));
+
+    const newObj: any = {};
+    storedKeys.forEach(key => {
+        newObj[key] = (obj as any)[key];
+    });
+
+    return newObj;
+}
+
+export function walkDirSync(dir: string, action: (file: string, stats: fs.Stats) => void) {
+    for (const item of fs.readdirSync(dir)) {
+        if (item.trimStart().startsWith('_')) {
+            continue;  // ignore items with beginning _
+        }
+
+        const fullPath = path.join(dir, item);
+        const stats = fs.statSync(fullPath);
+
+        if (stats.isDirectory()) {
+            walkDirSync(fullPath, action);
+        } else if (stats.isFile()) {
+            action(fullPath, stats);
+        }
+    }
+}
 
 export function withEntityTooLarge(
     action: HttpMiddleware,
