@@ -59,8 +59,8 @@ import { createHttpMethodDecorator } from './factories';
 export function HEAD(): MethodDecorator;
 export function HEAD(options: IControllerRouteOptions): MethodDecorator;
 export function HEAD(use: HttpMiddleware[]): MethodDecorator;
-export function HEAD(path: ControllerRoutePath, use?: HttpMiddleware[]): MethodDecorator;
-export function HEAD(arg1?: ControllerRouteArgument1, arg2?: ControllerRouteArgument2): MethodDecorator {
+export function HEAD(path: ControllerRoutePath, use?: Nilable<HttpMiddleware[]>): MethodDecorator;
+export function HEAD(arg1?: Nilable<ControllerRouteArgument1>, arg2?: Nilable<ControllerRouteArgument2>): MethodDecorator {
     return createHttpMethodDecorator({
         decoratorOptions: {
             arg1: arg1 as Nilable<ControllerRouteArgument1>,

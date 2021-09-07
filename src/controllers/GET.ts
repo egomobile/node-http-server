@@ -55,8 +55,8 @@ import type { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRout
 export function GET(): MethodDecorator;
 export function GET(options: IControllerRouteOptions): MethodDecorator;
 export function GET(use: HttpMiddleware[]): MethodDecorator;
-export function GET(path: ControllerRoutePath, use?: HttpMiddleware[]): MethodDecorator;
-export function GET(arg1?: ControllerRouteArgument1, arg2?: ControllerRouteArgument2): MethodDecorator {
+export function GET(path: ControllerRoutePath, use?: Nilable<HttpMiddleware[]>): MethodDecorator;
+export function GET(arg1?: Nilable<ControllerRouteArgument1>, arg2?: Nilable<ControllerRouteArgument2>): MethodDecorator {
     return createHttpMethodDecorator({
         decoratorOptions: {
             arg1: arg1 as Nilable<ControllerRouteArgument1<IControllerRouteWithBodyOptions>>,

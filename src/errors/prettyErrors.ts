@@ -26,6 +26,9 @@ interface ICreateHandlerOptions {
  * Options for 'prettyErrors()' function.
  */
 export interface IPrettyErrorsOptions {
+    /**
+     * A custom function that returns the status code for the response.
+     */
     getStatusCode?: Nilable<GetStatusCodeFromError>;
 }
 
@@ -56,18 +59,20 @@ export interface IPrettyErrorsOptions {
 export function prettyErrors(): HttpErrorHandler;
 export function prettyErrors(code: number): HttpErrorHandler;
 export function prettyErrors(getStatusCode: GetStatusCodeFromError): HttpErrorHandler;
-export function prettyErrors(arg?: Nilable<GetStatusCodeFromError | IPrettyErrorsOptions | number>): HttpErrorHandler {
+export function prettyErrors(arg1?: Nilable<GetStatusCodeFromError | IPrettyErrorsOptions | number>): HttpErrorHandler {
     let options: Nilable<IPrettyErrorsOptions>;
-    if (!isNil(arg)) {
-        if (typeof arg === 'object') {
-            options = arg;
+    if (!isNil(arg1)) {
+        if (typeof arg1 === 'object') {
+            options = arg1;
         } else {
-            options = {};
-
-            if (typeof arg === 'number') {
-                options.getStatusCode = createGetStatusCodeFromErrorHandler(arg);
-            } else if (typeof arg === 'function') {
-                options.getStatusCode = arg;
+            if (typeof arg1 === 'number') {
+                options = {
+                    getStatusCode: createGetStatusCodeFromErrorHandler(arg1)
+                };
+            } else if (typeof arg1 === 'function') {
+                options = {
+                    getStatusCode: arg1
+                };
             } else {
                 throw new TypeError('Argument must be of type object, function or number');
             }

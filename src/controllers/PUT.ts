@@ -59,15 +59,15 @@ import { createHttpMethodDecorator } from './factories';
 export function PUT(): MethodDecorator;
 export function PUT(limit: number, format?: Nilable<HttpInputDataFormat>): MethodDecorator;
 export function PUT(options: IControllerRouteWithBodyOptions): MethodDecorator;
-export function PUT(schema: AnySchema, limit?: number): MethodDecorator;
+export function PUT(schema: AnySchema, limit?: Nilable<number>): MethodDecorator;
 export function PUT(use: HttpMiddleware[]): MethodDecorator;
 export function PUT(path: ControllerRoutePath): MethodDecorator;
 export function PUT(path: ControllerRoutePath, use: HttpMiddleware[]): MethodDecorator;
-export function PUT(path: ControllerRoutePath, schema: AnySchema, limit?: number): MethodDecorator;
+export function PUT(path: ControllerRoutePath, schema: AnySchema, limit?: Nilable<number>): MethodDecorator;
 export function PUT(
-    arg1?: ControllerRouteArgument1<IControllerRouteWithBodyOptions>,
-    arg2?: ControllerRouteArgument2,
-    arg3?: ControllerRouteArgument3
+    arg1?: Nilable<ControllerRouteArgument1<IControllerRouteWithBodyOptions>>,
+    arg2?: Nilable<ControllerRouteArgument2>,
+    arg3?: Nilable<ControllerRouteArgument3>
 ): MethodDecorator {
     return createHttpMethodDecorator({
         decoratorOptions: {

@@ -1,6 +1,6 @@
 import type { ServerResponse } from 'http';
 import { OpenAPIV3 } from 'openapi-types';
-import type { Constructor, HttpPathValidator, HttpRequestHandler, IHttpController, IHttpServer } from '.';
+import type { Constructor, HttpPathValidator, HttpRequestHandler, IHttpController, IHttpServer, Optional } from '.';
 
 export type GroupedHttpRequestHandlers = {
     [method: string]: RequestHandlerContext[];
@@ -13,7 +13,7 @@ export interface IControllerClass {
 
 export interface IControllerContext {
     controllers: IControllerInfo[];
-    swagger?: OpenAPIV3.Document;
+    swagger?: Optional<OpenAPIV3.Document>;
 }
 
 export interface IControllerFile {

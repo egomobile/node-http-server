@@ -58,15 +58,15 @@ import { createHttpMethodDecorator } from './factories';
  */
 export function DELETE(): MethodDecorator;
 export function DELETE(limit: number, format?: Nilable<HttpInputDataFormat>): MethodDecorator;
-export function DELETE(schema: AnySchema, limit?: number): MethodDecorator;
+export function DELETE(schema: AnySchema, limit?: Nilable<number>): MethodDecorator;
 export function DELETE(use: HttpMiddleware[]): MethodDecorator;
 export function DELETE(path: ControllerRoutePath): MethodDecorator;
 export function DELETE(path: ControllerRoutePath, use: HttpMiddleware[]): MethodDecorator;
-export function DELETE(path: ControllerRoutePath, schema: AnySchema, limit?: number): MethodDecorator;
+export function DELETE(path: ControllerRoutePath, schema: AnySchema, limit?: Nilable<number>): MethodDecorator;
 export function DELETE(
-    arg1?: ControllerRouteArgument1<IControllerRouteWithBodyOptions>,
-    arg2?: ControllerRouteArgument2,
-    arg3?: ControllerRouteArgument3
+    arg1?: Nilable<ControllerRouteArgument1<IControllerRouteWithBodyOptions>>,
+    arg2?: Nilable<ControllerRouteArgument2>,
+    arg3?: Nilable<ControllerRouteArgument3>
 ): MethodDecorator {
     return createHttpMethodDecorator({
         decoratorOptions: {

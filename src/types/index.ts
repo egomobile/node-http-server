@@ -205,15 +205,15 @@ export interface IControllersOptions {
      *
      * @see https://www.npmjs.com/package/minimatch
      */
-    patterns?: string | string[];
+    patterns?: Nilable<string | string[]>;
     /**
      * The custom root directory. Default: 'controllers'
      */
-    rootDir?: string;
+    rootDir?: Nilable<string>;
     /**
      * Options to setup Swagger UI.
      */
-    swagger?: ControllersSwaggerOptionsValue;
+    swagger?: Nilable<ControllersSwaggerOptionsValue>;
 }
 
 /**
@@ -223,7 +223,7 @@ export interface IControllersSwaggerOptions {
     /**
      * The base path. Default: /swagger
      */
-    basePath?: string;
+    basePath?: Nilable<string>;
     /**
      * The base document.
      */
@@ -305,19 +305,19 @@ export interface IHttpRequest<TBody extends any = any> extends IncomingMessage {
     /**
      * The body, if parsed.
      */
-    body?: TBody;
+    body?: Optional<TBody>;
     /**
      * List of cookies, if parsed.
      */
-    cookies?: Record<string, string>;
+    cookies?: Optional<Record<string, string>>;
     /**
      * The current language, if parsed.
      */
-    lang?: Nullable<string>;
+    lang?: Nilable<string>;
     /**
      * List of query parameters, if parsed.
      */
-    query?: URLSearchParams;
+    query?: Optional<URLSearchParams>;
 }
 
 /**
@@ -412,11 +412,12 @@ export interface IHttpServer {
      * await app.listen()
      * ```
      *
-     * @param {string} [rootDir] The custom root directory.
-     * @param {IControllersOptions} options Custom options.
+     * @param {Nilable<string>} [rootDir] The custom root directory.
+     * @param {Nilable<IControllersOptions>} [options] Custom options.
      */
-    controllers(rootDir?: string): this;
-    controllers(options: IControllersOptions): this;
+    controllers(): this;
+    controllers(rootDir: Nilable<string>): this;
+    controllers(options: Nilable<IControllersOptions>): this;
 
     /**
      * Registers a route for a DELETE request.
@@ -576,7 +577,7 @@ export interface IHttpServer {
     /**
      * The current TCP port or (undefined) if server is not running.
      */
-    readonly port?: number;
+    readonly port?: Optional<number>;
 
     /**
      * Registers a route for a POST request.
@@ -751,9 +752,9 @@ export interface IHttpServer {
 /**
  * A next function.
  *
- * @param {any} [error] The error, if occurred.
+ * @param {Optional<any>} [error] The error, if occurred.
  */
-export type NextFunction = (error?: any) => void;
+export type NextFunction = (error?: Optional<any>) => void;
 
 /**
  * A type, that can also be (null) or (undefined).

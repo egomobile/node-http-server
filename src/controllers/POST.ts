@@ -59,15 +59,15 @@ import { createHttpMethodDecorator } from './factories';
 export function POST(): MethodDecorator;
 export function POST(limit: number, format?: Nilable<HttpInputDataFormat>): MethodDecorator;
 export function POST(options: IControllerRouteWithBodyOptions): MethodDecorator;
-export function POST(schema: AnySchema, limit?: number): MethodDecorator;
+export function POST(schema: AnySchema, limit?: Nilable<number>): MethodDecorator;
 export function POST(use: HttpMiddleware[]): MethodDecorator;
 export function POST(path: ControllerRoutePath): MethodDecorator;
 export function POST(path: ControllerRoutePath, use: HttpMiddleware[]): MethodDecorator;
-export function POST(path: ControllerRoutePath, schema: AnySchema, limit?: number): MethodDecorator;
+export function POST(path: ControllerRoutePath, schema: AnySchema, limit?: Nilable<number>): MethodDecorator;
 export function POST(
-    arg1?: ControllerRouteArgument1<IControllerRouteWithBodyOptions>,
-    arg2?: ControllerRouteArgument2,
-    arg3?: ControllerRouteArgument3
+    arg1?: Nilable<ControllerRouteArgument1<IControllerRouteWithBodyOptions>>,
+    arg2?: Nilable<ControllerRouteArgument2>,
+    arg3?: Nilable<ControllerRouteArgument3>
 ): MethodDecorator {
     return createHttpMethodDecorator({
         decoratorOptions: {

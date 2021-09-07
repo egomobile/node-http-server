@@ -128,6 +128,8 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
             decoratorOptions = { limit: limitToBytes(arg1) };
 
             if (!isNil(arg2)) {
+                // [arg2] HttpInputDataFormat
+
                 if (Object.values(HttpInputDataFormat).includes(arg2 as any)) {
                     decoratorOptions.format = arg2 as HttpInputDataFormat;
                 } else {
