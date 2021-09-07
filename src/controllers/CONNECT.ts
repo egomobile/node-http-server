@@ -16,7 +16,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { ControllerRouteOptionsValue, IControllerRouteWithBodyOptions, Nilable } from '../types';
+import type { AnySchema } from 'joi';
+import type { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRoutePath, HttpInputDataFormat, HttpMiddleware, IControllerRouteWithBodyOptions, Nilable } from '../types';
 import { createHttpMethodDecorator } from './factories';
 
 /**
@@ -46,13 +47,34 @@ import { createHttpMethodDecorator } from './factories';
  * }
  * ```
  *
- * @param {Nilable<ControllerRouteOptionsValue>} [options] Custom options.
+ * @param {Nilable<HttpInputDataFormat>} [format] The custom format of the input.
+ * @param {Nilable<number>} [limit] A custom limited, size in MB, for the input data.
+ * @param {Nilable<IControllerRouteOptions>} [options] Custom options.
+ * @param {Nilable<ControllerRoutePath>} [path] The custom path.
+ * @param {Nilable<AnySchema>} [schema] An optional schema, that validates the body.
+ * @param {Nilable<HttpMiddleware[]>} [use] Additional middlewares.
  *
  * @returns {MethodDecorator} The new decorator function.
  */
-export function CONNECT(options?: Nilable<ControllerRouteOptionsValue<IControllerRouteWithBodyOptions>>): MethodDecorator {
+export function CONNECT(): MethodDecorator;
+export function CONNECT(limit: number, format?: Nilable<HttpInputDataFormat>): MethodDecorator;
+export function CONNECT(options: IControllerRouteWithBodyOptions): MethodDecorator;
+export function CONNECT(schema: AnySchema, limit?: Nilable<number>): MethodDecorator;
+export function CONNECT(use: HttpMiddleware[]): MethodDecorator;
+export function CONNECT(path: ControllerRoutePath): MethodDecorator;
+export function CONNECT(path: ControllerRoutePath, use: HttpMiddleware[]): MethodDecorator;
+export function CONNECT(path: ControllerRoutePath, schema: AnySchema, limit?: Nilable<number>): MethodDecorator;
+export function CONNECT(
+    arg1?: Nilable<ControllerRouteArgument1<IControllerRouteWithBodyOptions>>,
+    arg2?: Nilable<ControllerRouteArgument2>,
+    arg3?: Nilable<ControllerRouteArgument3>
+): MethodDecorator {
     return createHttpMethodDecorator({
-        decoratorOptions: options,
+        decoratorOptions: {
+            arg1,
+            arg2,
+            arg3
+        },
         name: 'connect'
     });
 }

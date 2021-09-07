@@ -20,11 +20,11 @@ import { OpenAPIV3 } from 'openapi-types';
 import { isSchema } from 'joi';
 import { CONTROLLERS_CONTEXES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_SERVER_CONTROLLER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SWAGGER_METHOD_INFO } from '../constants';
 import { buffer, json, validate } from '../middlewares';
-import type { ControllerRouteOptionsValue, GetterFunc, HttpErrorHandler, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer } from '../types';
+import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, GetterFunc, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer } from '../types';
 import type { IControllerClass, IControllerContext, IControllerFile, InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, ISwaggerMethodInfo } from '../types/internal';
-import { asAsync, getAllClassProps, isClass, isNil, sortObjectByKeys, walkDirSync } from '../utils';
+import { asAsync, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, walkDirSync } from '../utils';
 import { params } from '../validators/params';
-import { getListFromObject, getMethodOrThrow, normalizeRouterPath } from './utils';
+import { createBodyParserMiddlewareByFormat, getListFromObject, getMethodOrThrow, normalizeRouterPath } from './utils';
 import { setupSwaggerUIForServerControllers } from '../swagger';
 import { toSwaggerPath } from '../swagger/utils';
 
@@ -36,7 +36,11 @@ interface ICreateControllerMethodRequestHandlerOptions {
 }
 
 export interface ICreateHttpMethodDecoratorOptions {
-    decoratorOptions: Nilable<ControllerRouteOptionsValue<IControllerRouteWithBodyOptions>>;
+    decoratorOptions: {
+        arg1: Nilable<ControllerRouteArgument1<IControllerRouteWithBodyOptions>>;
+        arg2: Nilable<ControllerRouteArgument2>;
+        arg3: Nilable<ControllerRouteArgument3>;
+    };
     name: HttpMethod;
 }
 
@@ -68,38 +72,115 @@ function createControllerMethodRequestHandler({ getError, handler }: ICreateCont
 }
 
 export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOptions): MethodDecorator {
-    const decoratorOptions: Nilable<IControllerRouteWithBodyOptions> =
-        typeof options.decoratorOptions === 'string' ? {
-            path: options.decoratorOptions
-        } : options.decoratorOptions;
+    const throwIfOptionsIncompatibleWithHTTPMethod = () => {
+        if (['get', 'head', 'options'].includes(options.name)) {
+            throw new Error(`Cannot use schema with ${options.name.toUpperCase()} requests`);
+        }
+    };
+
+    const { arg1, arg2, arg3 } = options.decoratorOptions;
+
+    let decoratorOptions: Nilable<IControllerRouteWithBodyOptions>;
+
+    if (!isNil(arg1)) {
+        if (isSchema(arg1)) {
+            // [arg1] AnySchema
+            // [arg2] number
+            decoratorOptions = { schema: arg1 };
+
+            if (!isNil(arg2)) {
+                if (typeof arg2 === 'number') {
+                    decoratorOptions.limit = limitToBytes(arg2);
+                } else {
+                    throw new TypeError('arg2 must be of type number');
+                }
+            }
+        } else if (typeof arg1 === 'string') {
+            // [arg1] string
+            decoratorOptions = { path: arg1 };
+
+            if (!isNil(arg2)) {
+                if (Array.isArray(arg2)) {
+                    // [arg2] HttpMiddleware[]
+                    decoratorOptions.use = arg2;
+                } else if (isSchema(arg2)) {
+                    // [arg2] AnySchema
+                    // [arg3] number
+
+                    decoratorOptions.schema = arg2;
+
+                    if (!isNil(arg3)) {
+                        if (typeof arg3 === 'number') {
+                            decoratorOptions = { limit: limitToBytes(arg3) };
+                        } else {
+                            throw new TypeError('arg3 must be of type number');
+                        }
+                    }
+                } else {
+                    throw new TypeError('arg2 must be of type array or schema');
+                }
+            }
+        } else if (Array.isArray(arg1)) {
+            // [arg1] HttpMiddleware[]
+            decoratorOptions = { use: arg1 };
+        } else if (typeof arg1 === 'number') {
+            // [arg1] number
+            decoratorOptions = { limit: limitToBytes(arg1) };
+
+            if (!isNil(arg2)) {
+                if (Object.values(HttpInputDataFormat).includes(arg2 as any)) {
+                    decoratorOptions.format = arg2 as HttpInputDataFormat;
+                } else {
+                    throw new TypeError('arg2 must be of type HttpInputDataFormat');
+                }
+            }
+        } else if (typeof arg1 === 'object') {
+            // [arg1] IControllerRouteOptions | IControllerRouteWithBodyOptions
+            decoratorOptions = arg1;
+        } else {
+            throw new TypeError('arg1 must be of type array, number, object, schema or string');
+        }
+    }
+
+    if (!isNil(decoratorOptions)) {
+        if (typeof decoratorOptions !== 'object') {
+            throw new TypeError('decoratorOptions must be of type object');
+        }
+    }
 
     if (!isNil(decoratorOptions?.limit)) {
-        if (typeof decoratorOptions!.limit !== 'number') {
+        if (typeof decoratorOptions?.limit !== 'number') {
             throw new TypeError('decoratorOptions.limit must be of type number');
         }
     }
 
     if (!isNil(decoratorOptions?.path)) {
-        if (typeof decoratorOptions!.path !== 'string') {
+        if (typeof decoratorOptions?.path !== 'string') {
             throw new TypeError('decoratorOptions.path must be of type string');
         }
     }
 
     if (!isNil(decoratorOptions?.onError)) {
-        if (typeof decoratorOptions!.onError !== 'function') {
+        if (typeof decoratorOptions?.onError !== 'function') {
             throw new TypeError('decoratorOptions.onError must be of type function');
         }
     }
 
     if (!isNil(decoratorOptions?.schema)) {
-        if (!isSchema(decoratorOptions!.schema)) {
+        if (!isSchema(decoratorOptions?.schema)) {
             throw new TypeError('decoratorOptions.schema must be a Joi object');
         }
     }
 
     if (!isNil(decoratorOptions?.serializer)) {
-        if (typeof decoratorOptions!.serializer !== 'function') {
+        if (typeof decoratorOptions?.serializer !== 'function') {
             throw new TypeError('decoratorOptions.serializer must be of type function');
+        }
+    }
+
+    if (!isNil(decoratorOptions?.documentation)) {
+        if (typeof decoratorOptions?.documentation !== 'object') {
+            throw new TypeError('decoratorOptions.documentation must be of type object');
         }
     }
 
@@ -116,36 +197,36 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
         httpMethods.sort();
 
         const middlewares = (
-            Array.isArray(decoratorOptions?.use) ?
-                decoratorOptions!.use :
-                [decoratorOptions?.use]
+            Array.isArray(decoratorOptions?.use) ? (decoratorOptions?.use as HttpMiddleware[]) : [decoratorOptions?.use]
         ).filter(mw => !isNil(mw)) as HttpMiddleware[];
 
         if (decoratorOptions?.schema) {
-            if (['get', 'head', 'options'].includes(options.name)) {
-                throw new Error(`Cannot use schema with ${options.name.toUpperCase()} requests`);
-            }
+            throwIfOptionsIncompatibleWithHTTPMethod();
+
+            const createDataParser = isNil(decoratorOptions?.format) ?
+                () => json({
+                    limit: decoratorOptions?.limit
+                }) :
+                () => createBodyParserMiddlewareByFormat(decoratorOptions?.format || HttpInputDataFormat.JSON, {
+                    limit: decoratorOptions?.limit
+                });
 
             middlewares.push(
-                json({
-                    limit: decoratorOptions?.limit
-                }),
+                createDataParser(),
                 validate(decoratorOptions?.schema)
             );
-        } else {
-            if (typeof decoratorOptions?.limit === 'number') {
-                middlewares.push(
-                    buffer({
-                        limit: decoratorOptions.limit
-                    }),
-                );
-            }
-        }
+        } else if (typeof decoratorOptions?.limit === 'number') {
+            throwIfOptionsIncompatibleWithHTTPMethod();
 
-        if (decoratorOptions?.documentation) {
-            if (typeof decoratorOptions.documentation !== 'object') {
-                throw new TypeError('decoratorOptions.documentation must be of type object');
-            }
+            const createDataParser = isNil(decoratorOptions.format) ?
+                () => buffer({
+                    limit: decoratorOptions?.limit
+                }) :
+                () => createBodyParserMiddlewareByFormat(decoratorOptions?.format || HttpInputDataFormat.Binary, {
+                    limit: decoratorOptions?.limit
+                });
+
+            middlewares.push(createDataParser());
         }
 
         getListFromObject<InitControllerMethodAction>(method, INIT_CONTROLLER_METHOD_ACTIONS).push(
@@ -164,7 +245,7 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
         if (decoratorOptions?.documentation) {
             getListFromObject<InitControllerMethodSwaggerAction>(method, INIT_SERVER_CONTROLLER_ACTIONS).push(
                 createInitControllerMethodSwaggerAction({
-                    doc: decoratorOptions.documentation,
+                    doc: decoratorOptions?.documentation,
                     method,
                     methodName
                 })

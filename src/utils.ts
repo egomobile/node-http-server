@@ -102,6 +102,14 @@ export function isNil(val: unknown): val is (null | undefined) {
         typeof val === 'undefined';
 }
 
+export function limitToBytes(limit?: Nilable<number>): Nilable<number> {
+    if (isNil(limit)) {
+        return limit;
+    }
+
+    return limit * 1048576;
+}
+
 export function readStream(stream: NodeJS.ReadableStream) {
     const allChunks: Buffer[] = [];
 

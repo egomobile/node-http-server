@@ -24,10 +24,25 @@ import type { ParseError } from '../errors/parse';
 export type Constructor<T extends any = any> = (new (...args: any[]) => T);
 
 /**
- * Options for a controller route decorator.
+ * A possible value for a first argument of a HTTP method / controller route decorator
+ * like GET() or POST().
  */
-export type ControllerRouteOptionsValue<TOptions extends IControllerRouteOptions = IControllerRouteOptions>
-    = ControllerRoutePath | TOptions;
+export type ControllerRouteArgument1<TOptions extends IControllerRouteOptions = IControllerRouteOptions>
+    = number | string | AnySchema | TOptions | HttpMiddleware[];
+
+/**
+ * A possible value for a second argument of a HTTP method / controller route decorator
+ * like GET() or POST().
+ */
+export type ControllerRouteArgument2
+    = AnySchema | HttpMiddleware[] | number | Nilable<HttpInputDataFormat>;
+
+/**
+ * A possible value for a third argument of a HTTP method / controller route decorator
+ * like GET() or POST().
+ */
+export type ControllerRouteArgument3
+    = number;
 
 /**
  * A possible value for a path of a controller route.
@@ -68,6 +83,20 @@ export type GetterFunc<TValue extends any = any> = () => TValue;
  * @param {ServerResponse} response The response context.
  */
 export type HttpErrorHandler = (error: any, request: IncomingMessage, response: ServerResponse) => any;
+
+/**
+ * The format of the input data of a HTTP request.
+ */
+export enum HttpInputDataFormat {
+    /**
+     * Binary.
+     */
+    Binary = 1,
+    /**
+     * JSON
+     */
+    JSON = 2,
+}
 
 /**
  * A possible value for a HTTP method.
@@ -148,6 +177,10 @@ export interface IControllerRouteOptions {
  * Options for a controller route with a body.
  */
 export interface IControllerRouteWithBodyOptions extends IControllerRouteOptions {
+    /**
+     * The expected data of the input format.
+     */
+    format?: Nilable<HttpInputDataFormat>;
     /**
      * The limit in bytes for the input data.
      *

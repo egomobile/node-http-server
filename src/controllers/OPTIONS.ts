@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { ControllerRouteOptionsValue, IControllerRouteOptions, Nilable } from '../types';
+import type { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRoutePath, HttpMiddleware, IControllerRouteOptions, Nilable } from '../types';
 import { createHttpMethodDecorator } from './factories';
 
 /**
@@ -46,13 +46,23 @@ import { createHttpMethodDecorator } from './factories';
  * }
  * ```
  *
- * @param {Nilable<ControllerRouteOptionsValue<IControllerRouteOptions>>} [options] Custom options.
+ * @param {IControllerRouteOptions} [options] Custom options.
+ * @param {ControllerRoutePath} [path] The custom path.
+ * @param {HttpMiddleware[]} [use] Additional middlewares.
  *
  * @returns {MethodDecorator} The new decorator function.
  */
-export function OPTIONS(options?: Nilable<ControllerRouteOptionsValue<IControllerRouteOptions>>): MethodDecorator {
+export function OPTIONS(): MethodDecorator;
+export function OPTIONS(options: IControllerRouteOptions): MethodDecorator;
+export function OPTIONS(use: HttpMiddleware[]): MethodDecorator;
+export function OPTIONS(path: ControllerRoutePath, use?: HttpMiddleware[]): MethodDecorator;
+export function OPTIONS(arg1?: ControllerRouteArgument1, arg2?: ControllerRouteArgument2): MethodDecorator {
     return createHttpMethodDecorator({
-        decoratorOptions: options,
+        decoratorOptions: {
+            arg1: arg1 as Nilable<ControllerRouteArgument1>,
+            arg2: arg2 as Nilable<ControllerRouteArgument2>,
+            arg3: undefined
+        },
         name: 'options'
     });
 }

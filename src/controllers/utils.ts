@@ -14,7 +14,21 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import path from 'path';
-import type { Nilable } from '../types';
+import { buffer, IBufferOptions, IJsonOptions, json } from '../middlewares';
+import { HttpInputDataFormat, HttpMiddleware, IHttpBodyParserOptions, Nilable } from '../types';
+
+export function createBodyParserMiddlewareByFormat(format: HttpInputDataFormat, options?: Nilable<IHttpBodyParserOptions>): HttpMiddleware {
+    switch (format) {
+        case HttpInputDataFormat.JSON:
+            return json(options as IJsonOptions);
+
+        case HttpInputDataFormat.Binary:
+            return buffer(options as IBufferOptions);
+
+        default:
+            throw new Error(`Not implemented for value ${HttpInputDataFormat[format]} of HttpInputDataFormat`);
+    }
+}
 
 export function getListFromObject<T extends any = any>(obj: any, key: PropertyKey): T[] {
     let list: Nilable<T[]> = obj[key];
