@@ -16,12 +16,12 @@
 import fs from 'fs';
 import minimatch from 'minimatch';
 import path from 'path';
-import { OpenAPIV3 } from 'openapi-types';
+import type { OpenAPIV3 } from 'openapi-types';
 import { isSchema } from 'joi';
-import { CONTROLLERS_CONTEXES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_SERVER_CONTROLLER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SWAGGER_METHOD_INFO } from '../constants';
+import { CONTROLLERS_CONTEXES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_SERVER_CONTROLLER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SWAGGER_METHOD_INFO } from '../constants';
 import { buffer, json, validate } from '../middlewares';
-import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, GetterFunc, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer } from '../types';
-import type { IControllerClass, IControllerContext, IControllerFile, InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, ISwaggerMethodInfo } from '../types/internal';
+import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdater, GetterFunc, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer } from '../types';
+import type { IControllerClass, IControllerContext, IControllerFile, InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo } from '../types/internal';
 import { asAsync, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, walkDirSync } from '../utils';
 import { params } from '../validators/params';
 import { createBodyParserMiddlewareByFormat, getListFromObject, getMethodOrThrow, normalizeRouterPath } from './utils';
@@ -247,7 +247,9 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
         if (decoratorOptions?.documentation) {
             getListFromObject<InitControllerMethodSwaggerAction>(method, INIT_SERVER_CONTROLLER_ACTIONS).push(
                 createInitControllerMethodSwaggerAction({
-                    doc: decoratorOptions?.documentation,
+                    doc: JSON.parse(
+                        JSON.stringify(decoratorOptions.documentation)
+                    ),
                     method,
                     methodName
                 })
@@ -308,7 +310,7 @@ function createInitControllerMethodAction({
 }
 
 function createInitControllerMethodSwaggerAction({ doc, method, methodName }: ICreateInitControllerMethodSwaggerActionOptions): InitControllerMethodSwaggerAction {
-    return ({ apiDocument }) => {
+    return ({ apiDocument, controller }) => {
         if ((method as any)[SWAGGER_METHOD_INFO]) {
             throw new Error(`Cannot redefine OpenAPI definition of ${String(methodName)}`);
         }
@@ -339,6 +341,15 @@ function createInitControllerMethodSwaggerAction({ doc, method, methodName }: IC
                         let methodObj: any = pathObj[httpMethod];
                         if (methodObj) {
                             throw new Error(`Cannot reset documentation for route ${routerPath} (${httpMethod.toUpperCase()})`);
+                        }
+
+                        const docUpdater: Nilable<DocumentationUpdater> = (controller as any)[DOCUMENTATION_UPDATER];
+                        if (docUpdater) {
+                            docUpdater({
+                                documentation: doc,
+                                method: httpMethod.toUpperCase() as Uppercase<HttpMethod>,
+                                path: routerPath
+                            });
                         }
 
                         pathObj[httpMethod] = doc;
@@ -562,9 +573,16 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                         });
                     });
 
+                    getListFromObject<InitDocumentationUpdaterAction>(propValue, SETUP_DOCUMENTATION_UPDATER).forEach(action => {
+                        action({
+                            controller
+                        });
+                    });
+
                     getListFromObject<InitControllerMethodSwaggerAction>(propValue, INIT_SERVER_CONTROLLER_ACTIONS).forEach(action => {
                         action({
-                            apiDocument: swaggerDoc
+                            apiDocument: swaggerDoc,
+                            controller
                         });
                     });
                 }
@@ -577,7 +595,11 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
         });
 
         if (swagger) {
-            setupSwaggerUIForServerControllers(server, swaggerDoc, swagger);
+            setupSwaggerUIForServerControllers({
+                server,
+                document: swaggerDoc,
+                options: swagger
+            });
 
             newControllersContext.swagger = swaggerDoc;
         }

@@ -450,4 +450,8 @@ export {
     SchemaFunction,
     Schema
 } from 'joi';
+
+export {
+    OpenAPIV3
+} from 'openapi-types';
 // </EXPORTS>

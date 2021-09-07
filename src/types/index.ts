@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { OpenAPIV3 } from 'openapi-types';
+import type { OpenAPIV3 } from 'openapi-types';
 import type { IncomingMessage, ServerResponse } from 'http';
 import type { AnySchema, ValidationError as JoiValidationError } from 'joi';
 import type { ParseError } from '../errors/parse';
@@ -58,6 +58,11 @@ export type ControllersSwaggerBaseDocument = Pick<Pick<OpenAPIV3.Document, Exclu
  * Possible values for Swagger options for controllers.
  */
 export type ControllersSwaggerOptionsValue = IControllersSwaggerOptions | false;
+
+/**
+ * A method / function, that updates the documentation of a route / controller method, e.g.
+ */
+export type DocumentationUpdater = (context: IDocumentationUpdaterContext) => any;
 
 /**
  * Returns a status code from an error object.
@@ -228,6 +233,24 @@ export interface IControllersSwaggerOptions {
      * The base document.
      */
     document: ControllersSwaggerBaseDocument;
+}
+
+/**
+ * Context of a method, that updates the documentation of a route / controller method.
+ */
+export interface IDocumentationUpdaterContext {
+    /**
+     * The underlying documentation.
+     */
+    documentation: OpenAPIV3.OperationObject;
+    /**
+     * The HTTP method.
+     */
+    method: Uppercase<HttpMethod>;
+    /**
+     * The path of the route.
+     */
+    path: HttpRequestPath;
 }
 
 /**

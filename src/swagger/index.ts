@@ -17,10 +17,16 @@ import fs from 'fs';
 import indexHtml from './resources/index_html';
 import mimeTypes from 'mime-types';
 import path from 'path';
-import { OpenAPIV3 } from 'openapi-types';
+import type { OpenAPIV3 } from 'openapi-types';
 import { normalizeRouterPath } from '../controllers/utils';
 import type { IControllersSwaggerOptions, IHttpServer } from '../types';
 import { createSwaggerPathValidator, getSwaggerDocsBasePath } from './utils';
+
+export interface ISetupSwaggerUIForServerControllersOptions {
+    document: OpenAPIV3.Document;
+    options: IControllersSwaggerOptions;
+    server: IHttpServer;
+}
 
 const pathToSwaggerUi: string = require('swagger-ui-dist').absolutePath();
 
@@ -28,11 +34,11 @@ const indexHtmlFilePath = path.join(pathToSwaggerUi, 'index.html');
 
 const { readFile, stat } = fs.promises;
 
-export function setupSwaggerUIForServerControllers(
-    server: IHttpServer,
-    document: OpenAPIV3.Document,
-    options: IControllersSwaggerOptions
-) {
+export function setupSwaggerUIForServerControllers({
+    document,
+    server,
+    options
+}: ISetupSwaggerUIForServerControllersOptions) {
     const basePath = getSwaggerDocsBasePath(options.basePath);
     const basePathWithSuffix = basePath + (basePath.endsWith('/') ? '' : '/');
 
