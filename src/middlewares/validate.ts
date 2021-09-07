@@ -113,6 +113,8 @@ function createMiddleware({ onValidationFailed, schema }: ICreateMiddlewareOptio
 
         if (validationResult.error) {
             await onValidationFailed(validationResult.error, request, response);
+
+            response.end();
         } else {
             next();
         }

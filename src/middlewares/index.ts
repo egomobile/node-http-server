@@ -32,8 +32,6 @@ export const defaultLimitReachedHandler: HttpRequestHandler = async (request, re
             'Content-Length': '0'
         });
     }
-
-    response.end();
 };
 
 /**

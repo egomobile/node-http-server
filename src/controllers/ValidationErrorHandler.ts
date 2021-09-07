@@ -16,8 +16,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { ERROR_HANDLER, SETUP_ERROR_HANDLER } from '../constants';
-import type { InitControllerErrorHandlerAction } from '../types/internal';
+import { SETUP_VALIDATION_ERROR_HANDLER, VALIDATION_ERROR_HANDLER } from '../constants';
+import type { InitControllerValidationErrorHandlerAction } from '../types/internal';
 import { getListFromObject, getMethodOrThrow } from './utils';
 
 /**
@@ -25,43 +25,46 @@ import { getListFromObject, getMethodOrThrow } from './utils';
  *
  * @example
  * ```
- * import { Controller, ControllerBase, ErrorHandler, GET, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+ * import { Controller, ControllerBase, GET, IHttpRequest, IHttpResponse, JoiValidationError, schema, ValidationErrorHandler } from '@egomobile/http-server'
+ *
+ * const mySchema = schema.object({
+ *   email: schema.string().trim().email().required(),
+ *   name: schema.string().trim().min(1).optional()
+ * })
  *
  * @Controller()
  * export default class MyController extends ControllerBase {
- *   @GET()
+ *   @POST(mySchema)
  *   async index(request: IHttpRequest, response: IHttpResponse) {
- *     throw new Error('Something went wrong!')
+ *     response.write('You send: ' + JSON.stringify(response.body!))
  *   }
  *
- *   @ErrorHandler()  // mark that method as default error handler
- *                    // inside that controller
- *   async handleError(error: any, request: IHttpRequest, response: IHttpResponse) {
- *     const errorMessage = Buffer.from('ERROR: ' + String(error), 'utf8')
+ *   @ValidationErrorHandler()  // mark that method as default schema validation
+ *                              // error handler inside that controller
+ *   async handleValidationError(error: JoiValidationError, request: IHttpRequest, response: IHttpResponse) {
+ *     const errorMessage = Buffer.from('VALIDATION ERROR: ' + error.message, 'utf8')
  *
- *     response.writeHead(500, {
+ *     response.writeHead(400, {
  *       'Content-Length': String(errorMessage.length)
  *     })
  *     response.write(errorMessage)
- *
- *     response.end()
  *   }
  * }
  * ```
  *
  * @returns {MethodDecorator} The new decorator function.
  */
-export function ErrorHandler(): MethodDecorator {
+export function ValidationErrorHandler(): MethodDecorator {
     return function (target, methodName, descriptor) {
         const method = getMethodOrThrow(descriptor);
 
-        getListFromObject<InitControllerErrorHandlerAction>(method, SETUP_ERROR_HANDLER).push(
+        getListFromObject<InitControllerValidationErrorHandlerAction>(method, SETUP_VALIDATION_ERROR_HANDLER).push(
             ({ controller }) => {
-                if ((controller as any)[ERROR_HANDLER]) {
-                    throw new Error(`Cannot redefine ${String(methodName)} method as controllers error handler`);
+                if ((controller as any)[VALIDATION_ERROR_HANDLER]) {
+                    throw new Error(`Cannot redefine ${String(methodName)} method as controllers validation error handler`);
                 }
 
-                (controller as any)[ERROR_HANDLER] = method.bind(controller);
+                (controller as any)[VALIDATION_ERROR_HANDLER] = method.bind(controller);
             }
         );
     };

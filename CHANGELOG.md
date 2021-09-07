@@ -1,5 +1,10 @@
 # Change Log (@egomobile/http-server)
 
+## 0.8.0
+
+- implement `ValidationErrorHandler()` decorator
+- bugfixes
+
 ## 0.7.0
 
 - implement controller framework, similar to [express-controllers](https://github.com/egodigital/express-controllers):

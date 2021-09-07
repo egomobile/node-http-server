@@ -199,6 +199,10 @@ export interface IControllerRouteWithBodyOptions extends IControllerRouteOptions
      * 'json()' is used to parse the input.
      */
     schema?: Nilable<AnySchema>;
+    /**
+     * Custom schema validation error handler.
+     */
+    onValidationFailed?: Nilable<ValidationFailedHandler>;
 }
 
 /**

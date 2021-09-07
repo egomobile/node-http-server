@@ -65,7 +65,7 @@ export function Serializer(): MethodDecorator {
                     throw new Error(`Cannot redefine ${String(methodName)} method as controllers serializer`);
                 }
 
-                (controller as any)[RESPONSE_SERIALIZER] = method;
+                (controller as any)[RESPONSE_SERIALIZER] = method.bind(controller);
             }
         );
     };
