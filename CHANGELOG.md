@@ -3,6 +3,7 @@
 ## 0.8.0
 
 - implement `ValidationErrorHandler()` decorator
+- add VSCode debugger settings
 - bugfixes
 
 ## 0.7.0
