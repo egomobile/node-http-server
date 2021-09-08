@@ -68,7 +68,7 @@ export function DocumentationUpdater(): MethodDecorator {
                     throw new Error(`Cannot redefine ${String(methodName)} method as documentation updater`);
                 }
 
-                (controller as any)[DOCUMENTATION_UPDATER] = method;
+                (controller as any)[DOCUMENTATION_UPDATER] = method.bind(controller);
             }
         );
     };

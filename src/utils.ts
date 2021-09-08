@@ -16,7 +16,7 @@
 import fs from 'fs';
 import path from 'path';
 import { EntityTooLargeError } from './errors';
-import type { Constructor, HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, Nilable, Optional } from './types';
+import type { Constructor, HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, Nilable, Nullable, Optional } from './types';
 
 interface ICreateWithEntityTooLargeActionOptions {
     action: HttpMiddleware;
@@ -136,7 +136,7 @@ export function readStream(stream: NodeJS.ReadableStream) {
 
 export function readStreamWithLimit(
     stream: NodeJS.ReadableStream,
-    limit: Nilable<number>
+    limit: Nullable<number>
 ) {
     const allChunks: Buffer[] = [];
     let currentSize = 0;
@@ -238,6 +238,8 @@ function createWithEntityTooLargeAction({ action, onLimitReached }: ICreateWithE
         } catch (error) {
             if (error instanceof EntityTooLargeError) {
                 await onLimitReached(request, response);
+
+                response.end();
             } else {
                 throw error;
             }

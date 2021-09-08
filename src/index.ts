@@ -195,7 +195,11 @@ export const createServer = (): IHttpServer => {
 
             // setup request handler
             if (middlewares?.length) {
-                handler = mergeHandler(handler, middlewares, getErrorHandler);
+                handler = mergeHandler(
+                    handler,
+                    middlewares.map(mw => asAsync<HttpMiddleware>(mw)),
+                    getErrorHandler
+                );
             }
 
             // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -434,6 +438,7 @@ export {
     DateSchema,
     FunctionSchema,
     isSchema,
+    ValidationError as JoiValidationError,
     LinkSchema,
     NumberSchema,
     ObjectPropertiesSchema,

@@ -13,12 +13,12 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions, Nilable, ParseErrorHandler } from '../types';
+import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions, Nilable, Nullable, ParseErrorHandler } from '../types';
 import { ParseError } from '../errors/parse';
-import { isNil, readStreamWithLimit, withEntityTooLarge } from '../utils';
+import { isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
 
 interface ICreateMiddlewareOptions {
-    limit: Nilable<number>;
+    limit: Nullable<number>;
     onLimitReached: Nilable<HttpRequestHandler>;
     onParsingFailed: ParseErrorHandler;
 }
@@ -89,7 +89,7 @@ export function json(optionsOrLimit?: Nilable<number | IJsonOptions>, onLimitRea
         // [1] HttpRequestHandler
 
         optionsOrLimit = {
-            limit: optionsOrLimit * 1048576
+            limit: limitToBytes(optionsOrLimit)
         };
 
         optionsOrLimit.onLimitReached = onLimitReached;
@@ -97,6 +97,10 @@ export function json(optionsOrLimit?: Nilable<number | IJsonOptions>, onLimitRea
     }
 
     let limit = optionsOrLimit?.limit;
+    if (typeof limit === 'undefined') {
+        limit = limitToBytes(128);
+    }
+
     onLimitReached = optionsOrLimit?.onLimitReached;
     onParsingFailed = optionsOrLimit?.onParsingFailed;
 
@@ -121,7 +125,7 @@ export function json(optionsOrLimit?: Nilable<number | IJsonOptions>, onLimitRea
     }
 
     return createMiddleware({
-        limit,
+        limit: limit as Nullable<number>,
         onLimitReached,
         onParsingFailed: onParsingFailed!
     });
@@ -133,15 +137,16 @@ function createMiddleware({ limit, onLimitReached, onParsingFailed }: ICreateMid
             request.body = JSON.parse(
                 (await readStreamWithLimit(request, limit)).toString('utf8')
             );
+
+            next();
         } catch (error) {
             if (error instanceof SyntaxError) {
                 await onParsingFailed!(new ParseError(error), request, response);
-                return;
+
+                response.end();
+            } else {
+                throw error;
             }
-
-            throw error;
         }
-
-        next();
     }, onLimitReached);
 }

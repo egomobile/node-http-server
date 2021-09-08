@@ -13,8 +13,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions, Nilable } from '../types';
-import { isNil, readStreamWithLimit, withEntityTooLarge } from '../utils';
+import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions, Nilable, Nullable } from '../types';
+import { isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
 
 /**
  * Options for 'buffer()' function.
@@ -23,7 +23,7 @@ export interface IBufferOptions extends IHttpBodyParserOptions {
 }
 
 interface ICreateMiddlewareOptions {
-    limit: Nilable<number>;
+    limit: Nullable<number>;
     onLimitReached: Nilable<HttpRequestHandler>;
 }
 
@@ -79,13 +79,17 @@ export function buffer(options: Nilable<IBufferOptions>): HttpMiddleware;
 export function buffer(optionsOrLimit?: Nilable<IBufferOptions | number>, onLimitReached?: Nilable<HttpRequestHandler>): HttpMiddleware {
     if (typeof optionsOrLimit === 'number') {
         optionsOrLimit = {
-            limit: optionsOrLimit * 1048576
+            limit: limitToBytes(optionsOrLimit)
         };
 
         optionsOrLimit.onLimitReached = onLimitReached;
     }
 
     let limit = optionsOrLimit?.limit;
+    if (typeof limit === 'undefined') {
+        limit = limitToBytes(128);
+    }
+
     onLimitReached = optionsOrLimit?.onLimitReached;
 
     if (!isNil(limit)) {
@@ -101,7 +105,7 @@ export function buffer(optionsOrLimit?: Nilable<IBufferOptions | number>, onLimi
     }
 
     return createMiddleware({
-        limit,
+        limit: limit as Nullable<number>,
         onLimitReached
     });
 }

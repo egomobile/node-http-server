@@ -18,10 +18,10 @@ import minimatch from 'minimatch';
 import path from 'path';
 import type { OpenAPIV3 } from 'openapi-types';
 import { isSchema } from 'joi';
-import { CONTROLLERS_CONTEXES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_SERVER_CONTROLLER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SWAGGER_METHOD_INFO } from '../constants';
-import { buffer, json, validate } from '../middlewares';
-import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdater, GetterFunc, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer } from '../types';
-import type { IControllerClass, IControllerContext, IControllerFile, InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo } from '../types/internal';
+import { CONTROLLERS_CONTEXES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_SERVER_CONTROLLER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from '../constants';
+import { buffer, defaultValidationFailedHandler, json, validate } from '../middlewares';
+import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdater, GetterFunc, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer, ValidationFailedHandler } from '../types';
+import type { IControllerClass, IControllerContext, IControllerFile, InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo } from '../types/internal';
 import { asAsync, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, walkDirSync } from '../utils';
 import { params } from '../validators/params';
 import { createBodyParserMiddlewareByFormat, getListFromObject, getMethodOrThrow, normalizeRouterPath } from './utils';
@@ -51,12 +51,18 @@ interface ICreateInitControllerMethodActionOptions {
     httpMethod: HttpMethod;
     middlewares: HttpMiddleware[];
     serializer: Nilable<ResponseSerializer>;
+    updateMiddlewares: (options: IUpdateMiddlewaresOptions) => void;
 }
 
 interface ICreateInitControllerMethodSwaggerActionOptions {
     doc: OpenAPIV3.OperationObject;
     method: Function;
     methodName: string | symbol;
+}
+
+interface IUpdateMiddlewaresOptions {
+    controller: IHttpController<IHttpServer>;
+    middlewares: HttpMiddleware[];
 }
 
 function createControllerMethodRequestHandler({ getError, handler }: ICreateControllerMethodRequestHandlerOptions): HttpRequestHandler {
@@ -168,6 +174,12 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
         }
     }
 
+    if (!isNil(decoratorOptions?.onValidationFailed)) {
+        if (typeof decoratorOptions?.onValidationFailed !== 'function') {
+            throw new TypeError('decoratorOptions.onValidationFailed must be of type function');
+        }
+    }
+
     if (!isNil(decoratorOptions?.schema)) {
         if (!isSchema(decoratorOptions?.schema)) {
             throw new TypeError('decoratorOptions.schema must be a Joi object');
@@ -202,22 +214,10 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
             Array.isArray(decoratorOptions?.use) ? (decoratorOptions?.use as HttpMiddleware[]) : [decoratorOptions?.use]
         ).filter(mw => !isNil(mw)) as HttpMiddleware[];
 
-        if (decoratorOptions?.schema) {
-            throwIfOptionsIncompatibleWithHTTPMethod();
-
-            const createDataParser = isNil(decoratorOptions?.format) ?
-                () => json({
-                    limit: decoratorOptions?.limit
-                }) :
-                () => createBodyParserMiddlewareByFormat(decoratorOptions?.format || HttpInputDataFormat.JSON, {
-                    limit: decoratorOptions?.limit
-                });
-
-            middlewares.push(
-                createDataParser(),
-                validate(decoratorOptions?.schema)
-            );
-        } else if (typeof decoratorOptions?.limit === 'number') {
+        if (
+            !decoratorOptions?.schema &&
+            typeof decoratorOptions?.limit === 'number'
+        ) {
             throwIfOptionsIncompatibleWithHTTPMethod();
 
             const createDataParser = isNil(decoratorOptions.format) ?
@@ -240,7 +240,35 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                 getError: (controller, server) => decoratorOptions?.onError ||
                     (controller as any)[ERROR_HANDLER] ||
                     server.errorHandler,
-                serializer: decoratorOptions?.serializer
+                serializer: decoratorOptions?.serializer,
+                updateMiddlewares: ({ controller, middlewares }) => {
+                    if (!decoratorOptions?.schema) {
+                        return;
+                    }
+
+                    throwIfOptionsIncompatibleWithHTTPMethod();
+
+                    const validationErrorHandler =
+                        createWrapperValidationErrorHandler(
+                            decoratorOptions?.onValidationFailed ||
+                            (controller as any)[VALIDATION_ERROR_HANDLER]
+                        ) || defaultValidationFailedHandler;
+
+                    const createDataParser: () => HttpMiddleware = isNil(decoratorOptions?.format) ?
+                        () => json({
+                            limit: decoratorOptions?.limit
+                        }) :
+                        () => createBodyParserMiddlewareByFormat(decoratorOptions?.format || HttpInputDataFormat.JSON, {
+                            limit: decoratorOptions?.limit
+                        });
+
+                    middlewares.push(
+                        createDataParser(),
+                        validate(decoratorOptions.schema, {
+                            onValidationFailed: validationErrorHandler
+                        })
+                    );
+                }
             })
         );
 
@@ -264,7 +292,8 @@ function createInitControllerMethodAction({
     getError,
     httpMethod,
     middlewares,
-    serializer
+    serializer,
+    updateMiddlewares
 }: ICreateInitControllerMethodActionOptions): InitControllerMethodAction {
     return ({ controller, relativeFilePath, method, server }) => {
         const dir = path.dirname(relativeFilePath);
@@ -297,6 +326,11 @@ function createInitControllerMethodAction({
         if (routerPath.includes('/:')) {
             routerPath = params(routerPath);
         }
+
+        updateMiddlewares({
+            controller,
+            middlewares
+        });
 
         (server as any)[httpMethod](routerPath, middlewares, createControllerMethodRequestHandler({
             getError: () => getError(controller, server),
@@ -378,6 +412,20 @@ function createRequestHandlerWithSerializer(handler: HttpRequestHandler, getSeri
         } else {
             await handler(request, response);
         }
+    };
+}
+
+function createWrapperValidationErrorHandler(handler: Nilable<ValidationFailedHandler>): Nilable<ValidationFailedHandler> {
+    if (isNil(handler)) {
+        return handler;
+    }
+
+    handler = asAsync<ValidationFailedHandler>(handler);
+
+    return async (error, request, response) => {
+        await handler!(error, request, response);
+
+        response.end();
     };
 }
 
@@ -562,6 +610,12 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                     });
 
                     getListFromObject<InitControllerErrorHandlerAction>(propValue, SETUP_ERROR_HANDLER).forEach((action) => {
+                        action({
+                            controller
+                        });
+                    });
+
+                    getListFromObject<InitControllerValidationErrorHandlerAction>(propValue, SETUP_VALIDATION_ERROR_HANDLER).forEach((action) => {
                         action({
                             controller
                         });

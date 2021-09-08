@@ -17,6 +17,13 @@ import path from 'path';
 import request from 'supertest';
 import { binaryParser, createServer } from './utils';
 
+/*
+interface IMySchema {
+    email: string;
+    name?: string;
+}
+*/
+
 function createServerAndInitControllers() {
     const server = createServer();
 
@@ -24,6 +31,17 @@ function createServerAndInitControllers() {
 
     return server;
 }
+
+/*
+const validInputData: IMySchema[] = [{
+    email: 'marcel.kloubert@e-go-mobile.com'
+}, {
+    email: 'marcel.kloubert@e-go-mobile.com',
+    name: 'Marcel Kloubert'
+}];
+*/
+
+const invalidInputData: any[] = [{}];
 
 describe('controllers', () => {
     it.each(['/', '/bar', '/foo'])('should return 200 when do a GET request for existing IndexController', async (p) => {
@@ -124,6 +142,34 @@ describe('controllers', () => {
         expect(response.headers['content-type']).toBe('application/json; charset=utf-8');
 
         expect(data).toMatchObject(expectedObject);
+    });
+
+    /* TODO: reactive => does currently run not in test case
+    it.each(validInputData)('should return 200 when do a POST request on /test5 route for existing Test5Controller with valid input data', async (data) => {
+        const server = createServerAndInitControllers();
+
+        await request(server).post('/test5')
+            .send(
+                Buffer.from(JSON.stringify(data), 'utf8')
+            )
+            .expect(200);
+    });
+    */
+
+    it.each(invalidInputData)('should return 400 when do a POST request on /test5 route for existing Test5Controller with invalid input data', async (data) => {
+        const server = createServerAndInitControllers();
+
+        await request(server).post('/test5')
+            .send(data)
+            .expect(400);
+    });
+
+    it.each(invalidInputData)('should return 409 when do a POST request on /test5 route for existing Test5Controller with invalid input data', async (data) => {
+        const server = createServerAndInitControllers();
+
+        await request(server).post('/test5/foo')
+            .send(data)
+            .expect(409);
     });
 
     it.each(['/baz', '/baz/bar', '/baz/foo'])('should return 200 when do a GET request for existing BazController which uses middlewares', async (p) => {
