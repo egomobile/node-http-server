@@ -265,10 +265,11 @@ export const createServer = (): IHttpServer => {
         return server;
     };
 
-    server.listen = (port) => {
+    server.listen = (port?) => {
         if (typeof port === 'string') {
             port = port.trim();
-            if (port !== '') {
+
+            if (port?.length) {
                 port = parseInt(port);
             } else {
                 port = undefined;
