@@ -297,8 +297,8 @@ export const createServer = (): IHttpServer => {
                 reject(err);
             });
 
-            newInstance.listen(port, () => {
-                (server as any).port = port as number;
+            newInstance.listen(port as number, '0.0.0.0', () => {
+                (server as any).port = port;
 
                 resolve(undefined);
             });

@@ -1,5 +1,10 @@
 # Change Log (@egomobile/http-server)
 
+## 0.9.1
+
+- bugfixes
+- `npm update`
+
 ## 0.8.0
 
 - implement `ValidationErrorHandler()` decorator
