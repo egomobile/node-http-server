@@ -13,8 +13,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions, Nilable, Nullable } from '../types';
-import { isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
+import type { HttpMiddleware, HttpRequestHandler, IHttpStringBodyParserOptions, Nilable, Nullable } from '../types';
+import { getBufferEncoding, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
 
 interface ICreateMiddlewareOptions {
     encoding: string;
@@ -25,11 +25,7 @@ interface ICreateMiddlewareOptions {
 /**
  * Options for 'text()' function.
  */
-export interface ITextOptions extends IHttpBodyParserOptions {
-    /**
-     * The custom string encoding to use. Default: utf8
-     */
-    encoding?: Nilable<BufferEncoding>;
+export interface ITextOptions extends IHttpStringBodyParserOptions {
 }
 
 /**
@@ -113,17 +109,8 @@ export function text(optionsOrLimit?: Nilable<number | ITextOptions>, onLimitRea
         }
     }
 
-    let encoding = optionsOrLimit?.encoding;
-    if (isNil(encoding)) {
-        encoding = 'utf8';
-    } else {
-        if (typeof encoding !== 'string') {
-            throw new TypeError('encoding must be of type string');
-        }
-    }
-
     return createMiddleware({
-        encoding,
+        encoding: getBufferEncoding(optionsOrLimit?.encoding),
         limit: limit as Nullable<number>,
         onLimitReached
     });

@@ -80,6 +80,18 @@ export function getAllClassProps(startClass: any): string[] {
     return props;
 }
 
+export function getBufferEncoding(encoding: Nilable<BufferEncoding>): BufferEncoding {
+    if (isNil(encoding)) {
+        return 'utf8';
+    }
+
+    if (typeof encoding === 'string') {
+        return encoding;
+    }
+
+    throw new TypeError('encoding must be of type string');;
+}
+
 export function getUrlWithoutQuery(url: Optional<string>): Optional<string> {
     if (!url) {
         return url;

@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import jsYaml, { YAMLException } from 'js-yaml';
 import type { HttpMiddleware, HttpRequestHandler, IHttpStringBodyParserOptions, Nilable, Nullable, ParseErrorHandler } from '../types';
 import { ParseError } from '../errors/parse';
 import { getBufferEncoding, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
@@ -25,9 +26,9 @@ interface ICreateMiddlewareOptions {
 }
 
 /**
- * Options for 'json()' function.
+ * Options for 'yaml()' function.
  */
-export interface IJsonOptions extends IHttpStringBodyParserOptions {
+export interface IYamlOptions extends IHttpStringBodyParserOptions {
     /**
      * A custom parse error handler.
      */
@@ -36,20 +37,20 @@ export interface IJsonOptions extends IHttpStringBodyParserOptions {
 
 /**
  * Creates a middleware, that reads the whole input of the request stream,
- * parses it as JSON UTF-8 string and writes the object to 'body' property of the request
+ * parses it as YAML UTF-8 string and writes the object to 'body' property of the request
  * context.
  *
  * @param {number} [limit] The limit in MB.
  * @param {Nilable<HttpRequestHandler>} [onLimitReached] The custom handler, that is invoked, when limit has been reached.
- * @param {Nilable<ParseErrorHandler>} [onParsingFailed] The custom handler, that is invoked, when input is no valid JSON.
- * @param {Nilable<IJsonOptions>} [options] Custom options.
+ * @param {Nilable<ParseErrorHandler>} [onParsingFailed] The custom handler, that is invoked, when input is no valid YAML.
+ * @param {Nilable<IYamlOptions>} [options] Custom options.
  *
  * @returns {HttpMiddleware} The new middleware.
  *
  * @example
  * ```
  * import assert from 'assert'
- * import createServer, { json, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+ * import createServer, { IHttpRequest, IHttpResponse, yaml } from '@egomobile/http-server'
  *
  * const app = createServer()
  *
@@ -60,31 +61,31 @@ export interface IJsonOptions extends IHttpStringBodyParserOptions {
  * }
  *
  * // maximum input size: 128 MB
- * app.post('/', json(), async (request: IHttpRequest, response: IHttpResponse) => {
- *   assert.strictEqual(typeof request.body, 'object')
+ * app.post('/', yaml(), async (request: IHttpRequest, response: IHttpResponse) => {
+ *   assert.strictEqual(Array.isArray(request.body), true)
  * })
  *
  * // maximum input size: 256 MB
- * app.put('/', json(256), async (request: IHttpRequest, response: IHttpResponse) => {
- *   assert.strictEqual(typeof request.body, 'object')
+ * app.put('/', yaml(256), async (request: IHttpRequest, response: IHttpResponse) => {
+ *   assert.strictEqual(Array.isArray(request.body), true)
  * })
  *
  * // maximum input size: 384 MB
- * app.patch('/', json({ limit: 402653184 }), async (request: IHttpRequest, response: IHttpResponse) => {
- *   assert.strictEqual(typeof request.body, 'object')
+ * app.patch('/', yaml({ limit: 402653184 }), async (request: IHttpRequest, response: IHttpResponse) => {
+ *   assert.strictEqual(Array.isArray(request.body), true)
  * })
  *
- * app.delete('/', json({ limit: 1048576, onLimitReached: handleLimitReached }), async (request: IHttpRequest, response: IHttpResponse) => {
+ * app.delete('/', yaml({ limit: 1048576, onLimitReached: handleLimitReached }), async (request: IHttpRequest, response: IHttpResponse) => {
  * // alternative:
- * // app.delete('/', json(1, handleLimitReached), async (request: IHttpRequest, response: IHttpResponse) => {
- *   assert.strictEqual(typeof request.body, 'object')
+ * // app.delete('/', yaml(1, handleLimitReached), async (request: IHttpRequest, response: IHttpResponse) => {
+ *   assert.strictEqual(Array.isArray(request.body), true)
  * })
  * ```
  */
-export function json(): HttpMiddleware;
-export function json(limit: number, onLimitReached?: Nilable<HttpRequestHandler>, onParsingFailed?: Nilable<ParseErrorHandler>): HttpMiddleware;
-export function json(options: Nilable<IJsonOptions>): HttpMiddleware;
-export function json(optionsOrLimit?: Nilable<number | IJsonOptions>, onLimitReached?: Nilable<HttpRequestHandler>, onParsingFailed?: Nilable<ParseErrorHandler>): HttpMiddleware {
+export function yaml(): HttpMiddleware;
+export function yaml(limit: number, onLimitReached?: Nilable<HttpRequestHandler>, onParsingFailed?: Nilable<ParseErrorHandler>): HttpMiddleware;
+export function yaml(options: Nilable<IYamlOptions>): HttpMiddleware;
+export function yaml(optionsOrLimit?: Nilable<number | IYamlOptions>, onLimitReached?: Nilable<HttpRequestHandler>, onParsingFailed?: Nilable<ParseErrorHandler>): HttpMiddleware {
     if (typeof optionsOrLimit === 'number') {
         // [0] number
         // [1] HttpRequestHandler
@@ -136,13 +137,13 @@ export function json(optionsOrLimit?: Nilable<number | IJsonOptions>, onLimitRea
 function createMiddleware({ encoding, limit, onLimitReached, onParsingFailed }: ICreateMiddlewareOptions): HttpMiddleware {
     return withEntityTooLarge(async (request, response, next) => {
         try {
-            request.body = JSON.parse(
+            request.body = jsYaml.loadAll(
                 (await readStreamWithLimit(request, limit)).toString(encoding)
             );
 
             next();
         } catch (error) {
-            if (error instanceof SyntaxError) {
+            if (error instanceof YAMLException) {
                 await onParsingFailed!(new ParseError(error), request, response);
 
                 response.end();

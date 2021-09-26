@@ -75,3 +75,4 @@ export * from './lang';
 export * from './query';
 export * from './text';
 export * from './validate';
+export * from './yaml';

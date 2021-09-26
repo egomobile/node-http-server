@@ -155,6 +155,8 @@ A possible result could be:
 The module makes use of:
 
 - [joi](https://joi.dev/) by [Sideway Inc.](https://github.com/sideway)
+- [js-yaml](https://github.com/nodeca/js-yaml) by
+  [Nodeca](https://github.com/nodeca)
 - [mime-types](https://github.com/jshttp/mime-types) by
   [jshttp](https://github.com/jshttp)
 - [minimatch](https://github.com/isaacs/minimatch) by

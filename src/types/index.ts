@@ -258,7 +258,7 @@ export interface IDocumentationUpdaterContext {
 }
 
 /**
- * Options for 'body()' function.
+ * Options for a body parser function.
  */
 export interface IHttpBodyParserOptions {
     /**
@@ -774,6 +774,16 @@ export interface IHttpServer {
      * ```
      */
     use(...middlewares: HttpMiddleware[]): this;
+}
+
+/**
+ * Options for a body parser function, that works with string data.
+ */
+export interface IHttpStringBodyParserOptions extends IHttpBodyParserOptions {
+    /**
+     * The custom string encoding to use. Default: utf8
+     */
+    encoding?: Nilable<BufferEncoding>;
 }
 
 /**

@@ -1,5 +1,10 @@
 # Change Log (@egomobile/http-server)
 
+## 0.11.0
+
+- add `yaml()` middleware
+- add optional `encoding` props for options of `json()` and `text()` middlewares
+
 ## 0.10.0
 
 - add `text()` middleware
