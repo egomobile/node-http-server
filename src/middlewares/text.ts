@@ -16,32 +16,37 @@
 import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions, Nilable, Nullable } from '../types';
 import { isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
 
-/**
- * Options for 'buffer()' function.
- */
-export interface IBufferOptions extends IHttpBodyParserOptions {
-}
-
 interface ICreateMiddlewareOptions {
+    encoding: string;
     limit: Nullable<number>;
     onLimitReached: Nilable<HttpRequestHandler>;
 }
 
 /**
- * Creates a middleware, that reads the whole input of the request stream
- * and writes data to 'body' property of the request
- * context as buffer.
+ * Options for 'text()' function.
+ */
+export interface ITextOptions extends IHttpBodyParserOptions {
+    /**
+     * The custom string encoding to use. Default: utf8
+     */
+    encoding?: Nilable<BufferEncoding>;
+}
+
+/**
+ * Creates a middleware, that reads the whole input of the request stream,
+ * converts it as string and writes the value to 'body' property of the request
+ * context.
  *
  * @param {number} [limit] The limit in MB.
  * @param {Nilable<HttpRequestHandler>} [onLimitReached] The custom handler, that is invoked, when limit has been reached.
- * @param {Nilable<IBufferOptions>} [options] Custom options.
+ * @param {Nilable<ITextOptions>} [options] Custom options.
  *
  * @returns {HttpMiddleware} The new middleware.
  *
  * @example
  * ```
  * import assert from 'assert'
- * import createServer, { buffer, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+ * import createServer, { IHttpRequest, IHttpResponse, text } from '@egomobile/http-server'
  *
  * const app = createServer()
  *
@@ -52,32 +57,36 @@ interface ICreateMiddlewareOptions {
  * }
  *
  * // maximum input size: 128 MB
- * app.post('/', buffer(), async (request: IHttpRequest, response: IHttpResponse) => {
- *   assert.strictEqual(Buffer.isBuffer(request.body), true)
+ * app.post('/', text(), async (request: IHttpRequest, response: IHttpResponse) => {
+ *   assert.strictEqual(typeof request.body, 'object')
  * })
  *
  * // maximum input size: 256 MB
- * app.put('/', buffer(256), async (request: IHttpRequest, response: IHttpResponse) => {
- *     assert.strictEqual(Buffer.isBuffer(request.body), true)
+ * app.put('/', text(256), async (request: IHttpRequest, response: IHttpResponse) => {
+ *   assert.strictEqual(typeof request.body, 'object')
  * })
  *
  * // maximum input size: 384 MB
- * app.patch('/', buffer({ limit: 402653184 }), async (request: IHttpRequest, response: IHttpResponse) => {
- *   assert.strictEqual(Buffer.isBuffer(request.body), true)
+ * // encoding: ASCII
+ * app.patch('/', text({ limit: 402653184, encoding: 'ascii' }), async (request: IHttpRequest, response: IHttpResponse) => {
+ *   assert.strictEqual(typeof request.body, 'object')
  * })
  *
- * app.delete('/', buffer({ limit: 1048576, onLimitReached: handleLimitReached }), async (request: IHttpRequest, response: IHttpResponse) => {
+ * app.delete('/', text({ limit: 1048576, onLimitReached: handleLimitReached }), async (request: IHttpRequest, response: IHttpResponse) => {
  * // alternative:
- * // app.delete('/', buffer(1, handleLimitReached), async (request: IHttpRequest, response: IHttpResponse) => {
- *   assert.strictEqual(Buffer.isBuffer(request.body), true)
+ * // app.delete('/', text(1, handleLimitReached), async (request: IHttpRequest, response: IHttpResponse) => {
+ *   assert.strictEqual(typeof request.body, 'object')
  * })
  * ```
  */
-export function buffer(): HttpMiddleware;
-export function buffer(limit: number, onLimitReached?: Nilable<HttpRequestHandler>): HttpMiddleware;
-export function buffer(options: Nilable<IBufferOptions>): HttpMiddleware;
-export function buffer(optionsOrLimit?: Nilable<IBufferOptions | number>, onLimitReached?: Nilable<HttpRequestHandler>): HttpMiddleware {
+export function text(): HttpMiddleware;
+export function text(limit: number, onLimitReached?: Nilable<HttpRequestHandler>): HttpMiddleware;
+export function text(options: Nilable<ITextOptions>): HttpMiddleware;
+export function text(optionsOrLimit?: Nilable<number | ITextOptions>, onLimitReached?: Nilable<HttpRequestHandler>): HttpMiddleware {
     if (typeof optionsOrLimit === 'number') {
+        // [0] number
+        // [1] HttpRequestHandler
+
         optionsOrLimit = {
             limit: limitToBytes(optionsOrLimit)
         };
@@ -104,15 +113,25 @@ export function buffer(optionsOrLimit?: Nilable<IBufferOptions | number>, onLimi
         }
     }
 
+    let encoding = optionsOrLimit?.encoding;
+    if (isNil(encoding)) {
+        encoding = 'utf8';
+    } else {
+        if (typeof encoding !== 'string') {
+            throw new TypeError('encoding must be of type string');
+        }
+    }
+
     return createMiddleware({
+        encoding,
         limit: limit as Nullable<number>,
         onLimitReached
     });
 }
 
-function createMiddleware({ limit, onLimitReached }: ICreateMiddlewareOptions) {
+function createMiddleware({ encoding, limit, onLimitReached }: ICreateMiddlewareOptions): HttpMiddleware {
     return withEntityTooLarge(async (request, response, next) => {
-        request.body = await readStreamWithLimit(request, limit);
+        request.body = (await readStreamWithLimit(request, limit)).toString(encoding);
 
         next();
     }, onLimitReached);

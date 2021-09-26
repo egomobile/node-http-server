@@ -73,4 +73,5 @@ export * from './cookies';
 export * from './json';
 export * from './lang';
 export * from './query';
+export * from './text';
 export * from './validate';

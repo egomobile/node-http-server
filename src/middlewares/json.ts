@@ -52,6 +52,7 @@ export interface IJsonOptions extends IHttpBodyParserOptions {
  *
  * const app = createServer()
  *
+ * // custom error handler
  * async function handleLimitReached(request: IHttpRequest, response: IHttpResponse) {
  *   request.writeHead(400)
  *   request.write('Input is too big')
@@ -72,7 +73,6 @@ export interface IJsonOptions extends IHttpBodyParserOptions {
  *   assert.strictEqual(typeof request.body, 'object')
  * })
  *
- * // custom error handler
  * app.delete('/', json({ limit: 1048576, onLimitReached: handleLimitReached }), async (request: IHttpRequest, response: IHttpResponse) => {
  * // alternative:
  * // app.delete('/', json(1, handleLimitReached), async (request: IHttpRequest, response: IHttpResponse) => {

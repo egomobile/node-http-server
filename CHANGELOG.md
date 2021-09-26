@@ -1,5 +1,11 @@
 # Change Log (@egomobile/http-server)
 
+## 0.10.0
+
+- add `text()` middleware
+- `npm update`
+- fix, cleanup and improve documentation
+
 ## 0.9.1
 
 - bugfixes
@@ -13,9 +19,12 @@
 
 ## 0.7.0
 
-- implement controller framework, similar to [express-controllers](https://github.com/egodigital/express-controllers):
-  - decorators for `CONNECT`, `DELETE`, `GET`, `HEAD`, `OPTIONS`, `PATCH`, `POST`, `PUT`, `TRACE` HTTP methods
-  - decorators for setting up custom, controller-wide serializers and error handlers
+- implement controller framework, similar to
+  [express-controllers](https://github.com/egodigital/express-controllers):
+  - decorators for `CONNECT`, `DELETE`, `GET`, `HEAD`, `OPTIONS`, `PATCH`,
+    `POST`, `PUT`, `TRACE` HTTP methods
+  - decorators for setting up custom, controller-wide serializers and error
+    handlers
 - code cleanups and improvements
 - bugfixes
 
@@ -26,10 +35,13 @@
 
 ## 0.5.0
 
-- **BREAKING CHANGE**: replace use of [querystring](https://nodejs.org/api/querystring.html) with [URLSearchParams](https://nodejs.org/api/url.html#url_class_urlsearchparams)
+- **BREAKING CHANGE**: replace use of
+  [querystring](https://nodejs.org/api/querystring.html) with
+  [URLSearchParams](https://nodejs.org/api/url.html#url_class_urlsearchparams)
 - add `cookies()` and `lang()` middlewares
 - cleanup documentation
-- add optional `TBody` type parameter to `IHttpRequest` interface to describe body property
+- add optional `TBody` type parameter to `IHttpRequest` interface to describe
+  body property
 - `npm update`
 
 ## 0.4.0
