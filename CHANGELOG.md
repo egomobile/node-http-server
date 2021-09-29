@@ -1,5 +1,10 @@
 # Change Log (@egomobile/http-server)
 
+## 0.12.0
+
+- optimize `readStreamWithLimit()` function
+- `npm update`
+
 ## 0.11.0
 
 - add `yaml()` middleware
