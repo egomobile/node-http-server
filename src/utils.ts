@@ -156,10 +156,7 @@ export function readStreamWithLimit(
     const addChunkAndRecalc = (chunk: Buffer) => {
         allChunks.push(chunk);
 
-        currentSize = allChunks.reduce(
-            (currentSum, currentChunk) => currentSum + currentChunk.length,
-            0
-        );
+        currentSize += chunk.length;
     };
 
     let addChunk: (chunk: Buffer) => void;
