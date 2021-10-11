@@ -1,5 +1,10 @@
 # Change Log (@egomobile/http-server)
 
+## 0.13.0
+
+- add missing export of `ValidationErrorHandler()` decorator
+- `npm update`
+
 ## 0.12.0
 
 - optimize `readStreamWithLimit()` function
