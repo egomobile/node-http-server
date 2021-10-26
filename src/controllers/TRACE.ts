@@ -16,8 +16,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { AnySchema } from 'joi';
-import type { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRoutePath, HttpInputDataFormat, HttpMiddleware, IControllerRouteWithBodyOptions, Nilable } from '../types';
+import type { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRoutePath, HttpMiddleware, IControllerRouteOptions, IControllerRouteWithBodyOptions, Nilable } from '../types';
 import { createHttpMethodDecorator } from './factories';
 
 /**
@@ -47,33 +46,22 @@ import { createHttpMethodDecorator } from './factories';
  * }
  * ```
  *
- * @param {Nilable<HttpInputDataFormat>} [format] The custom format of the input.
- * @param {Nilable<number>} [limit] A custom limited, size in MB, for the input data.
  * @param {Nilable<IControllerRouteOptions>} [options] Custom options.
  * @param {Nilable<ControllerRoutePath>} [path] The custom path.
- * @param {Nilable<AnySchema>} [schema] An optional schema, that validates the body.
  * @param {Nilable<HttpMiddleware[]>} [use] Additional middlewares.
  *
  * @returns {MethodDecorator} The new decorator function.
  */
 export function TRACE(): MethodDecorator;
-export function TRACE(limit: number, format?: Nilable<HttpInputDataFormat>): MethodDecorator;
-export function TRACE(options: IControllerRouteWithBodyOptions): MethodDecorator;
-export function TRACE(schema: AnySchema, limit?: Nilable<number>): MethodDecorator;
+export function TRACE(options: IControllerRouteOptions): MethodDecorator;
 export function TRACE(use: HttpMiddleware[]): MethodDecorator;
-export function TRACE(path: ControllerRoutePath): MethodDecorator;
-export function TRACE(path: ControllerRoutePath, use: HttpMiddleware[]): MethodDecorator;
-export function TRACE(path: ControllerRoutePath, schema: AnySchema, limit?: Nilable<number>): MethodDecorator;
-export function TRACE(
-    arg1?: Nilable<ControllerRouteArgument1<IControllerRouteWithBodyOptions>>,
-    arg2?: Nilable<ControllerRouteArgument2>,
-    arg3?: Nilable<ControllerRouteArgument3>
-): MethodDecorator {
+export function TRACE(path: ControllerRoutePath, use?: Nilable<HttpMiddleware[]>): MethodDecorator;
+export function TRACE(arg1?: Nilable<ControllerRouteArgument1>, arg2?: Nilable<ControllerRouteArgument2>): MethodDecorator {
     return createHttpMethodDecorator({
         decoratorOptions: {
-            arg1,
-            arg2,
-            arg3
+            arg1: arg1 as Nilable<ControllerRouteArgument1<IControllerRouteWithBodyOptions>>,
+            arg2: arg2 as Nilable<ControllerRouteArgument2>,
+            arg3: undefined
         },
         name: 'trace'
     });

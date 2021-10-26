@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.14.0
+
+- **BREAKING CHANGE**: [DELETE()](https://egomobile.github.io/node-http-server/modules.html#DELETE), [HEAD()](https://egomobile.github.io/node-http-server/modules.html#HEAD), [OPTIONS()](https://egomobile.github.io/node-http-server/modules.html#OPTIONS) and [TRACE()](https://egomobile.github.io/node-http-server/modules.html#TRACE) decorators do not support bodies anymore: https://specs.openstack.org/openstack/api-wg/guidelines/http/methods.html
+
 ## 0.13.1
 
 - add missing export of `ValidationErrorHandler()` decorator
