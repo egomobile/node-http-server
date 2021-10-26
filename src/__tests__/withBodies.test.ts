@@ -25,7 +25,7 @@ const routePaths: HttpRequestPath[] = [
 ];
 
 describe('Simple requests with common HTTP methods and input data', () => {
-    ['delete', 'options', 'patch', 'put', 'post', 'trace'].forEach(method => {
+    ['patch', 'put', 'post'].forEach(method => {
         const methodName = method.toUpperCase();
 
         it.each(routePaths)(`should return 200 when do a ${methodName} request and send data`, async (path) => {

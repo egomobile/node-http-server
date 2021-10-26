@@ -68,6 +68,7 @@ export const defaultValidationFailedHandler: ValidationFailedHandler = async (er
     response.end();
 };
 
+export * from './apiKey';
 export * from './buffer';
 export * from './cookies';
 export * from './json';

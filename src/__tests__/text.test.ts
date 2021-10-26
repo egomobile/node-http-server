@@ -10,7 +10,7 @@ const routePaths: HttpRequestPath[] = [
 ];
 
 describe('text() middleware', () => {
-    ['delete', 'options', 'patch', 'put', 'post', 'trace'].forEach(method => {
+    ['patch', 'put', 'post'].forEach(method => {
         const methodName = method.toUpperCase();
 
         it.each(routePaths)(`should return 200 when do a ${methodName} request`, async (path) => {
