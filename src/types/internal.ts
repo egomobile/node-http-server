@@ -1,6 +1,6 @@
 import type { ServerResponse } from 'http';
 import type { OpenAPIV3 } from 'openapi-types';
-import type { Constructor, HttpPathValidator, HttpRequestHandler, IHttpController, IHttpServer, Optional } from '.';
+import type { Constructor, HttpPathValidator, HttpRequestHandler, IControllersOptions, IHttpController, IHttpServer, Nilable, Optional } from '.';
 
 export type GroupedHttpRequestHandlers = {
     [method: string]: RequestHandlerContext[];
@@ -30,6 +30,7 @@ export interface IInitControllerMethodActionContext {
     controller: IHttpController;
     controllerClass: Constructor<IHttpController>;
     fullFilePath: string;
+    globalOptions: Nilable<IControllersOptions>;
     method: Function;
     relativeFilePath: string;
     server: IHttpServer;

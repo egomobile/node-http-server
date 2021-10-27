@@ -161,6 +161,10 @@ export interface IControllerRouteOptions {
      */
     documentation?: Nilable<OpenAPIV3.OperationObject>;
     /**
+     * Indicates, that query parameters should NOT be parsed.
+     */
+    noQueryParams?: Nilable<boolean>;
+    /**
      * The custom error handler.
      */
     onError?: Nilable<HttpErrorHandler>;
@@ -209,6 +213,10 @@ export interface IControllerRouteWithBodyOptions extends IControllerRouteOptions
  * Options for 'controllers()' method of 'IHttpServer' instance.
  */
 export interface IControllersOptions {
+    /**
+     * Default value, that indicates, that query parameters should NOT be parsed.
+     */
+    noQueryParams?: Nilable<boolean>;
     /**
      * The custom file patterns.
      *

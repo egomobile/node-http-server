@@ -19,7 +19,7 @@ import path from 'path';
 import type { OpenAPIV3 } from 'openapi-types';
 import { isSchema } from 'joi';
 import { CONTROLLERS_CONTEXES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_SERVER_CONTROLLER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from '../constants';
-import { buffer, defaultValidationFailedHandler, json, validate } from '../middlewares';
+import { buffer, defaultValidationFailedHandler, json, query, validate } from '../middlewares';
 import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdater, GetterFunc, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer, ValidationFailedHandler } from '../types';
 import type { IControllerClass, IControllerContext, IControllerFile, InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo } from '../types/internal';
 import { asAsync, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, walkDirSync } from '../utils';
@@ -62,6 +62,7 @@ interface ICreateInitControllerMethodSwaggerActionOptions {
 
 interface IUpdateMiddlewaresOptions {
     controller: IHttpController<IHttpServer>;
+    globalOptions: Nilable<IControllersOptions>;
     middlewares: HttpMiddleware[];
 }
 
@@ -79,7 +80,7 @@ function createControllerMethodRequestHandler({ getError, handler }: ICreateCont
 
 export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOptions): MethodDecorator {
     const throwIfOptionsIncompatibleWithHTTPMethod = () => {
-        if (['get', 'head', 'options'].includes(options.name)) {
+        if (!['post', 'put', 'patch'].includes(options.name)) {
             throw new Error(`Cannot use schema with ${options.name.toUpperCase()} requests`);
         }
     };
@@ -210,9 +211,13 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
         }
         httpMethods.sort();
 
-        const middlewares = (
-            Array.isArray(decoratorOptions?.use) ? (decoratorOptions?.use as HttpMiddleware[]) : [decoratorOptions?.use]
-        ).filter(mw => !isNil(mw)) as HttpMiddleware[];
+        const middlewares: HttpMiddleware[] = [];
+
+        middlewares.push(
+            ...(
+                Array.isArray(decoratorOptions?.use) ? (decoratorOptions?.use as HttpMiddleware[]) : [decoratorOptions?.use]
+            ).filter(mw => !isNil(mw)) as HttpMiddleware[]
+        );
 
         if (
             !decoratorOptions?.schema &&
@@ -241,33 +246,44 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                     (controller as any)[ERROR_HANDLER] ||
                     server.errorHandler,
                 serializer: decoratorOptions?.serializer,
-                updateMiddlewares: ({ controller, middlewares }) => {
-                    if (!decoratorOptions?.schema) {
-                        return;
+                updateMiddlewares: ({ controller, globalOptions, middlewares }) => {
+                    // use query() middleware?
+                    let shouldAddQueryMiddleware = true;
+                    if (isNil(decoratorOptions?.noQueryParams)) {
+                        shouldAddQueryMiddleware = !globalOptions?.noQueryParams;
+                    } else {
+                        shouldAddQueryMiddleware = !decoratorOptions?.noQueryParams;
                     }
 
-                    throwIfOptionsIncompatibleWithHTTPMethod();
+                    // schema?
+                    if (decoratorOptions?.schema) {
+                        throwIfOptionsIncompatibleWithHTTPMethod();
 
-                    const validationErrorHandler =
-                        createWrapperValidationErrorHandler(
-                            decoratorOptions?.onValidationFailed ||
-                            (controller as any)[VALIDATION_ERROR_HANDLER]
-                        ) || defaultValidationFailedHandler;
+                        const validationErrorHandler =
+                            createWrapperValidationErrorHandler(
+                                decoratorOptions?.onValidationFailed ||
+                                (controller as any)[VALIDATION_ERROR_HANDLER]
+                            ) || defaultValidationFailedHandler;
 
-                    const createDataParser: () => HttpMiddleware = isNil(decoratorOptions?.format) ?
-                        () => json({
-                            limit: decoratorOptions?.limit
-                        }) :
-                        () => createBodyParserMiddlewareByFormat(decoratorOptions?.format || HttpInputDataFormat.JSON, {
-                            limit: decoratorOptions?.limit
-                        });
+                        const createDataParser: () => HttpMiddleware = isNil(decoratorOptions?.format) ?
+                            () => json({
+                                limit: decoratorOptions?.limit
+                            }) :
+                            () => createBodyParserMiddlewareByFormat(decoratorOptions?.format || HttpInputDataFormat.JSON, {
+                                limit: decoratorOptions?.limit
+                            });
 
-                    middlewares.push(
-                        createDataParser(),
-                        validate(decoratorOptions.schema, {
-                            onValidationFailed: validationErrorHandler
-                        })
-                    );
+                        middlewares.push(
+                            createDataParser(),
+                            validate(decoratorOptions.schema, {
+                                onValidationFailed: validationErrorHandler
+                            })
+                        );
+
+                        if (shouldAddQueryMiddleware) {
+                            middlewares.unshift(query());  // add query parser to beginning
+                        }
+                    }
                 }
             })
         );
@@ -295,7 +311,7 @@ function createInitControllerMethodAction({
     serializer,
     updateMiddlewares
 }: ICreateInitControllerMethodActionOptions): InitControllerMethodAction {
-    return ({ controller, relativeFilePath, method, server }) => {
+    return ({ controller, relativeFilePath, method, server, globalOptions }) => {
         const dir = path.dirname(relativeFilePath);
         const fileName = path.basename(relativeFilePath, path.extname(relativeFilePath));
 
@@ -329,7 +345,8 @@ function createInitControllerMethodAction({
 
         updateMiddlewares({
             controller,
-            middlewares
+            middlewares,
+            globalOptions
         });
 
         (server as any)[httpMethod](routerPath, middlewares, createControllerMethodRequestHandler({
@@ -605,7 +622,8 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                             fullFilePath: cls.file.fullPath,
                             method: propValue,
                             relativeFilePath: cls.file.relativePath,
-                            server
+                            server,
+                            globalOptions: options
                         });
                     });
 
