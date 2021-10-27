@@ -11,7 +11,7 @@ const routePaths: HttpRequestPath[] = [
 ];
 
 describe('yaml() middleware', () => {
-    ['delete', 'options', 'patch', 'put', 'post', 'trace'].forEach(method => {
+    ['patch', 'put', 'post'].forEach(method => {
         const methodName = method.toUpperCase();
 
         it.each(routePaths)(`should return 200 when do a ${methodName} request with valid YAML data`, async (path) => {
