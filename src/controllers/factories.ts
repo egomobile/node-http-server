@@ -31,7 +31,7 @@ import { toSwaggerPath } from '../swagger/utils';
 type GetContollerValue<TValue extends any = any> = (controller: IHttpController, server: IHttpServer) => TValue;
 
 interface ICreateControllerMethodRequestHandlerOptions {
-    getError: GetterFunc<HttpErrorHandler>;
+    getErrorHandler: GetterFunc<HttpErrorHandler>;
     handler: HttpRequestHandler;
 }
 
@@ -47,7 +47,7 @@ export interface ICreateHttpMethodDecoratorOptions {
 interface ICreateInitControllerMethodActionOptions {
     controllerMethodName: string;
     controllerRouterPath: Nilable<string>;
-    getError: GetContollerValue<HttpErrorHandler>;
+    getErrorHandler: GetContollerValue<HttpErrorHandler>;
     httpMethod: HttpMethod;
     middlewares: HttpMiddleware[];
     serializer: Nilable<ResponseSerializer>;
@@ -66,14 +66,14 @@ interface IUpdateMiddlewaresOptions {
     middlewares: HttpMiddleware[];
 }
 
-function createControllerMethodRequestHandler({ getError, handler }: ICreateControllerMethodRequestHandlerOptions): HttpRequestHandler {
+function createControllerMethodRequestHandler({ getErrorHandler, handler }: ICreateControllerMethodRequestHandlerOptions): HttpRequestHandler {
     handler = asAsync<HttpRequestHandler>(handler);
 
     return async (request, response) => {
         try {
             await handler(request, response);
         } catch (error) {
-            await getError()(error, request, response);
+            await getErrorHandler()(error, request, response);
         }
     };
 }
@@ -242,9 +242,13 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                 controllerRouterPath: decoratorOptions?.path,
                 httpMethod: options.name,
                 middlewares,
-                getError: (controller, server) => decoratorOptions?.onError ||
-                    (controller as any)[ERROR_HANDLER] ||
-                    server.errorHandler,
+                getErrorHandler: (controller, server) => {
+                    const errorHandler = decoratorOptions?.onError ||
+                        (controller as any)[ERROR_HANDLER] ||
+                        server.errorHandler;
+
+                    return errorHandler?.bind(controller);
+                },
                 serializer: decoratorOptions?.serializer,
                 updateMiddlewares: ({ controller, globalOptions, middlewares }) => {
                     // use query() middleware?
@@ -260,9 +264,11 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                         throwIfOptionsIncompatibleWithHTTPMethod();
 
                         const validationErrorHandler =
-                            createWrapperValidationErrorHandler(
-                                decoratorOptions?.onValidationFailed ||
-                                (controller as any)[VALIDATION_ERROR_HANDLER]
+                            createWrappedValidationErrorHandler(
+                                (
+                                    decoratorOptions?.onValidationFailed ||
+                                    (controller as any)[VALIDATION_ERROR_HANDLER]
+                                )?.bind(controller)
                             ) || defaultValidationFailedHandler;
 
                         const createDataParser: () => HttpMiddleware = isNil(decoratorOptions?.format) ?
@@ -305,7 +311,7 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
 function createInitControllerMethodAction({
     controllerMethodName,
     controllerRouterPath,
-    getError,
+    getErrorHandler,
     httpMethod,
     middlewares,
     serializer,
@@ -350,11 +356,19 @@ function createInitControllerMethodAction({
         });
 
         (server as any)[httpMethod](routerPath, middlewares, createControllerMethodRequestHandler({
-            getError: () => getError(controller, server),
+            getErrorHandler: () => getErrorHandler(controller, server),
             handler: createRequestHandlerWithSerializer(
-                method as HttpRequestHandler,
-                () => serializer ||
-                    (controller as any)[RESPONSE_SERIALIZER]
+                (method as HttpRequestHandler).bind(controller),
+                () => {
+                    const controllerSerializer: ResponseSerializer = serializer || (controller as any)[RESPONSE_SERIALIZER];
+                    if (controllerSerializer) {
+                        return asAsync<ResponseSerializer>(
+                            controllerSerializer.bind(controller)
+                        );
+                    }
+
+                    return controllerSerializer;
+                }
             )
         }));
     };
@@ -396,7 +410,7 @@ function createInitControllerMethodSwaggerAction({ doc, method, methodName }: IC
 
                         const docUpdater: Nilable<DocumentationUpdater> = (controller as any)[DOCUMENTATION_UPDATER];
                         if (docUpdater) {
-                            docUpdater({
+                            docUpdater.bind(controller)({
                                 documentation: doc,
                                 method: httpMethod.toUpperCase() as Uppercase<HttpMethod>,
                                 path: routerPath
@@ -432,7 +446,7 @@ function createRequestHandlerWithSerializer(handler: HttpRequestHandler, getSeri
     };
 }
 
-function createWrapperValidationErrorHandler(handler: Nilable<ValidationFailedHandler>): Nilable<ValidationFailedHandler> {
+function createWrappedValidationErrorHandler(handler: Nilable<ValidationFailedHandler>): Nilable<ValidationFailedHandler> {
     if (isNil(handler)) {
         return handler;
     }

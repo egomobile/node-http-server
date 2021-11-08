@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.16.0
+
+- now bind `ValidationErrorHandler()`, `ErrorHandler()`, `Serializer`, `DocumentationUpdater()` and controller methods to controller instance
+
 ## 0.15.1
 
 - [query() middleware](https://egomobile.github.io/node-http-server/modules.html#query) is automatically added as 1st middleware to each controller by default now
