@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.17.0
+
+- removed `bind()` calls
+
 ## 0.16.0
 
 - now bind `ValidationErrorHandler()`, `ErrorHandler()`, `Serializer`, `DocumentationUpdater()` and controller methods to controller instance
