@@ -27,7 +27,7 @@ import { asAsync, isNil } from '../utils';
 export type ApiKeyValidator = (request: IHttpRequest, response: IHttpResponse) => any;
 
 /**
- * Options for 'text()' function.
+ * Options for 'apiKey()' function.
  */
 export interface IApiKeyOptions {
     /**
@@ -50,6 +50,12 @@ interface ICreateMiddlewareOptions {
  */
 export const defaultApiKeyHeader = 'x-api-key';
 
+/**
+ * The default handler, that is invoked, when an API key validation failed.
+ *
+ * @param {IHttpRequest} request The request context.
+ * @param {IHttpResponse} response The response context.
+ */
 export const defaultApiKeyValidationFailedHandler: HttpRequestHandler = async (request, response) => {
     if (!response.headersSent) {
         response.writeHead(401, {
@@ -61,11 +67,9 @@ export const defaultApiKeyValidationFailedHandler: HttpRequestHandler = async (r
 };
 
 /**
- * Creates a middleware, that reads the whole input of the request stream,
- * converts it as string and writes the value to 'body' property of the request
- * context.
+ * Creates a middleware, that checks for an API key.
  *
- * @param {Nilable<string>} header The custom header name.
+ * @param {Nilable<string>} header The custom header name. Default: 'x-api-key'
  * @param {string} key The key.
  * @param {ApiKeyValidator} validator The validator.
  * @param {Nilable<IApiKeyOptions>} [options] Custom options.
@@ -154,7 +158,7 @@ export function apiKey(
             }
         }
 
-        validator = createApiValidator((header || defaultApiKeyHeader).toLowerCase().trim(), arg1);
+        validator = createApiKeyValidator((header || defaultApiKeyHeader).toLowerCase().trim(), arg1);
     } else {
         // args[0] => ApiKeyValidator
         // args[1] => HttpRequestHandler
@@ -191,6 +195,6 @@ function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOp
     };
 }
 
-function createApiValidator(header: string, key: string): ApiKeyValidator {
+function createApiKeyValidator(header: string, key: string): ApiKeyValidator {
     return async (request) => request.headers[header] === key;
 }

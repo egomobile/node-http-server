@@ -1,10 +1,11 @@
 # Change Log (@egomobile/http-server)
 
-## 0.15.0
+## 0.15.1
 
 - [query() middleware](https://egomobile.github.io/node-http-server/modules.html#query) is automatically added as 1st middleware to each controller by default now
 - add `noQueryParams` to [IControllerRouteOptions](https://egomobile.github.io/node-http-server/interfaces/IControllerRouteOptions.html) and [IControllersOptions](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html)
 - add missing method check, if try to use schema validation in controller methods
+- (bug-)fixes
 
 ## 0.14.0
 
