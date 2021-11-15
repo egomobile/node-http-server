@@ -30,7 +30,7 @@ import { createHttpMethodDecorator } from './factories';
  *
  * @Controller()
  * export default class IndexController extends ControllerBase {
- *   // can by accessed with a HEAD request
+ *   // can be accessed with a HEAD request
  *   // by using route /
  *   @HEAD()
  *   async index(request: IHttpRequest, response: IHttpResponse) {
@@ -39,12 +39,21 @@ import { createHttpMethodDecorator } from './factories';
  *     })
  *   }
  *
- *   // can by accessed with a HEAD request
+ *   // can be accessed with a HEAD request
  *   // by using route /foo
  *   @HEAD()
  *   async foo(request: IHttpRequest, response: IHttpResponse) {
  *     response.writeHead(200, {
  *       'x-ego-header1': 'foo: ' + new Date()
+ *     })
+ *   }
+ *
+ *   // can be accessed with a HEAD request
+ *   // by using route /baz
+ *   @HEAD('/baz')
+ *   async foo(request: IHttpRequest, response: IHttpResponse) {
+ *     response.writeHead(200, {
+ *       'x-ego-header1': 'baz: ' + new Date()
  *     })
  *   }
  * }

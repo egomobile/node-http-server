@@ -31,18 +31,25 @@ import { createHttpMethodDecorator } from './factories';
  *
  * @Controller()
  * export default class IndexController extends ControllerBase {
- *   // can by accessed with a PUT request
+ *   // can be accessed with a PUT request
  *   // by using route /
  *   @PUT()
  *   async index(request: IHttpRequest, response: IHttpResponse) {
  *     response.write('(root): ' + new Date())
  *   }
  *
- *   // can by accessed with a PUT request
+ *   // can be accessed with a PUT request
  *   // by using route /foo
  *   @PUT()
  *   async foo(request: IHttpRequest, response: IHttpResponse) {
  *     response.write('foo: ' + new Date())
+ *   }
+ *
+ *   // can be accessed with a PUT request
+ *   // by using route /baz
+ *   @PUT('/baz')
+ *   async bar(request: IHttpRequest, response: IHttpResponse) {
+ *     response.write('baz: ' + new Date())
  *   }
  * }
  * ```
