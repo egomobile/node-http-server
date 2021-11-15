@@ -30,18 +30,25 @@ import type { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRout
  *
  * @Controller()
  * export default class IndexController extends ControllerBase {
- *   // can by accessed with a GET request
+ *   // can be accessed with a GET request
  *   // by using route /
  *   @GET()
  *   async index(request: IHttpRequest, response: IHttpResponse) {
  *     response.write('(root): ' + new Date())
  *   }
  *
- *   // can by accessed with a GET request
+ *   // can be accessed with a GET request
  *   // by using route /foo
  *   @GET()
  *   async foo(request: IHttpRequest, response: IHttpResponse) {
  *     response.write('foo: ' + new Date())
+ *   }
+ *
+ *   // can be accessed with a GET request
+ *   // by using route /baz
+ *   @GET('/baz')
+ *   async bar(request: IHttpRequest, response: IHttpResponse) {
+ *     response.write('baz: ' + new Date())
  *   }
  * }
  * ```

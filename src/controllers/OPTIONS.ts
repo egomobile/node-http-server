@@ -30,18 +30,25 @@ import { createHttpMethodDecorator } from './factories';
  *
  * @Controller()
  * export default class IndexController extends ControllerBase {
- *   // can by accessed with a OPTIONS request
+ *   // can be accessed with a OPTIONS request
  *   // by using route /
  *   @OPTIONS()
  *   async index(request: IHttpRequest, response: IHttpResponse) {
  *     response.write('(root): ' + new Date())
  *   }
  *
- *   // can by accessed with a OPTIONS request
+ *   // can be accessed with a OPTIONS request
  *   // by using route /foo
  *   @OPTIONS()
  *   async foo(request: IHttpRequest, response: IHttpResponse) {
  *     response.write('foo: ' + new Date())
+ *   }
+ *
+ *   // can be accessed with a OPTIONS request
+ *   // by using route /baz
+ *   @OPTIONS('/baz')
+ *   async bar(request: IHttpRequest, response: IHttpResponse) {
+ *     response.write('baz: ' + new Date())
  *   }
  * }
  * ```

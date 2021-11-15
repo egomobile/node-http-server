@@ -1,8 +1,9 @@
 # Change Log (@egomobile/http-server)
 
-## 0.17.0
+## 0.17.1
 
 - removed `bind()` calls
+- (bug-)fixes
 
 ## 0.16.0
 
