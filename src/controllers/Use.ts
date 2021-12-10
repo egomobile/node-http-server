@@ -25,35 +25,35 @@ import { isClass } from '../utils';
  *
  * @example
  * ```
- * import { Controller, ControllerBase, GET, IHttpRequest, IHttpResponse, NextFunction, Use } from '@egomobile/http-server'
+ * import { Controller, ControllerBase, IHttpRequest, IHttpResponse, json, NextFunction, PATCH, POST, schema, Use, validate } from '@egomobile/http-server'
  *
- * const myGlobalMiddleware1 = async (request: any, response: IHttpResponse, next: NextFunction) => {
- *   request.foo = 1.2  // request.foo === 1.2
- *   next()
- * }
+ * const fooSchema = schema.object({
+ *   // schema definition for /foo
+ * })
  *
- * const myGlobalMiddleware2 = async (request: any, response: IHttpResponse, next: NextFunction) => {
- *   request.foo += 34  // request.foo === 35.2
- *   next()
- * }
+ * const barSchema = schema.object({
+ *   // schema definition for /bar
+ * })
  *
  * @Controller()
- * @Use(myGlobalMiddleware1, myGlobalMiddleware2)
+ * @Use(json())
  * export default class MyController extends ControllerBase {
- *   @GET('/foo1', [async (request: any, response: IHttpResponse, next: NextFunction) => {
- *     request.foo += '6'  // request.foo === '35.26'
- *     next()
- *   }])
- *   async foo1(request: any, response: IHttpResponse) {
- *     assert.strictEqual(request.foo, '35.26')
+ *   @POST({
+ *     use: [validate(fooSchema)]  // additional, method specific middleware
+ *   })
+ *   async foo(request: IHttpRequest, response: IHttpResponse) {
+ *     // request.body should now be a plain object
+ *     // created from JSON string input
+ *     // and validated with fooSchema
  *   }
  *
- *   @GET('/foo2', [async (request: any, response: IHttpResponse, next: NextFunction) => {
- *     request.foo += '78'  // request.foo === '35.278'
- *     next()
- *   }])
- *   async foo2(request: any, response: IHttpResponse) {
- *     assert.strictEqual(request.foo, '35.278')
+ *   @PATCH({
+ *     use: [validate(barSchema)]
+ *   })
+ *   async bar(request: IHttpRequest, response: IHttpResponse) {
+ *     // request.body should now also be a plain object
+ *     // created from JSON string input
+ *     // and validated with barSchema
  *   }
  * }
  * ```
