@@ -25,7 +25,7 @@ import { isClass } from '../utils';
  *
  * @example
  * ```
- * import { Controller, ControllerBase, IHttpRequest, IHttpResponse, json, NextFunction, PATCH, POST, schema, Use, validate } from '@egomobile/http-server'
+ * import { Controller, ControllerBase, IHttpRequest, IHttpResponse, json, PATCH, POST, schema, Use, validate } from '@egomobile/http-server'
  *
  * const fooSchema = schema.object({
  *   // schema definition for /foo
