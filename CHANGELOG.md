@@ -1,5 +1,11 @@
 # Change Log (@egomobile/http-server)
 
+## 0.18.0
+
+- replace [mime-types](https://www.npmjs.com/package/mime-types) with [mrmime](https://www.npmjs.com/package/mrmime)
+- `npm update`s
+- (bug-)fixes
+
 ## 0.17.1
 
 - removed `bind()` calls

@@ -3,5 +3,6 @@ node_modules/
 /sandbox.ts
 /docs
 /lib
-/sandbox.http
+/sandbox.*
 /sandbox/**/*
+/TODOs.md

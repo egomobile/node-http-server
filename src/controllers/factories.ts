@@ -118,7 +118,7 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
 
                     if (!isNil(arg3)) {
                         if (typeof arg3 === 'number') {
-                            decoratorOptions = { limit: limitToBytes(arg3) };
+                            decoratorOptions.limit = limitToBytes(arg3);
                         } else {
                             throw new TypeError('arg3 must be of type number');
                         }
