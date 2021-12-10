@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-server)
 
-## 0.18.0
+## 0.18.1
 
 - implement [@Use()](https://egomobile.github.io/node-http-server/modules.html#Use) decorator
 - replace [mime-types](https://www.npmjs.com/package/mime-types) with [mrmime](https://www.npmjs.com/package/mrmime)

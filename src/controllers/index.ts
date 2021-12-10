@@ -58,4 +58,5 @@ export * from './POST';
 export * from './PUT';
 export * from './Serializer';
 export * from './TRACE';
+export * from './Use';
 export * from './ValidationErrorHandler';
