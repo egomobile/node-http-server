@@ -14,6 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 export const CONTROLLERS_CONTEXES = Symbol('CONTROLLERS_CONTEXES');
+export const CONTROLLER_MIDDLEWARES = Symbol('CONTROLLER_MIDDLEWARES');
 export const DOCUMENTATION_UPDATER = Symbol('DOCUMENTATION_UPDATER');
 export const ERROR_HANDLER = Symbol('ERROR_HANDLER');
 export const HTTP_METHODS = Symbol('HTTP_METHODS');

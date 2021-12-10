@@ -15,7 +15,7 @@
 
 import fs from 'fs';
 import indexHtml from './resources/index_html';
-import mimeTypes from 'mime-types';
+import mrmime from 'mrmime';
 import path from 'path';
 import type { OpenAPIV3 } from 'openapi-types';
 import { normalizeRouterPath } from '../controllers/utils';
@@ -109,7 +109,7 @@ export function setupSwaggerUIForServerControllers({
 
                 if (existingFile) {  // does file exist?
                     existingFile = path.resolve(existingFile);
-                    const contentType = mimeTypes.contentType(path.basename(existingFile)) || 'application/octet-stream';
+                    const contentType = mrmime.lookup(path.basename(existingFile)) || 'application/octet-stream';
 
                     response.writeHead(200, {
                         'Content-Type': contentType

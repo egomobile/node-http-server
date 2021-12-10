@@ -1,5 +1,12 @@
 # Change Log (@egomobile/http-server)
 
+## 0.18.0
+
+- implement [@Use()](https://egomobile.github.io/node-http-server/modules.html#Use) decorator
+- replace [mime-types](https://www.npmjs.com/package/mime-types) with [mrmime](https://www.npmjs.com/package/mrmime)
+- `npm update`s
+- (bug-)fixes, like [issue #11](https://github.com/egomobile/node-http-server/issues/11)
+
 ## 0.17.1
 
 - removed `bind()` calls

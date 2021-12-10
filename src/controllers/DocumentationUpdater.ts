@@ -25,7 +25,7 @@ import { getListFromObject, getMethodOrThrow } from './utils';
  *
  * @example
  * ```
- * import { Controller, ControllerBase, DocumentationUpdater, GET, IDocumentationUpdaterContext, IHttpRequest, IHttpResponse, OpenAPIV3 } from '@egomobile/http-server'
+ * import { Controller, ControllerBase, DocumentationUpdater, GET, IDocumentationUpdaterContext, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
  *
  * @Controller()
  * export default class MyController extends ControllerBase {

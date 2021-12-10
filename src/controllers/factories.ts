@@ -18,7 +18,7 @@ import minimatch from 'minimatch';
 import path from 'path';
 import type { OpenAPIV3 } from 'openapi-types';
 import { isSchema } from 'joi';
-import { CONTROLLERS_CONTEXES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_SERVER_CONTROLLER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from '../constants';
+import { CONTROLLERS_CONTEXES, CONTROLLER_MIDDLEWARES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_SERVER_CONTROLLER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from '../constants';
 import { buffer, defaultValidationFailedHandler, json, query, validate } from '../middlewares';
 import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdater, GetterFunc, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer, ValidationFailedHandler } from '../types';
 import type { IControllerClass, IControllerContext, IControllerFile, InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo } from '../types/internal';
@@ -118,7 +118,7 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
 
                     if (!isNil(arg3)) {
                         if (typeof arg3 === 'number') {
-                            decoratorOptions = { limit: limitToBytes(arg3) };
+                            decoratorOptions.limit = limitToBytes(arg3);
                         } else {
                             throw new TypeError('arg3 must be of type number');
                         }
@@ -279,10 +279,10 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                                 onValidationFailed: validationErrorHandler
                             })
                         );
+                    }
 
-                        if (shouldAddQueryMiddleware) {
-                            middlewares.unshift(query());  // add query parser to beginning
-                        }
+                    if (shouldAddQueryMiddleware) {
+                        middlewares.unshift(query());  // add query parser to beginning
                     }
                 }
             })
@@ -311,7 +311,7 @@ function createInitControllerMethodAction({
     serializer,
     updateMiddlewares
 }: ICreateInitControllerMethodActionOptions): InitControllerMethodAction {
-    return ({ controller, relativeFilePath, method, server, globalOptions }) => {
+    return ({ controller, controllerClass, relativeFilePath, method, server, globalOptions }) => {
         const dir = path.dirname(relativeFilePath);
         const fileName = path.basename(relativeFilePath, path.extname(relativeFilePath));
 
@@ -348,6 +348,12 @@ function createInitControllerMethodAction({
             middlewares,
             globalOptions
         });
+
+        if (controllerClass.prototype[CONTROLLER_MIDDLEWARES]) {
+            // add controler wide middlewares
+            // at the beginning of the list
+            middlewares.unshift(...controllerClass.prototype[CONTROLLER_MIDDLEWARES]);
+        }
 
         (server as any)[httpMethod](routerPath, middlewares, createControllerMethodRequestHandler({
             getErrorHandler: () => getErrorHandler(controller, server),
