@@ -23,6 +23,7 @@ import { isClass } from '../utils';
 /**
  * Sets up one or more middlewares for all methods of the underlying controller.
  *
+ * @example
  * ```
  * import { Controller, ControllerBase, GET, IHttpRequest, IHttpResponse, NextFunction, Use } from '@egomobile/http-server'
  *
