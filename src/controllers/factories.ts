@@ -279,10 +279,10 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                                 onValidationFailed: validationErrorHandler
                             })
                         );
+                    }
 
-                        if (shouldAddQueryMiddleware) {
-                            middlewares.unshift(query());  // add query parser to beginning
-                        }
+                    if (shouldAddQueryMiddleware) {
+                        middlewares.unshift(query());  // add query parser to beginning
                     }
                 }
             })
