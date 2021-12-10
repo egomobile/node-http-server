@@ -2,7 +2,7 @@
 
 ## 0.18.0
 
-- implement [@Use()](https://egomobile.github.io/node-http-server/modules.html#Use)
+- implement [@Use()](https://egomobile.github.io/node-http-server/modules.html#Use) decorator
 - replace [mime-types](https://www.npmjs.com/package/mime-types) with [mrmime](https://www.npmjs.com/package/mrmime)
 - `npm update`s
 - (bug-)fixes, like [PR #11](https://github.com/egomobile/node-http-server/issues/11)
