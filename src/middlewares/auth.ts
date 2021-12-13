@@ -140,7 +140,7 @@ export const defaultAuthFailedHandler: AuthValidationFailedHandler = async (requ
  * const app = createServer()
  *
  * // check if authorization header uses 'Bearer' scheme
- * // and the its value matches all criteria of 'checkBearer()'
+ * // and its value matches all criteria of 'checkBearer()'
  * app.get('/', auth('Bearer', checkBearer), async (response, response) => {
  *   // your code, if bearer value is valid
  * })
