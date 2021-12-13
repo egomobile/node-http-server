@@ -37,7 +37,46 @@ export type AuthValidator = (scheme: string, value: string, request: IHttpReques
 /**
  * List of auth validators, grouped by schemes.
  */
-export type AuthValidators = Record<string, AuthValidatorWithoutScheme>;
+export type AuthValidators = {
+    /**
+     * @see https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-auth-using-authorization-header.html
+     */
+    'aws4-hmac-sha256'?: AuthValidatorWithoutScheme;
+    /**
+     * @see https://datatracker.ietf.org/doc/html/rfc7617
+     */
+    'basic'?: AuthValidatorWithoutScheme;
+    /**
+     * @see https://datatracker.ietf.org/doc/html/rfc6750
+     */
+    'bearer'?: AuthValidatorWithoutScheme;
+    /**
+     * @see https://datatracker.ietf.org/doc/html/rfc7486
+     */
+    'digest'?: AuthValidatorWithoutScheme;
+    /**
+     * @see https://datatracker.ietf.org/doc/html/rfc7486
+     */
+    'hoba'?: AuthValidatorWithoutScheme;
+    /**
+     * @see https://datatracker.ietf.org/doc/html/rfc8120
+     */
+    'mutal'?: AuthValidatorWithoutScheme;
+    /**
+     * @see https://www.ietf.org/rfc/rfc4559.txt
+     */
+    'negotiate'?: AuthValidatorWithoutScheme;
+    /**
+     * @see https://datatracker.ietf.org/doc/html/rfc7804
+     */
+    'scram-sha-256'?: AuthValidatorWithoutScheme;
+    /**
+     * @see https://datatracker.ietf.org/doc/html/rfc8292
+     */
+    'vapid'?: AuthValidatorWithoutScheme;
+
+    [scheme: string]: AuthValidatorWithoutScheme;
+};
 
 /**
  * Validator, that checks value of an 'Authorization' header.
