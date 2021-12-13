@@ -75,6 +75,9 @@ export type AuthValidators = {
      */
     'vapid'?: AuthValidatorWithoutScheme;
 
+    /**
+     * Custom schemes and their validators.
+     */
     [scheme: string]: AuthValidatorWithoutScheme;
 };
 
