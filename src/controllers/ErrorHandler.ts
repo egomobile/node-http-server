@@ -57,10 +57,6 @@ export function ErrorHandler(): MethodDecorator {
 
         getListFromObject<InitControllerErrorHandlerAction>(method, SETUP_ERROR_HANDLER).push(
             ({ controller }) => {
-                if ((controller as any)[ERROR_HANDLER]) {
-                    throw new Error(`Cannot redefine ${String(methodName)} method as controllers error handler`);
-                }
-
                 (controller as any)[ERROR_HANDLER] = method.bind(controller);
             }
         );

@@ -61,10 +61,6 @@ export function Serializer(): MethodDecorator {
 
         getListFromObject<InitControllerSerializerAction>(method, SETUP_RESPONSE_SERIALIZER).push(
             ({ controller }) => {
-                if ((controller as any)[RESPONSE_SERIALIZER]) {
-                    throw new Error(`Cannot redefine ${String(methodName)} method as controllers serializer`);
-                }
-
                 (controller as any)[RESPONSE_SERIALIZER] = method.bind(controller);
             }
         );

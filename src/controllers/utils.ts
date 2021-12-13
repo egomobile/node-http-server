@@ -30,11 +30,15 @@ export function createBodyParserMiddlewareByFormat(format: HttpInputDataFormat, 
     }
 }
 
-export function getListFromObject<T extends any = any>(obj: any, key: PropertyKey): T[] {
+export function getListFromObject<T extends any = any>(obj: any, key: PropertyKey, deleteKey = false): T[] {
     let list: Nilable<T[]> = obj[key];
 
     if (!list) {
         obj[key] = list = [];
+    }
+
+    if (deleteKey) {
+        delete obj[key];
     }
 
     return list;

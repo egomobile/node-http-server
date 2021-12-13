@@ -4,11 +4,14 @@
 
 - implement [auth](https://egomobile.github.io/node-http-server/modules.html#auth) middleware
 - improve [defaultApiKeyValidationFailedHandler](https://egomobile.github.io/node-http-server/modules.html#defaultApiKeyValidationFailedHandler) and [defaultParseErrorHandler](https://egomobile.github.io/node-http-server/modules.html#defaultParseErrorHandler)
+- code cleanups and improvements
+- (bug-)fixes
 
 ## 0.18.1
 
 - implement [@Use()](https://egomobile.github.io/node-http-server/modules.html#Use) decorator
 - replace [mime-types](https://www.npmjs.com/package/mime-types) with [mrmime](https://www.npmjs.com/package/mrmime)
+- can download Swagger documentation over endpoints like `/swagger/yaml` now
 - `npm update`s
 - (bug-)fixes, like [issue #11](https://github.com/egomobile/node-http-server/issues/11)
 

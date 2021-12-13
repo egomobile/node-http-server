@@ -14,12 +14,13 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import fs from 'fs';
-import indexHtml from './resources/index_html';
+import yaml from 'js-yaml';
 import mrmime from 'mrmime';
-import path from 'path';
 import type { OpenAPIV3 } from 'openapi-types';
+import path from 'path';
 import { normalizeRouterPath } from '../controllers/utils';
 import type { IControllersSwaggerOptions, IHttpServer } from '../types';
+import indexHtml from './resources/index_html';
 import { createSwaggerPathValidator, getSwaggerDocsBasePath } from './utils';
 
 export interface ISetupSwaggerUIForServerControllersOptions {
@@ -43,6 +44,7 @@ export function setupSwaggerUIForServerControllers({
     const basePathWithSuffix = basePath + (basePath.endsWith('/') ? '' : '/');
 
     const documentJson = Buffer.from(JSON.stringify(document), 'utf8');
+    const documentYAML = Buffer.from(yaml.dump(document), 'utf8');
 
     document = JSON.parse(
         documentJson.toString('utf8')
@@ -72,6 +74,18 @@ export function setupSwaggerUIForServerControllers({
                     'Content-Length': String(documentJson.length)
                 });
                 response.write(documentJson);
+
+                return;
+            }
+
+            // return as YAML
+            if (['/yaml', '/yaml/'].includes(relativePath)) {
+                response.writeHead(200, {
+                    'Content-Disposition': 'attachment; filename="api-openapi3.yaml',
+                    'Content-Type': 'application/x-yaml; charset=utf-8',
+                    'Content-Length': String(documentYAML.length)
+                });
+                response.write(documentYAML);
 
                 return;
             }

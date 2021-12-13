@@ -60,10 +60,6 @@ export function ValidationErrorHandler(): MethodDecorator {
 
         getListFromObject<InitControllerValidationErrorHandlerAction>(method, SETUP_VALIDATION_ERROR_HANDLER).push(
             ({ controller }) => {
-                if ((controller as any)[VALIDATION_ERROR_HANDLER]) {
-                    throw new Error(`Cannot redefine ${String(methodName)} method as controllers validation error handler`);
-                }
-
                 (controller as any)[VALIDATION_ERROR_HANDLER] = method.bind(controller);
             }
         );

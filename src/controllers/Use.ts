@@ -74,10 +74,6 @@ export function Use(...middlewares: HttpMiddleware[]): ClassDecorator {
 
         const controllerClass: any = classFunction.prototype;
 
-        if (controllerClass[CONTROLLER_MIDDLEWARES]) {
-            throw new Error('Cannot redefine list of controller wide middlewares');
-        }
-
         controllerClass[CONTROLLER_MIDDLEWARES] = middlewares;
     };
 }

@@ -14,19 +14,19 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import fs from 'fs';
-import minimatch from 'minimatch';
-import path from 'path';
-import type { OpenAPIV3 } from 'openapi-types';
 import { isSchema } from 'joi';
-import { CONTROLLERS_CONTEXES, CONTROLLER_MIDDLEWARES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_SERVER_CONTROLLER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from '../constants';
+import minimatch from 'minimatch';
+import type { OpenAPIV3 } from 'openapi-types';
+import path from 'path';
+import { CONTROLLERS_CONTEXES, CONTROLLER_MIDDLEWARES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from '../constants';
 import { buffer, defaultValidationFailedHandler, json, query, validate } from '../middlewares';
+import { setupSwaggerUIForServerControllers } from '../swagger';
+import { toSwaggerPath } from '../swagger/utils';
 import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdater, GetterFunc, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer, ValidationFailedHandler } from '../types';
 import type { IControllerClass, IControllerContext, IControllerFile, InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo } from '../types/internal';
 import { asAsync, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, walkDirSync } from '../utils';
 import { params } from '../validators/params';
 import { createBodyParserMiddlewareByFormat, getListFromObject, getMethodOrThrow, normalizeRouterPath } from './utils';
-import { setupSwaggerUIForServerControllers } from '../swagger';
-import { toSwaggerPath } from '../swagger/utils';
 
 type GetContollerValue<TValue extends any = any> = (controller: IHttpController, server: IHttpServer) => TValue;
 
@@ -289,7 +289,7 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
         );
 
         if (decoratorOptions?.documentation) {
-            getListFromObject<InitControllerMethodSwaggerAction>(method, INIT_SERVER_CONTROLLER_ACTIONS).push(
+            getListFromObject<InitControllerMethodSwaggerAction>(method, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS).push(
                 createInitControllerMethodSwaggerAction({
                     doc: JSON.parse(
                         JSON.stringify(decoratorOptions.documentation)
@@ -367,10 +367,6 @@ function createInitControllerMethodAction({
 
 function createInitControllerMethodSwaggerAction({ doc, method, methodName }: ICreateInitControllerMethodSwaggerActionOptions): InitControllerMethodSwaggerAction {
     return ({ apiDocument, controller }) => {
-        if ((method as any)[SWAGGER_METHOD_INFO]) {
-            throw new Error(`Cannot redefine OpenAPI definition of ${String(methodName)}`);
-        }
-
         const info: ISwaggerMethodInfo = {
             doc,
             method
@@ -617,9 +613,10 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                 const propValue: unknown = (controller as any)[prop];
                 if (typeof propValue === 'function') {
                     if (prop === 'constructor') {
-                        return;
+                        return;  // not the constructor
                     }
 
+                    // controller methods
                     getListFromObject<InitControllerMethodAction>(propValue, INIT_CONTROLLER_METHOD_ACTIONS).forEach(action => {
                         action({
                             controller,
@@ -630,38 +627,43 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                             server,
                             globalOptions: options
                         });
-                    });
+                    }, true);
 
+                    // error handlers
                     getListFromObject<InitControllerErrorHandlerAction>(propValue, SETUP_ERROR_HANDLER).forEach((action) => {
                         action({
                             controller
                         });
-                    });
+                    }, true);
 
+                    // schema validators
                     getListFromObject<InitControllerValidationErrorHandlerAction>(propValue, SETUP_VALIDATION_ERROR_HANDLER).forEach((action) => {
                         action({
                             controller
                         });
-                    });
+                    }, true);
 
+                    // response serializer
                     getListFromObject<InitControllerSerializerAction>(propValue, SETUP_RESPONSE_SERIALIZER).forEach((action) => {
                         action({
                             controller
                         });
-                    });
+                    }, true);
 
+                    // Swagger documentation updater method / action
                     getListFromObject<InitDocumentationUpdaterAction>(propValue, SETUP_DOCUMENTATION_UPDATER).forEach(action => {
                         action({
                             controller
                         });
-                    });
+                    }, true);
 
-                    getListFromObject<InitControllerMethodSwaggerAction>(propValue, INIT_SERVER_CONTROLLER_ACTIONS).forEach(action => {
+                    // Swagger documentation
+                    getListFromObject<InitControllerMethodSwaggerAction>(propValue, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS).forEach(action => {
                         action({
                             apiDocument: swaggerDoc,
                             controller
                         });
-                    });
+                    }, true);
                 }
             });
 

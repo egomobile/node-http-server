@@ -64,10 +64,6 @@ export function DocumentationUpdater(): MethodDecorator {
 
         getListFromObject<InitDocumentationUpdaterAction>(method, SETUP_DOCUMENTATION_UPDATER).push(
             ({ controller }) => {
-                if ((controller as any)[DOCUMENTATION_UPDATER]) {
-                    throw new Error(`Cannot redefine ${String(methodName)} method as documentation updater`);
-                }
-
                 (controller as any)[DOCUMENTATION_UPDATER] = method.bind(controller);
             }
         );

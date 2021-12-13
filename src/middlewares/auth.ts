@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, Nilable } from '../types';
+import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, Nilable, Optional } from '../types';
 import { asAsync, isNil } from '../utils';
 
 /**
@@ -33,53 +33,6 @@ export type AuthValidationFailedHandler = HttpRequestHandler;
  * @returns {boolean|PromiseLike<boolean>} A truely value, that indicates, if criteria do match, or the promise with it.
  */
 export type AuthValidator = (scheme: string, value: string, request: IHttpRequest) => boolean | PromiseLike<boolean>;
-
-/**
- * List of auth validators, grouped by schemes.
- */
-export type AuthValidators = {
-    /**
-     * @see https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-auth-using-authorization-header.html
-     */
-    'aws4-hmac-sha256'?: AuthValidatorWithoutScheme;
-    /**
-     * @see https://datatracker.ietf.org/doc/html/rfc7617
-     */
-    'basic'?: AuthValidatorWithoutScheme;
-    /**
-     * @see https://datatracker.ietf.org/doc/html/rfc6750
-     */
-    'bearer'?: AuthValidatorWithoutScheme;
-    /**
-     * @see https://datatracker.ietf.org/doc/html/rfc7486
-     */
-    'digest'?: AuthValidatorWithoutScheme;
-    /**
-     * @see https://datatracker.ietf.org/doc/html/rfc7486
-     */
-    'hoba'?: AuthValidatorWithoutScheme;
-    /**
-     * @see https://datatracker.ietf.org/doc/html/rfc8120
-     */
-    'mutal'?: AuthValidatorWithoutScheme;
-    /**
-     * @see https://www.ietf.org/rfc/rfc4559.txt
-     */
-    'negotiate'?: AuthValidatorWithoutScheme;
-    /**
-     * @see https://datatracker.ietf.org/doc/html/rfc7804
-     */
-    'scram-sha-256'?: AuthValidatorWithoutScheme;
-    /**
-     * @see https://datatracker.ietf.org/doc/html/rfc8292
-     */
-    'vapid'?: AuthValidatorWithoutScheme;
-
-    /**
-     * Custom schemes and their validators.
-     */
-    [scheme: string]: AuthValidatorWithoutScheme;
-};
 
 /**
  * Validator, that checks value of an 'Authorization' header.
@@ -102,8 +55,55 @@ export interface IAuthOptions {
     /**
      * List of validators, grouped by schemes.
      */
-    validators: AuthValidators;
+    validators: IAuthValidators;
 }
+
+/**
+ * List of auth validators, grouped by schemes.
+ */
+export type IAuthValidators = {
+    /**
+     * @see https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-auth-using-authorization-header.html
+     */
+    'aws4-hmac-sha256'?: Optional<AuthValidatorWithoutScheme>;
+    /**
+     * @see https://datatracker.ietf.org/doc/html/rfc7617
+     */
+    'basic'?: Optional<AuthValidatorWithoutScheme>;
+    /**
+     * @see https://datatracker.ietf.org/doc/html/rfc6750
+     */
+    'bearer'?: Optional<AuthValidatorWithoutScheme>;
+    /**
+     * @see https://datatracker.ietf.org/doc/html/rfc7486
+     */
+    'digest'?: Optional<AuthValidatorWithoutScheme>;
+    /**
+     * @see https://datatracker.ietf.org/doc/html/rfc7486
+     */
+    'hoba'?: Optional<AuthValidatorWithoutScheme>;
+    /**
+     * @see https://datatracker.ietf.org/doc/html/rfc8120
+     */
+    'mutal'?: Optional<AuthValidatorWithoutScheme>;
+    /**
+     * @see https://www.ietf.org/rfc/rfc4559.txt
+     */
+    'negotiate'?: Optional<AuthValidatorWithoutScheme>;
+    /**
+     * @see https://datatracker.ietf.org/doc/html/rfc7804
+     */
+    'scram-sha-256'?: Optional<AuthValidatorWithoutScheme>;
+    /**
+     * @see https://datatracker.ietf.org/doc/html/rfc8292
+     */
+    'vapid'?: Optional<AuthValidatorWithoutScheme>;
+
+    /**
+     * Custom schemes and their validators.
+     */
+    [scheme: string]: Optional<AuthValidatorWithoutScheme>;
+};
 
 interface ICreateMiddlewareOptions {
     onValidationFailed: AuthValidationFailedHandler;
@@ -152,8 +152,8 @@ export const defaultAuthFailedHandler: AuthValidationFailedHandler = async (requ
  */
 export function auth(scheme: string, value: string, onValidationFailed?: Nilable<AuthValidationFailedHandler>): HttpMiddleware;
 export function auth(scheme: string, validator: AuthValidatorWithoutScheme, onValidationFailed?: Nilable<AuthValidationFailedHandler>): HttpMiddleware;
-export function auth(validators: AuthValidators, onValidationFailed?: Nilable<AuthValidationFailedHandler>): HttpMiddleware;
-export function auth(arg1: string | AuthValidators, arg2?: Nilable<string | AuthValidatorWithoutScheme | AuthValidationFailedHandler>, arg3?: Nilable<AuthValidationFailedHandler>): HttpMiddleware {
+export function auth(validators: IAuthValidators, onValidationFailed?: Nilable<AuthValidationFailedHandler>): HttpMiddleware;
+export function auth(arg1: string | IAuthValidators, arg2?: Nilable<string | AuthValidatorWithoutScheme | AuthValidationFailedHandler>, arg3?: Nilable<AuthValidationFailedHandler>): HttpMiddleware {
     let validator: AuthValidator;
     let onValidationFailed: Nilable<AuthValidationFailedHandler>;
 
@@ -161,7 +161,7 @@ export function auth(arg1: string | AuthValidators, arg2?: Nilable<string | Auth
         // [arg1] scheme
         // [arg3] onValidationFailed
 
-        const validators: AuthValidators = {};
+        const validators: IAuthValidators = {};
 
         if (typeof arg2 === 'string') {
             // [arg2] value
@@ -201,9 +201,9 @@ export function auth(arg1: string | AuthValidators, arg2?: Nilable<string | Auth
     });
 }
 
-function createValidatorFromObject(validatorsInput: Nilable<AuthValidators>): AuthValidator {
+function createValidatorFromObject(validatorsInput: Nilable<IAuthValidators>): AuthValidator {
     // make keys / schemes lower case
-    const validators: AuthValidators = {};
+    const validators: IAuthValidators = {};
     for (const [key, value] of Object.entries(validatorsInput || {})) {
         validators[key.toLowerCase().trim()] = value;
     }
@@ -213,7 +213,7 @@ function createValidatorFromObject(validatorsInput: Nilable<AuthValidators>): Au
     return (scheme, value, request) => {
         const v = validators[scheme];
 
-        return v && v(value, request);
+        return (v && v(value, request)) as any;
     };
 }
 
