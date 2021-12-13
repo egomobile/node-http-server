@@ -191,4 +191,28 @@ describe('controllers', () => {
         expect(str.length).toBe(expectedResult.length);
         expect(str).toBe(expectedResult);
     });
+
+    it.each([{
+        path: 'foo1',
+        expectedValue: 'foo1 === 11'
+    }, {
+        path: 'foo2',
+        expectedValue: 'foo2 === 3'
+    }])('should return 200 when do a GET request for existing Test6Controller with global middlewares', async (item) => {
+        const server = createServerAndInitControllers();
+
+        const response = await request(server).get('/test6/' + item.path)
+            .send()
+            .parse(binaryParser)
+            .expect(200);
+
+        const data = response.body;
+        expect(Buffer.isBuffer(data)).toBe(true);
+
+        const str = data.toString('utf8');
+
+        expect(typeof str).toBe('string');
+        expect(str.length).toBe(item.expectedValue.length);
+        expect(str).toBe(item.expectedValue);
+    });
 });
