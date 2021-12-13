@@ -198,11 +198,11 @@ export function sortObjectByKeys<T extends any = any>(obj: T): T {
         return obj;
     }
 
-    const storedKeys = Object.keys(obj as any)
+    const sortedKeys = Object.keys(obj as any)
         .sort((x, y) => compareValuesBy(x, y, k => k.toLowerCase().trim()));
 
     const newObj: any = {};
-    storedKeys.forEach(key => {
+    sortedKeys.forEach(key => {
         newObj[key] = (obj as any)[key];
     });
 
