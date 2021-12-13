@@ -1,5 +1,10 @@
 # Change Log (@egomobile/http-server)
 
+## 0.19.0
+
+- implement [auth](https://egomobile.github.io/node-http-server/modules.html#auth) middleware
+- improve [defaultApiKeyValidationFailedHandler](https://egomobile.github.io/node-http-server/modules.html#defaultApiKeyValidationFailedHandler) and [defaultParseErrorHandler](https://egomobile.github.io/node-http-server/modules.html#defaultParseErrorHandler)
+
 ## 0.18.1
 
 - implement [@Use()](https://egomobile.github.io/node-http-server/modules.html#Use) decorator

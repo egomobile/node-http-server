@@ -47,8 +47,6 @@ export const defaultParseErrorHandler: ParseErrorHandler = async (error, request
             'Content-Length': '0'
         });
     }
-
-    response.end();
 };
 
 /**
@@ -64,11 +62,10 @@ export const defaultValidationFailedHandler: ValidationFailedHandler = async (er
             'Content-Length': '0'
         });
     }
-
-    response.end();
 };
 
 export * from './apiKey';
+export * from './auth';
 export * from './buffer';
 export * from './cookies';
 export * from './json';
@@ -77,3 +74,4 @@ export * from './query';
 export * from './text';
 export * from './validate';
 export * from './yaml';
+

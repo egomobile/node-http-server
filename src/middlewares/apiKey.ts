@@ -62,8 +62,6 @@ export const defaultApiKeyValidationFailedHandler: HttpRequestHandler = async (r
             'Content-Length': '0'
         });
     }
-
-    response.end();
 };
 
 /**
