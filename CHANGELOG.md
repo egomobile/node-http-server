@@ -1,8 +1,9 @@
 # Change Log (@egomobile/http-server)
 
-## 0.21.0
+## 0.21.1
 
 - do not trim value in [auth()](https://egomobile.github.io/node-http-server/modules.html#auth) middleware anymore
+- (bug-)fixes
 
 ## 0.20.0
 
