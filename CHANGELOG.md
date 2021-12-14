@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.20.0
+
+- improve [auth()](https://egomobile.github.io/node-http-server/modules.html#auth) middleware
+
 ## 0.19.0
 
 - implement [auth](https://egomobile.github.io/node-http-server/modules.html#auth) middleware

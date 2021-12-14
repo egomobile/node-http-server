@@ -238,7 +238,7 @@ function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOp
                 value = '';
             }
 
-            isValid = await validator(scheme.toLowerCase(), value, request);
+            isValid = await validator(scheme.toLowerCase(), value.trim(), request);
         } else {
             isValid = false;
         }
