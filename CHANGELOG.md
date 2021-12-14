@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.22.0
+
+- (bug-)fixes
+
 ## 0.21.0
 
 - implement [basicAuth](https://egomobile.github.io/node-http-server/modules.html#basicAuth) middleware

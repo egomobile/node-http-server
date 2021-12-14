@@ -49,6 +49,7 @@ export abstract class ControllerBase<TApp extends any = IHttpServer> implements 
 export * from './CONNECT';
 export * from './Controller';
 export * from './DELETE';
+export * from './DocumentationUpdater';
 export * from './ErrorHandler';
 export * from './GET';
 export * from './HEAD';
@@ -60,3 +61,4 @@ export * from './Serializer';
 export * from './TRACE';
 export * from './Use';
 export * from './ValidationErrorHandler';
+
