@@ -1,14 +1,17 @@
 # Change Log (@egomobile/http-server)
 
+## 0.23.0
+
+- implement [basicAuth](https://egomobile.github.io/node-http-server/modules.html#basicAuth) middleware
+- code cleanups and improvements
+
 ## 0.22.0
 
 - (bug-)fixes
 
 ## 0.21.0
 
-- implement [basicAuth](https://egomobile.github.io/node-http-server/modules.html#basicAuth) middleware
 - do not trim value in [auth()](https://egomobile.github.io/node-http-server/modules.html#auth) middleware anymore
-- code cleanups and improvements
 
 ## 0.20.0
 
