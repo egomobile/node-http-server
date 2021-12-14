@@ -2,7 +2,9 @@
 
 ## 0.21.0
 
+- implement [basicAuth](https://egomobile.github.io/node-http-server/modules.html#basicAuth) middleware
 - do not trim value in [auth()](https://egomobile.github.io/node-http-server/modules.html#auth) middleware anymore
+- code cleanups and improvements
 
 ## 0.20.0
 

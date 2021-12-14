@@ -45,20 +45,6 @@ export type AuthValidator = (scheme: string, value: string, request: IHttpReques
 export type AuthValidatorWithoutScheme = (value: string, request: IHttpRequest) => boolean | PromiseLike<boolean>;
 
 /**
- * Options for 'auth()' function.
- */
-export interface IAuthOptions {
-    /**
-     * Custom handler, that is invoked, when auth validation fails.
-     */
-    onValidationFailed?: Nilable<AuthValidationFailedHandler>;
-    /**
-     * List of validators, grouped by schemes.
-     */
-    validators: IAuthValidators;
-}
-
-/**
  * List of auth validators, grouped by schemes.
  */
 export type IAuthValidators = {
