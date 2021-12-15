@@ -68,7 +68,7 @@ export const defaultBasicAuthFailedHandler: BasicAuthValidationFailedHandler = a
  *
  * @example
  * ```
- * import createServer, { basicAuth, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+ * import createServer, { basicAuth, BasicAuthCredentials, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
  *
  * const app = createServer()
  *
