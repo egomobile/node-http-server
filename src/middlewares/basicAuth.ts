@@ -57,7 +57,8 @@ interface ICreateMiddlewareOptions {
 export const defaultBasicAuthFailedHandler: BasicAuthValidationFailedHandler = async (username, request, response) => {
     if (!response.headersSent) {
         response.writeHead(401, {
-            'Content-Type': '0'
+            'Content-Type': '0',
+            'WWW-Authenticate': 'Basic realm="Restricted Area"'
         });
     }
 };
