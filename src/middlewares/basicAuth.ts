@@ -98,6 +98,7 @@ export function basicAuth(arg1: string | BasicAuthValidator | BasicAuthCredentia
     if (typeof arg1 === 'string') {
         // [arg1] username
         // [arg2] password
+        // [arg3] onValidationFailed
 
         validator = (username, password) => username === arg1 && password === arg2;
         onValidationFailed = arg3 as BasicAuthValidationFailedHandler;
