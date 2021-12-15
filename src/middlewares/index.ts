@@ -66,6 +66,7 @@ export const defaultValidationFailedHandler: ValidationFailedHandler = async (er
 
 export * from './apiKey';
 export * from './auth';
+export * from './basicAuth';
 export * from './buffer';
 export * from './cookies';
 export * from './json';
