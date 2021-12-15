@@ -13,7 +13,7 @@ const username = 'foo.user';
 const password = 'foo.password';
 
 const onValidationFailed: BasicAuthValidationFailedHandler = async (username, request, response) => {
-    const errorMessage = Buffer.from(`Unvalid credentials for user ${username}`, 'utf8');
+    const errorMessage = Buffer.from(`Invalid credentials for user ${username}`, 'utf8');
 
     if (!response.headersSent) {
         response.writeHead(403, {
