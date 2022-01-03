@@ -14,9 +14,9 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import jsYaml, { YAMLException } from 'js-yaml';
-import type { HttpMiddleware, HttpRequestHandler, IHttpStringBodyParserOptions, Nilable, Nullable, ParseErrorHandler } from '../types';
 import { ParseError } from '../errors/parse';
-import { getBufferEncoding, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
+import type { HttpMiddleware, HttpRequestHandler, IHttpStringBodyParserOptions, Nilable, Nullable, ParseErrorHandler } from '../types';
+import { canHttpMethodHandleBodies, getBufferEncoding, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
 
 interface ICreateMiddlewareOptions {
     encoding: string;
@@ -137,9 +137,13 @@ export function yaml(optionsOrLimit?: Nilable<number | IYamlOptions>, onLimitRea
 function createMiddleware({ encoding, limit, onLimitReached, onParsingFailed }: ICreateMiddlewareOptions): HttpMiddleware {
     return withEntityTooLarge(async (request, response, next) => {
         try {
-            request.body = jsYaml.loadAll(
-                (await readStreamWithLimit(request, limit)).toString(encoding)
-            );
+            if (canHttpMethodHandleBodies(request.method)) {
+                request.body = jsYaml.loadAll(
+                    (await readStreamWithLimit(request, limit)).toString(encoding)
+                );
+            } else {
+                request.body = null;
+            }
 
             next();
         } catch (error) {

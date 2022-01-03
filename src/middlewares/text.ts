@@ -14,7 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { HttpMiddleware, HttpRequestHandler, IHttpStringBodyParserOptions, Nilable, Nullable } from '../types';
-import { getBufferEncoding, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
+import { canHttpMethodHandleBodies, getBufferEncoding, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
 
 interface ICreateMiddlewareOptions {
     encoding: string;
@@ -118,7 +118,11 @@ export function text(optionsOrLimit?: Nilable<number | ITextOptions>, onLimitRea
 
 function createMiddleware({ encoding, limit, onLimitReached }: ICreateMiddlewareOptions): HttpMiddleware {
     return withEntityTooLarge(async (request, response, next) => {
-        request.body = (await readStreamWithLimit(request, limit)).toString(encoding);
+        if (canHttpMethodHandleBodies(request.method)) {
+            request.body = (await readStreamWithLimit(request, limit)).toString(encoding);
+        } else {
+            request.body = null;
+        }
 
         next();
     }, onLimitReached);
