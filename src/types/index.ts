@@ -440,7 +440,7 @@ export interface IHttpServer {
      * // working directory for JavaScript and/or TypeScript files,
      * // which do not start with _ and have a class as default export,
      * // that is marked with @Controller decorator
-     * // and creates instances from that classes, which will be autmatically
+     * // and creates instances from that classes, which will be automatically
      * // mapped as handlers for 'app' instance
      * app.controllers()
      *
@@ -562,6 +562,11 @@ export interface IHttpServer {
      * ```
      */
     listen(port?: Nilable<number | string>): Promise<void>;
+
+    /**
+     * Gets the current "not found" handler.
+     */
+    readonly notFoundHandler: HttpNotFoundHandler;
 
     /**
      * Registers a route for a OPTIONS request.

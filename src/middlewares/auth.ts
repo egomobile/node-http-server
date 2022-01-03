@@ -17,7 +17,7 @@ import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, Nilable, Optiona
 import { asAsync, isNil } from '../utils';
 
 /**
- * Handler that is invoked, that is invoked if validation of
+ * Handler that is invoked, if validation of
  * 'Authorization' header fails.
  */
 export type AuthValidationFailedHandler = HttpRequestHandler;
@@ -61,7 +61,7 @@ export type IAuthValidators = {
      */
     'bearer'?: Optional<AuthValidatorWithoutScheme>;
     /**
-     * @see https://datatracker.ietf.org/doc/html/rfc7486
+     * @see https://datatracker.ietf.org/doc/html/rfc7616
      */
     'digest'?: Optional<AuthValidatorWithoutScheme>;
     /**

@@ -49,8 +49,10 @@ async function main() {
   // parse query parameters from URL
   // and write them to 'query' prop of 'request' object
   app.get("/foo", [query()], async (request, response) => {
-    response.write(" BAR: " + request.query!.bar);
-    response.write(" BAZ: " + request.query!.baz);
+    // request.query => https://nodejs.org/api/url.html#class-urlsearchparams
+
+    response.write(" BAR: " + request.query!.get("bar"));
+    response.write(" BAZ: " + request.query!.get("baz"));
   });
 
   await app.listen();

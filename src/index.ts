@@ -135,7 +135,7 @@ export const createServer = (): IHttpServer => {
                     typeof path === 'function'
                 )
             ) {
-                throw new TypeError('path must be of type string, function or RegEx');
+                throw new TypeError('path must be of type string, function or RegExp');
             }
 
             let optionsOrMiddlewares: Nilable<HttpOptionsOrMiddlewares>;
@@ -321,8 +321,16 @@ export const createServer = (): IHttpServer => {
 
     (server as any).isEgoHttpServer = true;
 
+    // server.errorHandler
     Object.defineProperty(server, 'errorHandler', {
+        enumerable: true,
         get: () => errorHandler
+    });
+
+    // server.notFoundHandler
+    Object.defineProperty(server, 'notFoundHandler', {
+        enumerable: true,
+        get: () => notFoundHandler
     });
 
     setupHttpServerControllerMethod(server);
