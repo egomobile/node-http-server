@@ -162,7 +162,7 @@ export function auth(arg1: string | IAuthValidators, arg2?: Nilable<string | Aut
         validator = createValidatorFromObject(validators);
         onValidationFailed = arg3 as AuthValidationFailedHandler;
     } else if (typeof arg1 === 'object') {
-        // [arg1] validator2
+        // [arg1] validators
         // [arg2] onValidationFailed
 
         validator = createValidatorFromObject(arg1);
@@ -185,22 +185,6 @@ export function auth(arg1: string | IAuthValidators, arg2?: Nilable<string | Aut
         onValidationFailed: onValidationFailed || defaultAuthFailedHandler,
         validator
     });
-}
-
-function createValidatorFromObject(validatorsInput: Nilable<IAuthValidators>): AuthValidator {
-    // make keys / schemes lower case
-    const validators: IAuthValidators = {};
-    for (const [key, value] of Object.entries(validatorsInput || {})) {
-        validators[key.toLowerCase().trim()] = value;
-    }
-
-    validatorsInput = undefined;
-
-    return (scheme, value, request) => {
-        const v = validators[scheme];
-
-        return (v && v(value, request)) as any;
-    };
 }
 
 function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOptions): HttpMiddleware {
@@ -235,5 +219,21 @@ function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOp
 
             response.end();
         }
+    };
+}
+
+function createValidatorFromObject(validatorsInput: Nilable<IAuthValidators>): AuthValidator {
+    // make keys / schemes lower case
+    const validators: IAuthValidators = {};
+    for (const [key, value] of Object.entries(validatorsInput || {})) {
+        validators[key.toLowerCase().trim()] = value;
+    }
+
+    validatorsInput = undefined;
+
+    return (scheme, value, request) => {
+        const v = validators[scheme];
+
+        return (v && v(value, request)) as any;
     };
 }
