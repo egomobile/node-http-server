@@ -14,7 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions, Nilable, Nullable } from '../types';
-import { isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
+import { canHttpMethodHandleBodies, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
 
 /**
  * Options for 'buffer()' function.
@@ -112,7 +112,11 @@ export function buffer(optionsOrLimit?: Nilable<IBufferOptions | number>, onLimi
 
 function createMiddleware({ limit, onLimitReached }: ICreateMiddlewareOptions) {
     return withEntityTooLarge(async (request, response, next) => {
-        request.body = await readStreamWithLimit(request, limit);
+        if (canHttpMethodHandleBodies(request.method)) {
+            request.body = await readStreamWithLimit(request, limit);
+        } else {
+            request.body = null;
+        }
 
         next();
     }, onLimitReached);

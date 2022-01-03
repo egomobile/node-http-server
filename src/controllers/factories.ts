@@ -24,7 +24,7 @@ import { setupSwaggerUIForServerControllers } from '../swagger';
 import { toSwaggerPath } from '../swagger/utils';
 import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, GetterFunc, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, Nilable, ResponseSerializer, ValidationFailedHandler } from '../types';
 import type { IControllerClass, IControllerContext, IControllerFile, InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo } from '../types/internal';
-import { asAsync, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, walkDirSync } from '../utils';
+import { asAsync, canHttpMethodHandleBodies, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, walkDirSync } from '../utils';
 import { params } from '../validators/params';
 import { createBodyParserMiddlewareByFormat, getListFromObject, getMethodOrThrow, normalizeRouterPath } from './utils';
 
@@ -80,7 +80,7 @@ function createControllerMethodRequestHandler({ getErrorHandler, handler }: ICre
 
 export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOptions): MethodDecorator {
     const throwIfOptionsIncompatibleWithHTTPMethod = () => {
-        if (!['post', 'put', 'patch'].includes(options.name)) {
+        if (!canHttpMethodHandleBodies(options.name?.toUpperCase())) {
             throw new Error(`Cannot use schema with ${options.name.toUpperCase()} requests`);
         }
     };

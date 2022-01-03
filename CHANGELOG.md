@@ -1,5 +1,13 @@
 # Change Log (@egomobile/http-server)
 
+## 0.24.0
+
+- **BREAKING CHANGE**: [auth()](https://egomobile.github.io/node-http-server/modules.html#auth) and [apiKey()](https://egomobile.github.io/node-http-server/modules.html#apiKey) using try-catch blocks now
+- **BREAKING CHANGE**: [buffer()](https://egomobile.github.io/node-http-server/modules.html#buffer), [json()](https://egomobile.github.io/node-http-server/modules.html#json), [text()](https://egomobile.github.io/node-http-server/modules.html#text) and [yaml()](https://egomobile.github.io/node-http-server/modules.html#yaml) set [body prop](https://egomobile.github.io/node-http-server/interfaces/IHttpRequest.html#body) to `(null)` now, if HTTP method is not `PATCH`, `POST` or `PUT`
+- add `notFoundHandler` property to [IHttpServer](https://egomobile.github.io/node-http-server/interfaces/IHttpServer.html)
+- improve speed of internal helper functions
+- fix typos
+
 ## 0.23.0
 
 - implement [basicAuth](https://egomobile.github.io/node-http-server/modules.html#basicAuth) middleware

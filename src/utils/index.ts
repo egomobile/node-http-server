@@ -15,8 +15,9 @@
 
 import fs from 'fs';
 import path from 'path';
-import { EntityTooLargeError } from './errors';
-import type { Constructor, HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, Nilable, Nullable, Optional } from './types';
+import { httpMethodsWithBodies } from '../constants';
+import { EntityTooLargeError } from '../errors';
+import type { Constructor, HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, Nilable, Nullable, Optional } from '../types';
 
 interface ICreateWithEntityTooLargeActionOptions {
     action: HttpMiddleware;
@@ -31,6 +32,10 @@ export function asAsync<TFunc extends Function = Function>(func: Function): TFun
     return (async function (...args: any[]) {
         return func(...args);
     }) as any;
+}
+
+export function canHttpMethodHandleBodies(method: Nilable<string>): boolean {
+    return httpMethodsWithBodies.includes(method as any);
 }
 
 export function compareValues<T>(x: T, y: T): number {
@@ -231,7 +236,7 @@ export function withEntityTooLarge(
     onLimitReached: Nilable<HttpRequestHandler>
 ): HttpMiddleware {
     if (!onLimitReached) {
-        onLimitReached = require('./middlewares').defaultLimitReachedHandler;
+        onLimitReached = require('../middlewares').defaultLimitReachedHandler;
     }
 
     return createWithEntityTooLargeAction({

@@ -17,7 +17,7 @@ import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, Nilable, Optiona
 import { asAsync, isNil } from '../utils';
 
 /**
- * Handler that is invoked, that is invoked if validation of
+ * Handler that is invoked, if validation of
  * 'Authorization' header fails.
  */
 export type AuthValidationFailedHandler = HttpRequestHandler;
@@ -61,7 +61,7 @@ export type IAuthValidators = {
      */
     'bearer'?: Optional<AuthValidatorWithoutScheme>;
     /**
-     * @see https://datatracker.ietf.org/doc/html/rfc7486
+     * @see https://datatracker.ietf.org/doc/html/rfc7616
      */
     'digest'?: Optional<AuthValidatorWithoutScheme>;
     /**
@@ -162,7 +162,7 @@ export function auth(arg1: string | IAuthValidators, arg2?: Nilable<string | Aut
         validator = createValidatorFromObject(validators);
         onValidationFailed = arg3 as AuthValidationFailedHandler;
     } else if (typeof arg1 === 'object') {
-        // [arg1] validator2
+        // [arg1] validators
         // [arg2] onValidationFailed
 
         validator = createValidatorFromObject(arg1);
@@ -187,6 +187,41 @@ export function auth(arg1: string | IAuthValidators, arg2?: Nilable<string | Aut
     });
 }
 
+function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOptions): HttpMiddleware {
+    validator = asAsync(validator);
+    onValidationFailed = asAsync(onValidationFailed);
+
+    return async (request, response, next) => {
+        let isValid = false;
+        try {
+            const authorization = request.headers['authorization'];
+            if (typeof authorization === 'string') {
+                let scheme: string;
+                let value: string;
+
+                const sep = authorization.indexOf(' ');
+                if (sep > -1) {
+                    scheme = authorization.substr(0, sep);
+                    value = authorization.substr(sep + 1);
+                } else {
+                    scheme = authorization;
+                    value = '';
+                }
+
+                isValid = await validator(scheme.toLowerCase(), value, request);
+            }
+        } catch { }
+
+        if (isValid) {
+            next();
+        } else {
+            await onValidationFailed(request, response);
+
+            response.end();
+        }
+    };
+}
+
 function createValidatorFromObject(validatorsInput: Nilable<IAuthValidators>): AuthValidator {
     // make keys / schemes lower case
     const validators: IAuthValidators = {};
@@ -200,41 +235,5 @@ function createValidatorFromObject(validatorsInput: Nilable<IAuthValidators>): A
         const v = validators[scheme];
 
         return (v && v(value, request)) as any;
-    };
-}
-
-function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOptions): HttpMiddleware {
-    validator = asAsync(validator);
-    onValidationFailed = asAsync(onValidationFailed);
-
-    return async (request, response, next) => {
-        let isValid: boolean;
-
-        const authorization = request.headers['authorization'];
-        if (typeof authorization === 'string') {
-            let scheme: string;
-            let value: string;
-
-            const sep = authorization.indexOf(' ');
-            if (sep > -1) {
-                scheme = authorization.substr(0, sep);
-                value = authorization.substr(sep + 1);
-            } else {
-                scheme = authorization;
-                value = '';
-            }
-
-            isValid = await validator(scheme.toLowerCase(), value, request);
-        } else {
-            isValid = false;
-        }
-
-        if (isValid) {
-            next();
-        } else {
-            await onValidationFailed(request, response);
-
-            response.end();
-        }
     };
 }

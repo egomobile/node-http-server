@@ -17,12 +17,12 @@
 
 /// <reference path="../index.d.ts" />
 
-import joi from 'joi';
 import { createServer as createHttpServer, IncomingMessage, Server, ServerResponse } from 'http';
+import joi from 'joi';
+import { setupHttpServerControllerMethod } from './controllers/factories';
 import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction, Nilable, Optional } from './types';
 import type { GroupedHttpRequestHandlers } from './types/internal';
 import { asAsync, getUrlWithoutQuery, isNil } from './utils';
-import { setupHttpServerControllerMethod } from './controllers/factories';
 
 /**
  * The default HTTP error handler.
@@ -135,7 +135,7 @@ export const createServer = (): IHttpServer => {
                     typeof path === 'function'
                 )
             ) {
-                throw new TypeError('path must be of type string, function or RegEx');
+                throw new TypeError('path must be of type string, function or RegExp');
             }
 
             let optionsOrMiddlewares: Nilable<HttpOptionsOrMiddlewares>;
@@ -321,8 +321,16 @@ export const createServer = (): IHttpServer => {
 
     (server as any).isEgoHttpServer = true;
 
+    // server.errorHandler
     Object.defineProperty(server, 'errorHandler', {
+        enumerable: true,
         get: () => errorHandler
+    });
+
+    // server.notFoundHandler
+    Object.defineProperty(server, 'notFoundHandler', {
+        enumerable: true,
+        get: () => notFoundHandler
     });
 
     setupHttpServerControllerMethod(server);
@@ -388,14 +396,11 @@ function mergeHandler(
                 error, request, response
             );
 
-            try {
-                let i = -1;
+            let i = -1;
 
-                const next: NextFunction = (error?) => {
-                    if (error) {
-                        handleError(error)
-                            .catch(reject);
-                    } else {
+            const next: NextFunction = (error?) => {
+                try {
+                    if (!error) {
                         const mw = middlewares[++i];
 
                         if (mw) {
@@ -408,56 +413,47 @@ function mergeHandler(
                                 .catch(handleError)
                                 .catch(reject);
                         }
+                    } else {
+                        handleError(error)
+                            .catch(reject);
                     }
-                };
+                } catch (ex) {
+                    handleError(ex)
+                        .catch(reject);
+                }
+            };
 
-                next();
-            } catch (ex) {
-                handleError(ex)
-                    .catch(reject);
-            }
+            next();
         });
     };
 }
 
 
 // <EXPORTS>
-export * from './types';
-export * from './middlewares';
-export * from './validators';
-export * from './errors';
-export * from './controllers';
-
-export const schema = joi;
-
 export {
     AlternativesSchema,
     AnySchema,
     ArraySchema,
     BinarySchema,
     BooleanSchema,
-    DateSchema,
-    FunctionSchema,
-    isSchema,
-    ValidationError as JoiValidationError,
-    LinkSchema,
+    DateSchema, ExtensionBoundSchema, FunctionSchema,
+    isSchema, LinkSchema,
     NumberSchema,
     ObjectPropertiesSchema,
-    ObjectSchema,
-    SchemaInternals,
-    StrictSchemaMap,
-    PartialSchemaMap,
-    StringSchema,
-    ExtensionBoundSchema,
-    SymbolSchema,
-    SchemaLike,
+    ObjectSchema, PartialSchemaMap, Schema, SchemaFunction, SchemaInternals, SchemaLike,
     SchemaLikeWithoutArray,
-    SchemaMap,
-    SchemaFunction,
-    Schema
+    SchemaMap, StrictSchemaMap, StringSchema, SymbolSchema, ValidationError as JoiValidationError
 } from 'joi';
-
 export {
     OpenAPIV3
 } from 'openapi-types';
+export * from './controllers';
+export * from './errors';
+export * from './middlewares';
+export * from './types';
+export * from './validators';
+
+export const schema = joi;
+
+
 // </EXPORTS>
