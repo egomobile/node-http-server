@@ -208,26 +208,25 @@ function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOp
     onValidationFailed = asAsync(onValidationFailed);
 
     return async (request, response, next) => {
-        let isValid: boolean;
+        let isValid = false;
+        try {
+            const authorization = request.headers['authorization'];
+            if (typeof authorization === 'string') {
+                let scheme: string;
+                let value: string;
 
-        const authorization = request.headers['authorization'];
-        if (typeof authorization === 'string') {
-            let scheme: string;
-            let value: string;
+                const sep = authorization.indexOf(' ');
+                if (sep > -1) {
+                    scheme = authorization.substr(0, sep);
+                    value = authorization.substr(sep + 1);
+                } else {
+                    scheme = authorization;
+                    value = '';
+                }
 
-            const sep = authorization.indexOf(' ');
-            if (sep > -1) {
-                scheme = authorization.substr(0, sep);
-                value = authorization.substr(sep + 1);
-            } else {
-                scheme = authorization;
-                value = '';
+                isValid = await validator(scheme.toLowerCase(), value, request);
             }
-
-            isValid = await validator(scheme.toLowerCase(), value, request);
-        } else {
-            isValid = false;
-        }
+        } catch { }
 
         if (isValid) {
             next();

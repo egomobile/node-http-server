@@ -183,7 +183,12 @@ export function apiKey(
 
 function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOptions): HttpMiddleware {
     return async (request, response, next) => {
-        if (await validator(request, response)) {
+        let isValid = false;
+        try {
+            isValid = await validator(request, response);
+        } catch { }
+
+        if (isValid) {
             next();
         } else {
             await onValidationFailed(request, response);
