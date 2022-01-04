@@ -15,7 +15,8 @@
 
 import path from 'path';
 import { buffer, IBufferOptions, IJsonOptions, json } from '../middlewares';
-import { HttpInputDataFormat, HttpMiddleware, IHttpBodyParserOptions, Nilable } from '../types';
+import { HttpInputDataFormat, HttpMiddleware, IHttpBodyParserOptions } from '../types';
+import type { Nilable } from '../types/internal';
 
 export function createBodyParserMiddlewareByFormat(format: HttpInputDataFormat, options?: Nilable<IHttpBodyParserOptions>): HttpMiddleware {
     switch (format) {

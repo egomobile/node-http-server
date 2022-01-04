@@ -17,6 +17,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import type { AnySchema, ValidationError as JoiValidationError } from 'joi';
 import type { OpenAPIV3 } from 'openapi-types';
 import type { ParseError } from '../errors/parse';
+import type { Nilable, Optional } from './internal';
 
 /**
  * Describes a constructor.
@@ -805,21 +806,6 @@ export interface IHttpStringBodyParserOptions extends IHttpBodyParserOptions {
  * @param {Optional<any>} [error] The error, if occurred.
  */
 export type NextFunction = (error?: Optional<any>) => void;
-
-/**
- * A type, that can also be (null) or (undefined).
- */
-export type Nilable<T extends any = any> = Nullable<T> | Optional<T>;
-
-/**
- * A type, that can also be (null).
- */
-export type Nullable<T extends any = any> = T | null;
-
-/**
- * A type, that can also be (undefined).
- */
-export type Optional<T extends any = any> = T | undefined;
 
 /**
  * A handler, that is executed, if data could not be parsed.

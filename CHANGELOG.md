@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.25.0
+
+- **BREAKING CHANGE**: `Nilable<T>`, `Nullable<T>` and `Optional<T>` are not public anymore and internal types now
+
 ## 0.24.0
 
 - **BREAKING CHANGE**: [auth()](https://egomobile.github.io/node-http-server/modules.html#auth) and [apiKey()](https://egomobile.github.io/node-http-server/modules.html#apiKey) using try-catch blocks now

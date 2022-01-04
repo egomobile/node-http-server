@@ -14,7 +14,8 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { ParseError } from '../errors/parse';
-import type { HttpMiddleware, HttpRequestHandler, IHttpStringBodyParserOptions, Nilable, Nullable, ParseErrorHandler } from '../types';
+import type { HttpMiddleware, HttpRequestHandler, IHttpStringBodyParserOptions, ParseErrorHandler } from '../types';
+import type { Nilable, Nullable } from '../types/internal';
 import { canHttpMethodHandleBodies, getBufferEncoding, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
 
 interface ICreateMiddlewareOptions {

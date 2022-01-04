@@ -15,8 +15,9 @@
 
 import youch from 'youch';
 import { defaultGetStatusCodeFromError } from '.';
+import type { GetStatusCodeFromError, HttpErrorHandler } from '../types';
+import type { Nilable } from '../types/internal';
 import { isNil } from '../utils';
-import type { GetStatusCodeFromError, HttpErrorHandler, Nilable } from '../types';
 
 interface ICreateHandlerOptions {
     getStatusCode: GetStatusCodeFromError;

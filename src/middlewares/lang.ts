@@ -13,7 +13,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, Nilable } from '../types';
+import type { HttpMiddleware } from '../types';
+import type { Nilable } from '../types/internal';
 
 interface ICreateMiddlewareOptions {
     additionalLanguages: string[];

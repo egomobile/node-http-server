@@ -15,7 +15,8 @@
 
 import type { IncomingMessage } from 'http';
 import { parse } from 'regexparam';
-import type { HttpPathValidator, Nullable } from '../types';
+import type { HttpPathValidator } from '../types';
+import type { Nullable } from '../types/internal';
 import { getUrlWithoutQuery } from '../utils';
 
 interface RegexParamResult {
