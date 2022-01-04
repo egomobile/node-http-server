@@ -1,6 +1,6 @@
 import type { ServerResponse } from 'http';
 import type { OpenAPIV3 } from 'openapi-types';
-import type { Constructor, HttpPathValidator, HttpRequestHandler, IControllersOptions, IHttpController, IHttpServer, Nilable, Optional } from '.';
+import type { Constructor, HttpPathValidator, HttpRequestHandler, IControllersOptions, IHttpController, IHttpServer } from '.';
 
 export type GroupedHttpRequestHandlers = {
     [method: string]: RequestHandlerContext[];
@@ -73,6 +73,12 @@ export interface ISwaggerMethodInfo {
     doc: OpenAPIV3.PathItemObject;
     method: Function;
 }
+
+export type Nilable<T extends any = any> = Nullable<T> | Optional<T>;
+
+export type Nullable<T extends any = any> = T | null;
+
+export type Optional<T extends any = any> = T | undefined;
 
 export interface RequestHandlerContext {
     end: (response: ServerResponse) => void;

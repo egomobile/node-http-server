@@ -14,7 +14,8 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { normalizeRouterPath } from '../controllers/utils';
-import type { HttpPathValidator, Nilable } from '../types';
+import type { HttpPathValidator } from '../types';
+import type { Nilable } from '../types/internal';
 import { isNil } from '../utils';
 
 export function createSwaggerPathValidator(basePath: Nilable<string>): HttpPathValidator {

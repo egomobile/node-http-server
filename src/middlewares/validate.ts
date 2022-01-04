@@ -15,7 +15,8 @@
 
 import { AnySchema, isSchema } from 'joi';
 import { defaultValidationFailedHandler } from '.';
-import type { HttpMiddleware, Nilable, ValidationFailedHandler } from '../types';
+import type { HttpMiddleware, ValidationFailedHandler } from '../types';
+import type { Nilable } from '../types/internal';
 import { isNil } from '../utils';
 
 interface ICreateMiddlewareOptions {

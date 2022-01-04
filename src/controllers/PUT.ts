@@ -17,7 +17,8 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { AnySchema } from 'joi';
-import type { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRoutePath, HttpInputDataFormat, HttpMiddleware, IControllerRouteWithBodyOptions, Nilable } from '../types';
+import type { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRoutePath, HttpInputDataFormat, HttpMiddleware, IControllerRouteWithBodyOptions } from '../types';
+import type { Nilable } from '../types/internal';
 import { createHttpMethodDecorator } from './factories';
 
 /**

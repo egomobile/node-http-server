@@ -17,7 +17,8 @@ import fs from 'fs';
 import path from 'path';
 import { httpMethodsWithBodies } from '../constants';
 import { EntityTooLargeError } from '../errors';
-import type { Constructor, HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, Nilable, Nullable, Optional } from '../types';
+import type { Constructor, HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction } from '../types';
+import type { Nilable, Nullable, Optional } from '../types/internal';
 
 interface ICreateWithEntityTooLargeActionOptions {
     action: HttpMiddleware;

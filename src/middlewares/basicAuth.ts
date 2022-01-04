@@ -13,7 +13,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, IHttpRequest, IHttpResponse, Nilable, Nullable } from '../types';
+import type { HttpMiddleware, IHttpRequest, IHttpResponse } from '../types';
+import type { Nilable, Nullable } from '../types/internal';
 import { asAsync, isNil } from '../utils';
 
 /**

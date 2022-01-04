@@ -13,7 +13,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions, Nilable, Nullable } from '../types';
+import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions } from '../types';
+import type { Nilable, Nullable } from '../types/internal';
 import { canHttpMethodHandleBodies, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
 
 /**

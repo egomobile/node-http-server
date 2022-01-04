@@ -20,8 +20,8 @@
 import { createServer as createHttpServer, IncomingMessage, Server, ServerResponse } from 'http';
 import joi from 'joi';
 import { setupHttpServerControllerMethod } from './controllers/factories';
-import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction, Nilable, Optional } from './types';
-import type { GroupedHttpRequestHandlers } from './types/internal';
+import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction } from './types';
+import type { GroupedHttpRequestHandlers, Nilable, Optional } from './types/internal';
 import { asAsync, getUrlWithoutQuery, isNil } from './utils';
 
 /**
