@@ -2,7 +2,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 import { SETUP_IMPORTS } from '../constants';
-import { InitControllerImportAction, ObjectKey } from '../types/internal';
+import type { InitControllerImportAction, Nilable, ObjectKey } from '../types/internal';
+import { isNil } from '../utils';
 import { getListFromObject } from './utils';
 
 /**
@@ -17,15 +18,15 @@ import { getListFromObject } from './utils';
  *
  * @Controller()
  * export default class MyController extends ControllerBase {
- *   @Import('foo')  // s. [1]
- *   public fooValue!: string
+ *   @Import()  // s. [1]
+ *   public foo!: string
  *
  *   @Import('currentTime')  // s. [2]
  *   public now!: Date
  *
  *   @GET()
  *   async index(request: IHttpRequest, response: IHttpResponse) {
- *     response.write(this.fooValue + ': ' + this.now)
+ *     response.write(this.foo + ': ' + this.now)
  *   }
  * }
  *
@@ -46,15 +47,17 @@ import { getListFromObject } from './utils';
  * app.listen()
  * ```
  *
- * @param {ObjectKey} key The key.
+ * @param {Nilable<ObjectKey>} [key] The key. Default: The name of the underlying property.
  *
  * @returns {PropertyDecorator} The new decorator function.
  */
-export function Import(key: ObjectKey): PropertyDecorator {
+export function Import(key?: Nilable<ObjectKey>): PropertyDecorator {
     return function (target, propertyName) {
+        const valueKey = isNil(key) ? propertyName : key!;
+
         getListFromObject<InitControllerImportAction>(target, SETUP_IMPORTS).push(
             ({ controller, imports }) => {
-                const lazyValue = (imports as any)[key];
+                const lazyValue = (imports as any)[valueKey];
 
                 if (typeof lazyValue === 'undefined') {
                     throw new TypeError(`Import value ${String(key)} not found`);

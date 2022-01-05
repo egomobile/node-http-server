@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.27.0
+
+- `key` parameter of [@Import() decorator](https://egomobile.github.io/node-http-server/modules.html#Import) is now optional, what means that, if no key is submitted, the name of the underlying property is used
+
 ## 0.26.1
 
 - add [@Import() decorator](https://egomobile.github.io/node-http-server/modules.html#Import), which can import values into a controller's property or provide them there
