@@ -12,7 +12,7 @@
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "esModuleInterop": true,
-        "sourceMap": false
+        "sourceMap": true
     },
     "exclude": [
         "node_modules"
