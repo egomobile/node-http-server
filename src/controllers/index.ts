@@ -53,6 +53,7 @@ export * from './DocumentationUpdater';
 export * from './ErrorHandler';
 export * from './GET';
 export * from './HEAD';
+export * from './Import';
 export * from './OPTIONS';
 export * from './PATCH';
 export * from './POST';

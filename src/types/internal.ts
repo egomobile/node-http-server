@@ -1,6 +1,6 @@
 import type { ServerResponse } from 'http';
 import type { OpenAPIV3 } from 'openapi-types';
-import type { Constructor, HttpPathValidator, HttpRequestHandler, IControllersOptions, IHttpController, IHttpServer } from '.';
+import type { Constructor, HttpPathValidator, HttpRequestHandler, IControllersOptions, IHttpController, IHttpServer, ImportValues } from '.';
 
 export type GroupedHttpRequestHandlers = {
     [method: string]: RequestHandlerContext[];
@@ -40,6 +40,11 @@ export interface IInitControllerErrorHandlerActionContext {
     controller: IHttpController<IHttpServer>;
 }
 
+export interface IInitControllerImportActionContext {
+    controller: IHttpController<IHttpServer>;
+    imports: ImportValues;
+}
+
 export interface IInitControllerSerializerActionContext {
     controller: IHttpController<IHttpServer>;
 }
@@ -61,6 +66,8 @@ export type InitControllerMethodAction = (context: IInitControllerMethodActionCo
 
 export type InitControllerErrorHandlerAction = (context: IInitControllerErrorHandlerActionContext) => void;
 
+export type InitControllerImportAction = (context: IInitControllerImportActionContext) => void;
+
 export type InitControllerSerializerAction = (context: IInitControllerSerializerActionContext) => void;
 
 export type InitControllerMethodSwaggerAction = (context: IInitControllerMethodSwaggerActionContext) => void;
@@ -77,6 +84,8 @@ export interface ISwaggerMethodInfo {
 export type Nilable<T extends any = any> = Nullable<T> | Optional<T>;
 
 export type Nullable<T extends any = any> = T | null;
+
+export type ObjectKey = string | symbol;
 
 export type Optional<T extends any = any> = T | undefined;
 
