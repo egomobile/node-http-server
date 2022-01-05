@@ -48,7 +48,7 @@ import { getListFromObject } from './utils';
  *
  * @param {ObjectKey} key The key.
  *
- * @returns {MethodDecorator} The new decorator function.
+ * @returns {PropertyDecorator} The new decorator function.
  */
 export function Import(key: ObjectKey): PropertyDecorator {
     return function (target, propertyName) {
