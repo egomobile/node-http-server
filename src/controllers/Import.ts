@@ -60,7 +60,7 @@ export function Import(key?: Nilable<ObjectKey>): PropertyDecorator {
                 const lazyValue = (imports as any)[valueKey];
 
                 if (typeof lazyValue === 'undefined') {
-                    throw new TypeError(`Import value ${String(key)} not found`);
+                    throw new TypeError(`Import value ${String(valueKey)} not found`);
                 }
 
                 // setup the property with a getter
