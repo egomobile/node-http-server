@@ -27,7 +27,10 @@ interface IMySchema {
 function createServerAndInitControllers() {
     const server = createServer();
 
-    server.controllers(path.join(__dirname, 'controllers'));
+    server.controllers(path.join(__dirname, 'controllers'), {
+        foo: () => 'bar',
+        baz: 42
+    });
 
     return server;
 }
@@ -214,5 +217,25 @@ describe('controllers', () => {
         expect(typeof str).toBe('string');
         expect(str.length).toBe(item.expectedValue.length);
         expect(str).toBe(item.expectedValue);
+    });
+
+    it('should return 200 when do a GET request for existing Test7Controller with import values', async () => {
+        const expectedValue = 'FOO:(bar string) BAZ:(42 number)';
+
+        const server = createServerAndInitControllers();
+
+        const response = await request(server).get('/test7')
+            .send()
+            .parse(binaryParser)
+            .expect(200);
+
+        const data = response.body;
+        expect(Buffer.isBuffer(data)).toBe(true);
+
+        const str = data.toString('utf8');
+
+        expect(typeof str).toBe('string');
+        expect(str.length).toBe(expectedValue.length);
+        expect(str).toBe(expectedValue);
     });
 });

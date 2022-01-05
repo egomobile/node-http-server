@@ -18,12 +18,12 @@ import { isSchema } from 'joi';
 import minimatch from 'minimatch';
 import type { OpenAPIV3 } from 'openapi-types';
 import path from 'path';
-import { CONTROLLERS_CONTEXES, CONTROLLER_MIDDLEWARES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from '../constants';
+import { CONTROLLERS_CONTEXES, CONTROLLER_MIDDLEWARES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from '../constants';
 import { buffer, defaultValidationFailedHandler, json, query, validate } from '../middlewares';
 import { setupSwaggerUIForServerControllers } from '../swagger';
 import { toSwaggerPath } from '../swagger/utils';
-import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, GetterFunc, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ResponseSerializer, ValidationFailedHandler } from '../types';
-import type { IControllerClass, IControllerContext, IControllerFile, InitControllerErrorHandlerAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable } from '../types/internal';
+import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, GetterFunc, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ResponseSerializer, ValidationFailedHandler } from '../types';
+import type { IControllerClass, IControllerContext, IControllerFile, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable } from '../types/internal';
 import { asAsync, canHttpMethodHandleBodies, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, walkDirSync } from '../utils';
 import { params } from '../validators/params';
 import { createBodyParserMiddlewareByFormat, getListFromObject, getMethodOrThrow, normalizeRouterPath } from './utils';
@@ -459,10 +459,24 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
 
         if (args.length) {
             if (typeof args[0] === 'string') {
+                // args[0] rootDir
+                // args[1] imports
+
+                const imports: Nilable<ImportValues> = args[1];
+
+                if (!isNil(imports)) {
+                    if (typeof imports !== 'object') {
+                        throw new TypeError('Second argument must be of type object');
+                    }
+                }
+
                 options = {
+                    imports,
                     rootDir: args[0]
                 };
             } else if (typeof args[0] === 'object') {
+                // args[0] options
+
                 options = args[0];
             } else {
                 throw new TypeError('Argument must be of type string or object');
@@ -603,6 +617,14 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
             };
 
             const controller = new cls['class'](contollerOptions);
+
+            // import values
+            getListFromObject<InitControllerImportAction>(controller, SETUP_IMPORTS).forEach((action) => {
+                action({
+                    controller,
+                    imports: options!.imports || {}
+                });
+            }, true);
 
             const classProps = getAllClassProps(cls['class']);
             classProps.forEach(prop => {

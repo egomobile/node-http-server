@@ -17,7 +17,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import type { AnySchema, ValidationError as JoiValidationError } from 'joi';
 import type { OpenAPIV3 } from 'openapi-types';
 import type { ParseError } from '../errors/parse';
-import type { Nilable, Optional } from './internal';
+import type { Nilable, ObjectKey, Optional } from './internal';
 
 /**
  * Describes a constructor.
@@ -214,6 +214,10 @@ export interface IControllerRouteWithBodyOptions extends IControllerRouteOptions
  * Options for 'controllers()' method of 'IHttpServer' instance.
  */
 export interface IControllersOptions {
+    /**
+     * List of (value) imports.
+     */
+    imports?: Nilable<ImportValues>;
     /**
      * Default value, that indicates, that query parameters should NOT be parsed.
      */
@@ -449,10 +453,11 @@ export interface IHttpServer {
      * ```
      *
      * @param {Nilable<string>} [rootDir] The custom root directory.
+     * @param {Nilable<ImportValues>} [imports] Values to import.
      * @param {Nilable<IControllersOptions>} [options] Custom options.
      */
     controllers(): this;
-    controllers(rootDir: Nilable<string>): this;
+    controllers(rootDir: Nilable<string>, imports?: Nilable<ImportValues>): this;
     controllers(options: Nilable<IControllersOptions>): this;
 
     /**
@@ -789,6 +794,16 @@ export interface IHttpServer {
      */
     use(...middlewares: HttpMiddleware[]): this;
 }
+
+/**
+ * A list of import values.
+ */
+export type ImportValues = Record<ObjectKey, LazyValue>;
+
+/**
+ * A (lazy) value.
+ */
+export type LazyValue<T extends any = any> = T | (() => T);
 
 /**
  * Options for a body parser function, that works with string data.
