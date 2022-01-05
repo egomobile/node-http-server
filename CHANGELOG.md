@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-server)
 
-## 0.26.0
+## 0.26.1
 
 - add [@Import() decorator](https://egomobile.github.io/node-http-server/modules.html#Import), which can import values into a controller's property or provide them there
 

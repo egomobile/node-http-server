@@ -57,7 +57,7 @@ export function Import(key: ObjectKey): PropertyDecorator {
                 const lazyValue = (imports as any)[key];
 
                 if (typeof lazyValue === 'undefined') {
-                    throw new TypeError('Import value not found');
+                    throw new TypeError(`Import value ${String(key)} not found`);
                 }
 
                 // setup the property with a getter
