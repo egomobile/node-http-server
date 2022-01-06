@@ -6,7 +6,7 @@ export default class Test7Controller extends ControllerBase {
     @Import('foo')
     public foo!: string;
 
-    @Import('baz')
+    @Import()
     public baz!: number;
 
     @GET('/')
