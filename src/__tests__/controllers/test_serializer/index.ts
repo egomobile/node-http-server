@@ -1,9 +1,9 @@
-import { Controller, IHttpRequest, IHttpResponse } from '../../../../src';
-import { ControllerBase, GET } from '../../../../src/controllers';
+import { Controller, IHttpRequest, IHttpResponse } from '../../..';
+import { ControllerBase, GET } from '../../../controllers';
 import { Serializer } from '../../../controllers/Serializer';
 
 @Controller()
-export default class Test4Controller extends ControllerBase {
+export default class TestSerializerController extends ControllerBase {
     @GET('/')
     async index(request: IHttpRequest, response: IHttpResponse) {
         return {
