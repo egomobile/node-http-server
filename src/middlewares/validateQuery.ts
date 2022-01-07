@@ -49,7 +49,7 @@ export interface IValidateQueryOptions {
  * @example
  * ```
  * import assert from 'assert'
- * import createServer, { IHttpRequest, IHttpResponse, json, query, schema, validateQuery } from '@egomobile/http-server'
+ * import createServer, { IHttpRequest, IHttpResponse, query, schema, validateQuery } from '@egomobile/http-server'
  *
  * const myQuerySchema = schema.object({
  *   offset: schema.string().strict().regex(/^([0-9]){1,}$/).required(),
