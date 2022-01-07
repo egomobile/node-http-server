@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.28.0
+
+- implement [validateQuery](https://egomobile.github.io/node-http-server/modules.html#validateQuery) middleware
+
 ## 0.27.1
 
 - `key` parameter of [@Import() decorator](https://egomobile.github.io/node-http-server/modules.html#Import) is now optional, what means that, if no key is submitted, the name of the underlying property is used
