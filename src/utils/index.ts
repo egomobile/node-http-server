@@ -215,7 +215,7 @@ export function sortObjectByKeys<T extends any = any>(obj: T): T {
     return newObj;
 }
 
-export function urlSearchParamsParamsToObject(params: Nilable<URLSearchParams>): Nilable<Record<string, string>> {
+export function urlSearchParamsToObject(params: Nilable<URLSearchParams>): Nilable<Record<string, string>> {
     if (!params) {
         return params as any;
     }

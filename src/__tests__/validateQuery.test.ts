@@ -25,8 +25,8 @@ interface IMyQuerySchema {
 }
 
 const myQuerySchema = schema.object({
-    offset: schema.string().strict().regex(/^(0-9){1,}$/).required(),
-    limit: schema.string().strict().regex(/^(0-9){1,}$/).optional()
+    offset: schema.string().strict().regex(/^([0-9]){1,}$/).required(),
+    limit: schema.string().strict().regex(/^([0-9]){1,}$/).optional()
 });
 
 const validData: IMyQuerySchema[] = [{

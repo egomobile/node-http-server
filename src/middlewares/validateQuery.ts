@@ -17,7 +17,7 @@ import { AnySchema, isSchema } from 'joi';
 import { defaultQueryValidationFailedHandler } from '.';
 import type { HttpMiddleware, ValidationFailedHandler } from '../types';
 import type { Nilable } from '../types/internal';
-import { isNil, urlSearchParamsParamsToObject } from '../utils';
+import { isNil, urlSearchParamsToObject } from '../utils';
 
 interface ICreateMiddlewareOptions {
     onValidationFailed: ValidationFailedHandler;
@@ -35,7 +35,7 @@ export interface IValidateQueryOptions {
 }
 
 /**
- * Creates a middleware, that validates the data of the 'body' property
+ * Creates a middleware, that validates the data of the 'query' property
  * inside the 'request' object with the help of a joi schema.
  *
  * @param {AnySchema} schema The schema to use.
@@ -52,8 +52,8 @@ export interface IValidateQueryOptions {
  * import createServer, { IHttpRequest, IHttpResponse, json, query, schema, validateQuery } from '@egomobile/http-server'
  *
  * const myQuerySchema = schema.object({
- *   offset: schema.string().strict().regex(/^(0-9){1,}$/).required(),
- *   limit: joi.string().strict().regex(/^(0-9){1,}$/).optional()
+ *   offset: schema.string().strict().regex(/^([0-9]){1,}$/).required(),
+ *   limit: joi.string().strict().regex(/^([0-9]){1,}$/).optional()
  * })
  *
  * const app = createServer()
@@ -104,7 +104,7 @@ export function validateQuery(schema: AnySchema, optionsOrErrorHandler?: Nilable
 function createMiddleware({ onValidationFailed, schema }: ICreateMiddlewareOptions): HttpMiddleware {
     return async (request, response, next) => {
         const validationResult = schema.validate(
-            urlSearchParamsParamsToObject(request.query)
+            urlSearchParamsToObject(request.query)
         );
 
         if (validationResult.error) {
