@@ -67,7 +67,7 @@ describe('controllers', () => {
         expect(str).toBe(expectedResult);
     });
 
-    it.each(['/test_url_params/foo%20baz', '/test_url_params/foo%20baz/bar'])('should return 200 when do a GET request for existing TestController which uses parameters', async (p) => {
+    it.each(['/test_path_params/foo%20baz', '/test_path_params/foo%20baz/bar'])('should return 200 when do a GET request for existing TestController which uses parameters', async (p) => {
         const expectedResult = 'test:' + p + ':foo baz';
 
         const server = createServerAndInitControllers();
@@ -87,7 +87,7 @@ describe('controllers', () => {
         expect(str).toBe(expectedResult);
     });
 
-    it.each(['/test_url_params_via_dirs/foo%20baz', '/test_url_params_via_dirs/foo%20baz/bar'])('should return 200 when do a GET request for existing TestController which uses parameters via directories', async (p) => {
+    it.each(['/test_path_params_via_dirs/foo%20baz', '/test_path_params_via_dirs/foo%20baz/bar'])('should return 200 when do a GET request for existing TestController which uses parameters via directories', async (p) => {
         const expectedResult = 'test2:' + p + ':foo baz';
 
         const server = createServerAndInitControllers();
