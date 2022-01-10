@@ -1,8 +1,8 @@
-import { Controller, IHttpResponse } from '../../../../src';
-import { ControllerBase, GET, Import } from '../../../../src/controllers';
+import { Controller, IHttpResponse } from '../../..';
+import { ControllerBase, GET, Import } from '../../../controllers';
 
 @Controller()
-export default class Test7Controller extends ControllerBase {
+export default class TestImportsController extends ControllerBase {
     @Import('foo')
     public foo!: string;
 

@@ -215,6 +215,20 @@ export function sortObjectByKeys<T extends any = any>(obj: T): T {
     return newObj;
 }
 
+export function urlSearchParamsToObject(params: Nilable<URLSearchParams>): Nilable<Record<string, string>> {
+    if (!params) {
+        return params as any;
+    }
+
+    const obj: Record<string, string> = {};
+
+    params.forEach((value, key) => {
+        obj[key] = value;
+    });
+
+    return obj;
+}
+
 export function walkDirSync(dir: string, action: (file: string, stats: fs.Stats) => void) {
     for (const item of fs.readdirSync(dir)) {
         if (item.trimStart().startsWith('_')) {

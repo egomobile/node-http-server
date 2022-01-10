@@ -1,5 +1,5 @@
-import { Controller, IHttpRequest, IHttpResponse, JoiValidationError, schema } from '../../../../src';
-import { ControllerBase, POST } from '../../../../src/controllers';
+import { Controller, IHttpRequest, IHttpResponse, JoiValidationError, schema } from '../../..';
+import { ControllerBase, POST } from '../../../controllers';
 import { ValidationErrorHandler } from '../../../controllers/ValidationErrorHandler';
 
 interface IMySchema {
@@ -13,7 +13,7 @@ const mySchema = schema.object({
 });
 
 @Controller()
-export default class Test5Controller extends ControllerBase {
+export default class TestSchemaValidationController extends ControllerBase {
     @POST(mySchema)
     async index(request: IHttpRequest<IMySchema>, response: IHttpResponse) {
         response.write('Your input: ' + JSON.stringify(request.body));

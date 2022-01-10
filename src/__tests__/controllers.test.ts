@@ -67,7 +67,7 @@ describe('controllers', () => {
         expect(str).toBe(expectedResult);
     });
 
-    it.each(['/test/foo%20baz', '/test/foo%20baz/bar'])('should return 200 when do a GET request for existing TestController which uses parameters', async (p) => {
+    it.each(['/test_path_params/foo%20baz', '/test_path_params/foo%20baz/bar'])('should return 200 when do a GET request for existing TestController which uses parameters', async (p) => {
         const expectedResult = 'test:' + p + ':foo baz';
 
         const server = createServerAndInitControllers();
@@ -87,7 +87,7 @@ describe('controllers', () => {
         expect(str).toBe(expectedResult);
     });
 
-    it.each(['/test2/foo%20baz', '/test2/foo%20baz/bar'])('should return 200 when do a GET request for existing TestController which uses parameters via directories', async (p) => {
+    it.each(['/test_path_params_via_dirs/foo%20baz', '/test_path_params_via_dirs/foo%20baz/bar'])('should return 200 when do a GET request for existing TestController which uses parameters via directories', async (p) => {
         const expectedResult = 'test2:' + p + ':foo baz';
 
         const server = createServerAndInitControllers();
@@ -107,7 +107,7 @@ describe('controllers', () => {
         expect(str).toBe(expectedResult);
     });
 
-    it.each(['/test3'])('should return 400 when do a GET request for existing Test3Controller with custom error handler', async (p) => {
+    it.each(['/test_error_handler'])('should return 400 when do a GET request for existing Test3Controller with custom error handler', async (p) => {
         const expectedResult = 'ERROR: ' + p + ' Something went wrong!';
 
         const server = createServerAndInitControllers();
@@ -127,7 +127,7 @@ describe('controllers', () => {
         expect(str).toBe(expectedResult);
     });
 
-    it.each(['/test4'])('should return 200 when do a GET request for existing Test4Controller with custom serializer', async (p) => {
+    it.each(['/test_serializer'])('should return 200 when do a GET request for existing Test4Controller with custom serializer', async (p) => {
         const expectedObject = {
             success: true,
             data: 'foo'
@@ -148,10 +148,10 @@ describe('controllers', () => {
     });
 
     /* TODO: reactive => does currently run not in test case
-    it.each(validInputData)('should return 200 when do a POST request on /test5 route for existing Test5Controller with valid input data', async (data) => {
+    it.each(validInputData)('should return 200 when do a POST request on /test_schema_validation route for existing Test5Controller with valid input data', async (data) => {
         const server = createServerAndInitControllers();
 
-        await request(server).post('/test5')
+        await request(server).post('/test_schema_validation')
             .send(
                 Buffer.from(JSON.stringify(data), 'utf8')
             )
@@ -159,18 +159,18 @@ describe('controllers', () => {
     });
     */
 
-    it.each(invalidInputData)('should return 400 when do a POST request on /test5 route for existing Test5Controller with invalid input data', async (data) => {
+    it.each(invalidInputData)('should return 400 when do a POST request on /test_schema_validation route for existing Test5Controller with invalid input data', async (data) => {
         const server = createServerAndInitControllers();
 
-        await request(server).post('/test5')
+        await request(server).post('/test_schema_validation')
             .send(data)
             .expect(400);
     });
 
-    it.each(invalidInputData)('should return 409 when do a POST request on /test5 route for existing Test5Controller with invalid input data', async (data) => {
+    it.each(invalidInputData)('should return 409 when do a POST request on /test_schema_validation route for existing Test5Controller with invalid input data', async (data) => {
         const server = createServerAndInitControllers();
 
-        await request(server).post('/test5/foo')
+        await request(server).post('/test_schema_validation/foo')
             .send(data)
             .expect(409);
     });
@@ -204,7 +204,7 @@ describe('controllers', () => {
     }])('should return 200 when do a GET request for existing Test6Controller with global middlewares', async (item) => {
         const server = createServerAndInitControllers();
 
-        const response = await request(server).get('/test6/' + item.path)
+        const response = await request(server).get('/test_middlewares/' + item.path)
             .send()
             .parse(binaryParser)
             .expect(200);
@@ -224,7 +224,7 @@ describe('controllers', () => {
 
         const server = createServerAndInitControllers();
 
-        const response = await request(server).get('/test7')
+        const response = await request(server).get('/test_imports')
             .send()
             .parse(binaryParser)
             .expect(200);

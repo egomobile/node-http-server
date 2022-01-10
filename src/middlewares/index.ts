@@ -56,6 +56,21 @@ export const defaultParseErrorHandler: ParseErrorHandler = async (error, request
  * @param {IncomingMessage} request The request context.
  * @param {ServerResponse} response The response context.
  */
+export const defaultQueryValidationFailedHandler: ValidationFailedHandler = async (error, request, response) => {
+    if (!response.headersSent) {
+        response.writeHead(400, {
+            'Content-Length': '0'
+        });
+    }
+};
+
+/**
+ * The default 'parse error' handler.
+ *
+ * @param {ParseError} error The error.
+ * @param {IncomingMessage} request The request context.
+ * @param {ServerResponse} response The response context.
+ */
 export const defaultValidationFailedHandler: ValidationFailedHandler = async (error, request, response) => {
     if (!response.headersSent) {
         response.writeHead(400, {
@@ -74,5 +89,6 @@ export * from './lang';
 export * from './query';
 export * from './text';
 export * from './validate';
+export * from './validateQuery';
 export * from './yaml';
 
