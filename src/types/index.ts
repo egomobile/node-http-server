@@ -391,6 +391,29 @@ export interface IHttpServer {
     (request: IncomingMessage, response: ServerResponse): void;
 
     /**
+     * Registers a route for all possible request methods.
+     *
+     * @param {HttpRequestPath} path The path.
+     * @param {OptionsOrMiddlewares} optionsOrMiddlewares The options or middlewares for the handler.
+     * @param {HttpRequestHandler} handler The handler.
+     *
+     * @example
+     * ```
+     * import createServer, { IHttpRequest, IHttpResponse } from '@egomobile/http-server'
+     *
+     * const app = createServer()
+     *
+     * app.all('/', async (request: IHttpRequest, response: IHttpResponse) => {
+     *     // do your magic here
+     * })
+     *
+     * await app.listen()  // port === 8080, if NODE_ENV === 'development'; otherwise 80
+     * ```
+     */
+    all(path: HttpRequestPath, handler: HttpRequestHandler): this;
+    all(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
+
+    /**
      * Closes / stops the server.
      *
      * @example
