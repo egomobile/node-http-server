@@ -229,6 +229,13 @@ export const createServer = (): IHttpServer => {
         };
     });
 
+    // server.all()
+    (server as any).all = (...args: any[]) => {
+        supportedHttpMethods.forEach(method => {
+            (server as any)[method.toLowerCase()](...args);
+        });
+    };
+
     server.setErrorHandler = (handler) => {
         if (typeof handler !== 'function') {
             throw new TypeError('handler must be a function');

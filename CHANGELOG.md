@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.29.0
+
+- implement [all() method](https://egomobile.github.io/node-http-server/interfaces/IHttpServer.html#all)
+
 ## 0.28.0
 
 - implement [validateQuery](https://egomobile.github.io/node-http-server/modules.html#validateQuery) middleware
