@@ -1,0 +1,24 @@
+{
+  "name": "@egomobile/http-server-benchmarks",
+  "version": "1.0.0",
+  "description": "Benchmarks about @egomobile/http-server module",
+  "author": "Next.e.GO Mobile SE, Aachen, Germany",
+  "license": "LGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/egomobile/node-http-server.git"
+  },
+  "dependencies": {
+    "@egomobile/http-server": "0.29.0",
+    "express": "4.17.2",
+    "fastify": "3.25.3",
+    "fastify-express": "0.3.3",
+    "polka": "0.5.2"
+  },
+  "scripts": {
+    "express": "node ./express.js",
+    "fastify": "node ./fastify.js",
+    "polka": "node ./polka.js",
+    "http-server": "node ./http-server.js"
+  }
+}

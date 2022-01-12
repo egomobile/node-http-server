@@ -60,6 +60,11 @@ interface ICreateInitControllerMethodSwaggerActionOptions {
     methodName: string | symbol;
 }
 
+interface ICreateRequestHandlerWithSerializerOptions {
+    handler: HttpRequestHandler;
+    serializer: ResponseSerializer;
+}
+
 interface IUpdateMiddlewaresOptions {
     controller: IHttpController<IHttpServer>;
     globalOptions: Nilable<IControllersOptions>;
@@ -343,6 +348,18 @@ function createInitControllerMethodAction({
             routerPath = params(routerPath);
         }
 
+        let routeSerializer: Nilable<ResponseSerializer> = serializer || (controller as any)[RESPONSE_SERIALIZER];
+        let routeHandler: HttpRequestHandler = (method as HttpRequestHandler).bind(controller);
+
+        let handler: HttpRequestHandler = asAsync(routeHandler);
+        if (routeSerializer) {
+            // wrap, only if required
+            handler = createRequestHandlerWithSerializer({
+                handler: routeHandler,
+                serializer: routeSerializer
+            });
+        }
+
         updateMiddlewares({
             controller,
             middlewares,
@@ -357,10 +374,7 @@ function createInitControllerMethodAction({
 
         (server as any)[httpMethod](routerPath, middlewares, createControllerMethodRequestHandler({
             getErrorHandler: () => getErrorHandler(controller, server),
-            handler: createRequestHandlerWithSerializer(
-                (method as HttpRequestHandler).bind(controller),
-                () => serializer || (controller as any)[RESPONSE_SERIALIZER]
-            )
+            handler
         }));
     };
 }
@@ -416,20 +430,12 @@ function createInitControllerMethodSwaggerAction({ doc, method, methodName }: IC
     };
 }
 
-function createRequestHandlerWithSerializer(handler: HttpRequestHandler, getSerializer: GetterFunc<Nilable<ResponseSerializer>>): HttpRequestHandler {
-    handler = asAsync(handler);
-
+function createRequestHandlerWithSerializer({ handler, serializer }: ICreateRequestHandlerWithSerializerOptions): HttpRequestHandler {
     return async (request, response) => {
-        const serializer = getSerializer();
-
-        if (serializer) {
-            await serializer(
-                await handler(request, response),
-                request, response
-            );
-        } else {
-            await handler(request, response);
-        }
+        await serializer(
+            await handler(request, response),
+            request, response
+        );
     };
 }
 

@@ -1,5 +1,13 @@
 # Change Log (@egomobile/http-server)
 
+## 0.30.0
+
+- type check for `key` parameter of [@Import() decorator](https://egomobile.github.io/node-http-server/modules.html#Import)
+- optimize serializer feature
+- update [Youch!](https://github.com/poppinss/youch) to version `3.0.0`
+- add benchmarks to `benchmarks` sub folder
+- fix typos
+
 ## 0.29.0
 
 - implement [all() method](https://egomobile.github.io/node-http-server/interfaces/IHttpServer.html#all)

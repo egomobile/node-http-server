@@ -5,7 +5,7 @@
 # @egomobile/http-server
 
 > Very fast alternative HTTP server to [Express](http://expressjs.com/), with
-> simple routing and middleware support and which ist compatible with
+> simple routing and middleware support and which is compatible with
 > [Node.js 12](https://nodejs.org/en/blog/release/v12.0.0/) or later.
 
 ## Install

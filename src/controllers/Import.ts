@@ -11,7 +11,7 @@ import { getListFromObject } from './utils';
  *
  * @example
  * ```
- * import createServer, { Controller, ControllerBase, IHttpRequest, IHttpResponse, Import } from '@egomobile/http-server'
+ * import createServer, { Controller, ControllerBase, GET, IHttpRequest, IHttpResponse, Import } from '@egomobile/http-server'
  *
  * // setup controller and define the
  * // value keys to import
@@ -52,6 +52,12 @@ import { getListFromObject } from './utils';
  * @returns {PropertyDecorator} The new decorator function.
  */
 export function Import(key?: Nilable<ObjectKey>): PropertyDecorator {
+    if (!isNil(key)) {
+        if (typeof key !== 'string' && typeof key !== 'symbol') {
+            throw new TypeError('key must be of type string or symbol');
+        }
+    }
+
     return function (target, propertyName) {
         const valueKey = isNil(key) ? propertyName : key!;
 
