@@ -186,7 +186,7 @@ A possible result could be:
 
 ## Benchmarks [<a href="#toc">↑</a>]
 
-The following benchmarks were made with [wrk](https://github.com/wg/wrk) on the following machine and [Node v16.13.2]():
+The following benchmarks were made with [wrk](https://github.com/wg/wrk) on the following machine, running [Node v16.13.2](https://github.com/nodejs/node/blob/master/doc/changelogs/CHANGELOG_V16.md#16.13.2):
 
 Machine:
 
