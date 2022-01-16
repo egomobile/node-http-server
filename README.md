@@ -8,7 +8,25 @@
 > simple routing and middleware support and which is compatible with
 > [Node.js 12](https://nodejs.org/en/blog/release/v12.0.0/) or later.
 
-## Install
+<a name="toc"></a>
+
+## Table of contents
+
+- [Install](#install)
+- [Usage](#usage)
+  - [Quick example](#quick-example)
+  - [Middlewares](#middlewares)
+  - [Controllers](#controllers)
+  - [Error handling](#error-handling)
+    - [Pretty error pages](#pretty-error-pages)
+- [Benchmarks](#benchmarks)
+- [Credits](#credits)
+- [Documentation](#documentation)
+- [See also](#see-also)
+
+<a name="install"></a>
+
+## Install [<a href="#toc">↑</a>]
 
 Execute the following command from your project folder, where your
 `package.json` file is stored:
@@ -17,9 +35,13 @@ Execute the following command from your project folder, where your
 npm install --save @egomobile/http-server
 ```
 
-## Usage
+<a name="usage"></a>
 
-### Quick example
+## Usage [<a href="#toc">↑</a>]
+
+<a name="quick-example"></a>
+
+### Quick example [<a href="#usage">↑</a>]
 
 ```typescript
 import createServer, { buffer, params, query } from "@egomobile/http-server";
@@ -62,7 +84,9 @@ async function main() {
 main().catch(console.error);
 ```
 
-### Middlewares
+<a name="middlewares"></a>
+
+### Middlewares [<a href="#usage">↑</a>]
 
 To enhance the functionality of your handlers, you can setup global or route
 specific middlewares.
@@ -70,7 +94,9 @@ specific middlewares.
 For more details, have a look
 [at the wiki page](https://github.com/egomobile/node-http-server/wiki/Middlewares).
 
-### Controllers
+<a name="controllers"></a>
+
+### Controllers [<a href="#usage">↑</a>]
 
 The module provides tools, like
 [decorators](https://www.typescriptlang.org/docs/handbook/decorators.html),
@@ -82,7 +108,9 @@ Have a look
 [at the wiki page](https://github.com/egomobile/node-http-server/wiki/Controllers)
 for detailed information.
 
-### Error handling
+<a name="error-handling"></a>
+
+### Error handling [<a href="#usage">↑</a>]
 
 ```typescript
 import createServer from "@egomobile/http-server";
@@ -128,7 +156,9 @@ async function main() {
 main().catch(console.error);
 ```
 
-#### Pretty error pages
+<a name="pretty-error-pages"></a>
+
+#### Pretty error pages [<a href="#error-handling">↑</a>]
 
 ```typescript
 import createServer, { prettyErrors } from "@egomobile/http-server";
@@ -152,7 +182,75 @@ A possible result could be:
 
 <kbd><img src="./assets/screenshot.png" /></kbd>
 
-## Credits
+<a name="benchmarks"></a>
+
+## Benchmarks [<a href="#toc">↑</a>]
+
+The following benchmarks were made with [wrk](https://github.com/wg/wrk) on the following machine and [Node v16.13.2]():
+
+Machine:
+
+- MacBook Pro (16", 2021)
+- CPU: Apple M1 Max
+- Memory: 64 GB
+- OS: MacOS 12.1
+
+Command: `wrk -t8 -c100 -d30s http://localhost:3000/user/123`
+
+```
+Express:
+=============
+Running 30s test @ http://localhost:3000/user/123
+  8 threads and 100 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     3.56ms  674.79us  14.59ms   90.47%
+    Req/Sec     3.39k   224.41     5.11k    75.04%
+  809164 requests in 30.03s, 118.84MB read
+Requests/sec:  26947.30
+Transfer/sec:      3.96MB
+
+
+Fastify:
+=============
+Running 30s test @ http://localhost:3000/user/123
+  8 threads and 100 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     3.32ms    0.95ms  19.41ms   85.25%
+    Req/Sec     3.64k   280.76     4.87k    76.38%
+  869871 requests in 30.03s, 142.69MB read
+Requests/sec:  28971.44
+Transfer/sec:      4.75MB
+
+
+Polka:
+===========
+Running 30s test @ http://localhost:3000/user/123
+  8 threads and 100 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     1.39ms  289.29us  13.20ms   91.15%
+    Req/Sec     8.66k     1.26k   10.67k    59.55%
+  2074873 requests in 30.10s, 259.22MB read
+Requests/sec:  68930.81
+Transfer/sec:      8.61MB
+
+
+@egomobile/http-server:
+============================
+Running 30s test @ http://localhost:3000/user/123
+  8 threads and 100 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     1.05ms  220.64us  13.11ms   85.16%
+    Req/Sec    11.44k     1.39k   18.48k    81.16%
+  2737095 requests in 30.10s, 341.95MB read
+Requests/sec:  90922.13
+Transfer/sec:     11.36MB
+```
+
+[Here](./benchmarks/README.md) are more information, on how the benchmarks were recorded.
+
+<a name="credits"></a>
+
+## Credits [<a href="#toc">↑</a>]
 
 The module makes use of:
 
@@ -170,7 +268,15 @@ The module makes use of:
 - [Youch!](https://github.com/poppinss/youch) by
   [Poppinss](https://github.com/poppinss)
 
-## Documentation
+<a name="documentation"></a>
+
+## Documentation [<a href="#toc">↑</a>]
 
 The API documentation can be found
 [here](https://egomobile.github.io/node-http-server/).
+
+<a name="see-also"></a>
+
+## See also [<a href="#toc">↑</a>]
+
+- [@egomobile/api-utils](https://github.com/egomobile/node-api-utils) - Extensions for this module, helping realizing REST APIs

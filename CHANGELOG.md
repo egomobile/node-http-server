@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-server)
 
-## 0.30.0
+## 0.30.1
 
 - type check for `key` parameter of [@Import() decorator](https://egomobile.github.io/node-http-server/modules.html#Import)
 - optimize serializer feature
