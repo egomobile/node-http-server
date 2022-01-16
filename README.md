@@ -246,7 +246,7 @@ Requests/sec:  90922.13
 Transfer/sec:     11.36MB
 ```
 
-[Here](./benchmarks/README.md) are more information, on how the benchmarks were recorded.
+[Here](./benchmarks) is the test code, used recording the benchmarks.
 
 <a name="credits"></a>
 

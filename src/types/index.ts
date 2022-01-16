@@ -16,6 +16,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import type { AnySchema, ValidationError as JoiValidationError } from 'joi';
 import type { OpenAPIV3 } from 'openapi-types';
+import type { URLSearchParams } from 'url';
 import type { ParseError } from '../errors/parse';
 import type { Nilable, ObjectKey, Optional } from './internal';
 

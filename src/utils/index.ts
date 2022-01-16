@@ -15,6 +15,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import type { URLSearchParams } from 'url';
 import { httpMethodsWithBodies } from '../constants';
 import { EntityTooLargeError } from '../errors';
 import type { Constructor, HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction } from '../types';

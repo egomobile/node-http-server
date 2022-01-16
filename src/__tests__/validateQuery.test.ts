@@ -14,6 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import request from 'supertest';
+import { URLSearchParams } from 'url';
 import { schema } from '..';
 import { query, validateQuery } from '../middlewares';
 import { IHttpRequest, IHttpResponse, ValidationFailedHandler } from '../types';
