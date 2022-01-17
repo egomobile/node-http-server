@@ -15,6 +15,7 @@ Machine:
 - MacBook Pro (15-inch, 2018)
 - CPU: 2,9 GHz 6-Core Intel Core i9
 - Memory: 32 GB 2400 MHz DDR4
+- OS: MacOS 12.1
 
 #### [Express](https://expressjs.com/)
 
