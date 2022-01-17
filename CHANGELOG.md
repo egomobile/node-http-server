@@ -1,6 +1,10 @@
 # Change Log (@egomobile/http-server)
 
-## 0.30.1
+## 0.31.0
+
+- replace use of [substr()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/substr) with [substring()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/substring)
+
+## 0.30.2
 
 - type check for `key` parameter of [@Import() decorator](https://egomobile.github.io/node-http-server/modules.html#Import)
 - optimize serializer feature
