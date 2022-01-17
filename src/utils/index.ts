@@ -106,7 +106,7 @@ export function getUrlWithoutQuery(url: Optional<string>): Optional<string> {
 
     const qMark = url.indexOf('?');
     if (qMark > -1) {
-        url = url.substr(0, qMark);
+        url = url.substring(0, qMark);
     }
 
     return url;

@@ -44,7 +44,7 @@ export function toSwaggerPath(routePath: string): string {
     return normalizeRouterPath(
         normalizeRouterPath(routePath)
             .split('/')
-            .map(x => x.trimStart().startsWith(':') ? `{${x.substr(1)}}` : x)
+            .map(x => x.trimStart().startsWith(':') ? `{${x.substring(1)}}` : x)
             .join('/')
     );
 }

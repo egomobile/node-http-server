@@ -46,7 +46,7 @@ export function query(): HttpMiddleware {
 
                 const qMark = request.url.indexOf('?');
                 if (qMark > -1) {
-                    qs = request.url.substr(qMark + 1);
+                    qs = request.url.substring(qMark + 1);
                 }
 
                 if (qs.length) {

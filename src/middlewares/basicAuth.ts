@@ -165,8 +165,8 @@ function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOp
                 // Authorization: <scheme> <value>
                 const sep = authorization.indexOf(' ');
                 if (sep > -1) {
-                    scheme = authorization.substr(0, sep);
-                    value = authorization.substr(sep + 1);
+                    scheme = authorization.substring(0, sep);
+                    value = authorization.substring(sep + 1);
                 } else {
                     scheme = authorization;
                     value = '';
@@ -182,8 +182,8 @@ function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOp
                     // username:password
                     const sep2 = usernameAndPassword.indexOf(':');
                     if (sep2 > -1) {
-                        username = usernameAndPassword.substr(0, sep2);
-                        password = usernameAndPassword.substr(sep2 + 1);
+                        username = usernameAndPassword.substring(0, sep2);
+                        password = usernameAndPassword.substring(sep2 + 1);
                     } else {
                         username = usernameAndPassword;
                         password = null;
