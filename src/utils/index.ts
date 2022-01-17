@@ -96,7 +96,7 @@ export function getBufferEncoding(encoding: Nilable<BufferEncoding>): BufferEnco
         return encoding;
     }
 
-    throw new TypeError('encoding must be of type string');;
+    throw new TypeError('encoding must be of type string');
 }
 
 export function getUrlWithoutQuery(url: Optional<string>): Optional<string> {
@@ -106,7 +106,7 @@ export function getUrlWithoutQuery(url: Optional<string>): Optional<string> {
 
     const qMark = url.indexOf('?');
     if (qMark > -1) {
-        url = url.substr(0, qMark);
+        url = url.substring(0, qMark);
     }
 
     return url;

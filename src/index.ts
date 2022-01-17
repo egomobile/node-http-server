@@ -66,7 +66,6 @@ const supportedHttpMethods = ['CONNECT', 'DELETE', 'GET', 'HEAD', 'OPTIONS', 'PA
  *
  * @example
  * ```
- * import assert from 'assert'
  * import createServer, { json, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
  *
  * const app = createServer()

@@ -80,12 +80,12 @@ function createMiddleware({ additionalLanguages, defaultLanguage }: ICreateMiddl
 
                         const sep = x.indexOf(';');
                         if (sep > -1) {
-                            lang = x.substr(0, sep);
+                            lang = x.substring(0, sep);
 
-                            const weightExpr = x.substr(sep + 1);
+                            const weightExpr = x.substring(sep + 1);
                             const q = weightExpr.indexOf('q=');
                             if (q > -1) {
-                                weight = parseFloat(weightExpr.substr(q + 2).trim());
+                                weight = parseFloat(weightExpr.substring(q + 2).trim());
                             }
                         } else {
                             lang = x;

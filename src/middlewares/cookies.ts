@@ -54,8 +54,8 @@ export function cookies(): HttpMiddleware {
 
                 const sep = c.indexOf('=');
                 if (sep > -1) {
-                    name = c.substr(0, sep);
-                    value = c.substr(sep + 1);
+                    name = c.substring(0, sep);
+                    value = c.substring(sep + 1);
                 } else {
                     name = c;
                     value = '';

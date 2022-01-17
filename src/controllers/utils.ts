@@ -66,10 +66,10 @@ export function normalizeRouterPath(p: Nilable<string>): string {
         .trim();
 
     while (p.endsWith('/')) {
-        p = p.substr(0, p.length - 1).trim();
+        p = p.substring(0, p.length - 1).trim();
     }
     while (p.startsWith('/')) {
-        p = p.substr(1).trim();
+        p = p.substring(1).trim();
     }
 
     if (!p.startsWith('/')) {

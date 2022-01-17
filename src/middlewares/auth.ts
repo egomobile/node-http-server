@@ -202,8 +202,8 @@ function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOp
 
                 const sep = authorization.indexOf(' ');
                 if (sep > -1) {
-                    scheme = authorization.substr(0, sep);
-                    value = authorization.substr(sep + 1);
+                    scheme = authorization.substring(0, sep);
+                    value = authorization.substring(sep + 1);
                 } else {
                     scheme = authorization;
                     value = '';
