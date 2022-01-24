@@ -116,9 +116,8 @@ export function isClass<T extends any = any>(maybeClass: any): maybeClass is Con
     return typeof maybeClass?.constructor === 'function';
 }
 
-export function isNil(val: unknown): val is (null | undefined) {
-    return val === null ||
-        typeof val === 'undefined';
+export function isNil(val: unknown): val is (undefined | null) {
+    return typeof val === 'undefined' || val === null;
 }
 
 export function limitToBytes(limit?: Nilable<number>): Nilable<number> {

@@ -398,7 +398,7 @@ function mergeHandler(
 ): HttpRequestHandler {
     return function (request, response) {
         return new Promise<any>((resolve, reject) => {
-            const handleError = (error: any) => asAsync<HttpErrorHandler>(getErrorHandler())(
+            const handleError = (error: any) => getErrorHandler()(
                 error, request, response
             );
 

@@ -160,13 +160,29 @@ main().catch(console.error);
 
 #### Pretty error pages [<a href="#error-handling">↑</a>]
 
+A nice example is, to use [Youch!](https://github.com/poppinss/youch) by [Poppinss](https://github.com/poppinss).
+
+It prints pretty error pages in the browser:
+
 ```typescript
 import createServer, { prettyErrors } from "@egomobile/http-server";
+import youch from "youch";
 
 async function main() {
   // ...
 
-  app.setErrorHandler(prettyErrors());
+  app.setErrorHandler(async (error, request, response) => {
+    const html = Buffer.from(await new youch(error, request).toHTML(), "utf8");
+
+    if (!response.headersSent) {
+      response.writeHead(500, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Content-Length": String(html.length),
+      });
+    }
+
+    response.end(html);
+  });
 
   app.get("/", async (request, response) => {
     throw new Error("Oops! Something went wrong!");
@@ -265,8 +281,6 @@ The module makes use of:
   [Luke Edwards](https://github.com/lukeed)
 - [Swagger UI](https://github.com/swagger-api/swagger-ui) and
   [openapi-types](https://github.com/kogosoftwarellc/open-api)
-- [Youch!](https://github.com/poppinss/youch) by
-  [Poppinss](https://github.com/poppinss)
 
 <a name="documentation"></a>
 

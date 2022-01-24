@@ -16,8 +16,11 @@
 import type { HttpMiddleware } from '../types';
 import type { Nilable } from '../types/internal';
 
-interface ICreateMiddlewareOptions {
+interface ICreateMiddlewareOptions extends ICreateMiddlewareForDefaultOnlyOptions {
     additionalLanguages: string[];
+}
+
+interface ICreateMiddlewareForDefaultOnlyOptions {
     defaultLanguage: string;
 }
 
@@ -58,10 +61,19 @@ export function lang(defaultLanguage: string, ...additionalLanguages: string[]):
         throw new TypeError('All items of additionalLanguages must be of type string');
     }
 
-    return createMiddleware({
-        additionalLanguages: additionalLanguages.map(asl => asl.toLowerCase().trim()),
-        defaultLanguage: defaultLanguage.toLowerCase().trim()
-    });
+    additionalLanguages = additionalLanguages.map(asl => asl.toLowerCase().trim());
+    defaultLanguage = defaultLanguage.toLowerCase().trim();
+
+    if (additionalLanguages.length) {
+        return createMiddleware({
+            additionalLanguages,
+            defaultLanguage
+        });
+    } else {
+        return createMiddlewareForDefaultOnly({
+            defaultLanguage
+        });
+    }
 }
 
 function createMiddleware({ additionalLanguages, defaultLanguage }: ICreateMiddlewareOptions): HttpMiddleware {
@@ -73,6 +85,7 @@ function createMiddleware({ additionalLanguages, defaultLanguage }: ICreateMiddl
                 // parse 'Accept-Language' header
                 // example: Accept-Language: de, en-GB;q=0.85, en;q=0.9
                 const acceptLanguage = request.headers['accept-language']
+                    .toLowerCase()
                     .split(',')
                     .map(x => {
                         let lang: string;
@@ -92,7 +105,7 @@ function createMiddleware({ additionalLanguages, defaultLanguage }: ICreateMiddl
                         }
 
                         return {
-                            lang: lang.toLowerCase().trim(),
+                            lang,
                             weight
                         };
                     });
@@ -104,6 +117,14 @@ function createMiddleware({ additionalLanguages, defaultLanguage }: ICreateMiddl
         } catch { }
 
         request.lang = lang?.length ? lang : defaultLanguage;
+
+        next();
+    };
+}
+
+function createMiddlewareForDefaultOnly({ defaultLanguage }: ICreateMiddlewareForDefaultOnlyOptions): HttpMiddleware {
+    return async (request, response, next) => {
+        request.lang = defaultLanguage;
 
         next();
     };
