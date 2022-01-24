@@ -51,6 +51,10 @@ interface RegexParamResult {
  * @returns {HttpPathValidator} The new path validator.
  */
 export function params(path: string): HttpPathValidator {
+    if (typeof path !== 'string') {
+        throw new TypeError('path must be of type string');
+    }
+
     const result: RegexParamResult = parse(path);
 
     return (req: IncomingMessage) => {

@@ -1,5 +1,14 @@
 # Change Log (@egomobile/http-server)
 
+## 0.32.0
+
+- improve and fix [lang()](https://egomobile.github.io/node-http-server/modules.html#lang) middleware
+- [@CONNECT()](https://egomobile.github.io/node-http-server/modules.html#CONNECT) does not support input bodies anymore
+- type checks for arguments in [params()](https://egomobile.github.io/node-http-server/modules.html#params) validator
+- remove `prettyErrors()` error handler
+- other code cleanups and improvements
+- (bug-)fixes
+
 ## 0.31.0
 
 - replace use of [substr()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/substr) with [substring()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/substring)

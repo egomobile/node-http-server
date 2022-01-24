@@ -64,7 +64,7 @@ export interface IValidateOptions {
  * const app = createServer()
  *
  * app.post('/', [json(), validate(mySchema)], (request, response) => {
- *   const body: IMySchema = request.body;
+ *   const body: IMySchema = request.body
  *
  *   assert.strictEqual(typeof body, 'object')
  *   assert.strictEqual(typeof body.email, 'string')
