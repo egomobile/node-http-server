@@ -18,7 +18,7 @@ export default class TestSerializerController extends ControllerBase {
 
         response.writeHead(200, {
             'Content-Length': String(jsonResponse.length),
-            'Content-Type': 'application/json; charset=utf-8'
+            'Content-Type': 'application/json; charset=UTF-8'
         });
         response.write(jsonResponse);
     }

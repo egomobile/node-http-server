@@ -176,7 +176,7 @@ async function main() {
 
     if (!response.headersSent) {
       response.writeHead(500, {
-        "Content-Type": "text/html; charset=utf-8",
+        "Content-Type": "text/html; charset=UTF-8",
         "Content-Length": String(html.length),
       });
     }
@@ -275,8 +275,6 @@ The module makes use of:
   [Nodeca](https://github.com/nodeca)
 - [minimatch](https://github.com/isaacs/minimatch) by
   [isaacs](https://github.com/isaacs)
-- [mrmime](https://github.com/lukeed/mrmime) by
-  [Luke Edwards](https://github.com/lukeed)
 - [regexparam](https://github.com/lukeed/regexparam) by
   [Luke Edwards](https://github.com/lukeed)
 - [Swagger UI](https://github.com/swagger-api/swagger-ui) and

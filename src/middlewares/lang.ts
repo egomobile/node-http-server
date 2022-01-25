@@ -105,7 +105,7 @@ function createMiddleware({ additionalLanguages, defaultLanguage }: ICreateMiddl
                         }
 
                         return {
-                            lang,
+                            lang: lang.trim(),
                             weight
                         };
                     });

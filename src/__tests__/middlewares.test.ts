@@ -32,11 +32,11 @@ describe('Middlewares', () => {
 
             (server as any)[method](path, [
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-                    (request as any).foo = '';
+                    (request as any).foo = 'MK';
                     next();
                 },
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-                    (request as any).foo += 'MK';
+                    (request as any).foo += '';
                     next();
                 },
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
@@ -69,11 +69,11 @@ describe('Middlewares', () => {
 
             server.use(
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-                    (request as any).foo = '';
+                    (request as any).foo = 'MK';
                     next();
                 },
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-                    (request as any).foo += 'MK';
+                    (request as any).foo += '+';
                     next();
                 },
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
@@ -86,7 +86,7 @@ describe('Middlewares', () => {
                 response.write((request as any).foo);
             });
 
-            const expectedResponse = 'MKTM';
+            const expectedResponse = 'MK+TM';
 
             const response = await (request(server) as any)[method]('/')
                 .send()
@@ -108,11 +108,11 @@ describe('Middlewares', () => {
 
             server.use(
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-                    (request as any).foo = '';
+                    (request as any).foo = 'TM';
                     next();
                 },
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-                    (request as any).foo += 'TM';
+                    (request as any).foo += '+';
                     next();
                 },
             );
@@ -126,7 +126,7 @@ describe('Middlewares', () => {
                 response.write((request as any).foo);
             });
 
-            const expectedResponse = 'TMMK';
+            const expectedResponse = 'TM+MK';
 
             const response = await (request(server) as any)[method]('/')
                 .send()
