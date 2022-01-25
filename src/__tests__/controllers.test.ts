@@ -142,7 +142,7 @@ describe('controllers', () => {
         const data = response.body;
         expect(typeof data).toBe('object');
 
-        expect(response.headers['content-type']).toBe('application/json; charset=utf-8');
+        expect(response.headers['content-type']).toBe('application/json; charset=UTF-8');
 
         expect(data).toMatchObject(expectedObject);
     });

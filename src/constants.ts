@@ -32,3 +32,11 @@ export const SWAGGER_METHOD_INFO = Symbol('SWAGGER_METHOD_INFO');
 export const VALIDATION_ERROR_HANDLER = Symbol('VALIDATION_ERROR_HANDLER');
 
 export const httpMethodsWithBodies = ['POST', 'PUT', 'PATCH'];
+
+export const knownFileMimes: Record<string, string> = {
+    '.css': 'text/css; charset=UTF-8',
+    '.html': 'text/html; charset=UTF-8',
+    '.js': 'text/javascript; charset=UTF-8',
+    '.json': 'application/json; charset=UTF-8',
+    '.png': 'image/png'
+};

@@ -18,8 +18,8 @@ import path from 'path';
 import type { URLSearchParams } from 'url';
 import { httpMethodsWithBodies } from '../constants';
 import { EntityTooLargeError } from '../errors';
-import type { Constructor, HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction } from '../types';
-import type { Nilable, Nullable, Optional } from '../types/internal';
+import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction } from '../types';
+import type { Constructor, Nilable, Nullable, Optional } from '../types/internal';
 
 interface ICreateWithEntityTooLargeActionOptions {
     action: HttpMiddleware;

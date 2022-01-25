@@ -1,5 +1,18 @@
 # Change Log (@egomobile/http-server)
 
+## 0.33.0
+
+- remove [regexparam](https://github.com/lukeed/regexparam) by [Luke Edwards](https://github.com/lukeed) and use code directly to reduce dependencies
+- remove [mrmime](https://github.com/lukeed/mrmime) by [Luke Edwards](https://github.com/lukeed) to reduce dependencies
+- improve compilation of handlers and middlewares
+- fix minor typos
+- improve and fix [lang()](https://egomobile.github.io/node-http-server/modules.html#lang)
+- improve Swagger features
+- move following types to `internal`:
+  - `Constructor`
+  - `GetterFunc`
+- improve tests
+
 ## 0.32.0
 
 - improve and fix [lang()](https://egomobile.github.io/node-http-server/modules.html#lang) middleware

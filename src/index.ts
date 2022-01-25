@@ -83,7 +83,7 @@ const supportedHttpMethods = ['CONNECT', 'DELETE', 'GET', 'HEAD', 'OPTIONS', 'PA
  */
 export const createServer = (): IHttpServer => {
     let errorHandler: HttpErrorHandler = defaultHttpErrorHandler;
-    const globalMiddleWares: HttpMiddleware[] = [];
+    const globalMiddlewares: HttpMiddleware[] = [];
     let instance: Optional<Server>;
     let notFoundHandler: HttpNotFoundHandler = defaultHttpNotFoundHandler;
 
@@ -94,7 +94,7 @@ export const createServer = (): IHttpServer => {
     const recompileHandlers = () => {
         compiledHandlers = compileAllWithMiddlewares(
             groupedHandlers,
-            globalMiddleWares,
+            globalMiddlewares,
             getErrorHandler
         );
     };
@@ -192,15 +192,6 @@ export const createServer = (): IHttpServer => {
                 groupedHandlers[method] = [];
             }
 
-            // setup request handler
-            if (middlewares?.length) {
-                handler = mergeHandler(
-                    handler,
-                    middlewares.map(mw => asAsync<HttpMiddleware>(mw)),
-                    getErrorHandler
-                );
-            }
-
             // eslint-disable-next-line @typescript-eslint/naming-convention
             const autoEnd = isNil(options.autoEnd) ? true : options.autoEnd;
             if (typeof autoEnd !== 'boolean') {
@@ -220,7 +211,8 @@ export const createServer = (): IHttpServer => {
             groupedHandlers[method].push({
                 end: autoEnd ? endRequest : doNotEndRequest,
                 handler,
-                isPathValid
+                isPathValid,
+                middlewares: middlewares?.map(mw => asAsync<HttpMiddleware>(mw))
             });
             recompileHandlers();
 
@@ -264,7 +256,7 @@ export const createServer = (): IHttpServer => {
         }
 
         // keep sure to have an async functions here
-        globalMiddleWares.push(...moreMiddlewares.map(mw => asAsync<HttpMiddleware>(mw)));
+        globalMiddlewares.push(...moreMiddlewares.map(mw => asAsync<HttpMiddleware>(mw)));
 
         recompileHandlers();
 
@@ -354,18 +346,22 @@ export default createServer;
 
 function compileAllWithMiddlewares(
     groupedHandlers: GroupedHttpRequestHandlers,
-    middlewares: HttpMiddleware[],
+    globalMiddlewares: HttpMiddleware[],
     getErrorHandler: () => HttpErrorHandler
 ): GroupedHttpRequestHandlers {
-    if (!middlewares.length) {
-        return groupedHandlers;
-    }
-
     const compiledHandlers: GroupedHttpRequestHandlers = {};
+
     for (const method in groupedHandlers) {
         compiledHandlers[method] = groupedHandlers[method].map(ctx => ({
             end: ctx.end,
-            handler: mergeHandler(ctx.handler, middlewares, getErrorHandler),
+            handler: mergeHandler(
+                ctx.handler,
+                [
+                    ...globalMiddlewares,  // global middles
+                    ...(ctx.middlewares?.length ? ctx.middlewares : [])  // route specific middlewares
+                ],
+                getErrorHandler
+            ),
             isPathValid: ctx.isPathValid
         }));
     }
@@ -396,6 +392,10 @@ function mergeHandler(
     middlewares: HttpMiddleware[],
     getErrorHandler: () => HttpErrorHandler
 ): HttpRequestHandler {
+    if (!middlewares.length) {
+        return handler;  // nothing to merge
+    }
+
     return function (request, response) {
         return new Promise<any>((resolve, reject) => {
             const handleError = (error: any) => getErrorHandler()(

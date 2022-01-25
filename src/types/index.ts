@@ -21,11 +21,6 @@ import type { ParseError } from '../errors/parse';
 import type { Nilable, ObjectKey, Optional } from './internal';
 
 /**
- * Describes a constructor.
- */
-export type Constructor<T extends any = any> = (new (...args: any[]) => T);
-
-/**
  * A possible value for a first argument of a HTTP method / controller route decorator
  * like GET() or POST().
  */
@@ -74,13 +69,6 @@ export type DocumentationUpdaterHandler = (context: IDocumentationUpdaterContext
  * @returns {number} The status code.
  */
 export type GetStatusCodeFromError = (error: any) => number;
-
-/**
- * A function, that returns / provides a value.
- *
- * @returns {TValue} The value.
- */
-export type GetterFunc<TValue extends any = any> = () => TValue;
 
 /**
  * A HTTP error handler.
@@ -822,12 +810,12 @@ export interface IHttpServer {
 /**
  * A list of import values.
  */
-export type ImportValues = Record<ObjectKey, LazyValue>;
+export type ImportValues = Record<ObjectKey, LazyImportValue>;
 
 /**
  * A (lazy) value.
  */
-export type LazyValue<T extends any = any> = T | (() => T);
+export type LazyImportValue<T extends any = any> = T | (() => T);
 
 /**
  * Options for a body parser function, that works with string data.

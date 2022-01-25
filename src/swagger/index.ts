@@ -15,9 +15,9 @@
 
 import fs from 'fs';
 import yaml from 'js-yaml';
-import mrmime from 'mrmime';
 import type { OpenAPIV3 } from 'openapi-types';
 import path from 'path';
+import { knownFileMimes } from '../constants';
 import { normalizeRouterPath } from '../controllers/utils';
 import type { IControllersSwaggerOptions, IHttpServer } from '../types';
 import indexHtml from './resources/index_html';
@@ -70,7 +70,7 @@ export function setupSwaggerUIForServerControllers({
             if (['/json', '/json/'].includes(relativePath)) {
                 response.writeHead(200, {
                     'Content-Disposition': 'attachment; filename="api-openapi3.json',
-                    'Content-Type': 'application/json; charset=utf-8',
+                    'Content-Type': 'application/json; charset=UTF-8',
                     'Content-Length': String(documentJson.length)
                 });
                 response.write(documentJson);
@@ -82,7 +82,7 @@ export function setupSwaggerUIForServerControllers({
             if (['/yaml', '/yaml/'].includes(relativePath)) {
                 response.writeHead(200, {
                     'Content-Disposition': 'attachment; filename="api-openapi3.yaml',
-                    'Content-Type': 'application/x-yaml; charset=utf-8',
+                    'Content-Type': 'application/x-yaml; charset=UTF-8',
                     'Content-Length': String(documentYAML.length)
                 });
                 response.write(documentYAML);
@@ -113,7 +113,7 @@ export function setupSwaggerUIForServerControllers({
 
                 if (fullPath === indexHtmlFilePath) {  // index.html
                     response.writeHead(200, {
-                        'Content-Type': 'text/html; charset=utf-8',
+                        'Content-Type': 'text/html; charset=UTF-8',
                         'Content-Length': String(indexHtmlContent.length)
                     });
                     response.write(indexHtmlContent);
@@ -122,13 +122,15 @@ export function setupSwaggerUIForServerControllers({
                 }
 
                 if (existingFile) {  // does file exist?
-                    existingFile = path.resolve(existingFile);
-                    const contentType = mrmime.lookup(path.basename(existingFile)) || 'application/octet-stream';
+                    const contentType = knownFileMimes[path.extname(existingFile)]
+                        || 'application/octet-stream';
+                    const content = await readFile(existingFile);
 
                     response.writeHead(200, {
-                        'Content-Type': contentType
+                        'Content-Type': contentType,
+                        'Content-Length': String(content.length)
                     });
-                    response.write(await readFile(existingFile));
+                    response.write(content);
 
                     return;
                 }
@@ -145,7 +147,7 @@ export function setupSwaggerUIForServerControllers({
             if (!response.headersSent) {
                 response.writeHead(500, {
                     'Content-Length': String(errorMessage.length),
-                    'Content-Type': 'text/plain; charset=utf-8'
+                    'Content-Type': 'text/plain; charset=UTF-8'
                 });
             }
 

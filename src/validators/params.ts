@@ -14,7 +14,6 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { IncomingMessage } from 'http';
-import { parse } from 'regexparam';
 import type { HttpPathValidator } from '../types';
 import type { Nullable } from '../types/internal';
 import { getUrlWithoutQuery } from '../utils';
@@ -86,4 +85,46 @@ function exec(path: string, result: RegexParamResult): Nullable<Record<string, s
     }
 
     return paramList;
+}
+
+/**
+ * This code is based on 'regexparam' v2.0.0 by Luke Edwards.
+ *
+ * @see https://github.com/lukeed/regexparam
+ * @see https://github.com/lukeed
+ * @see https://www.npmjs.com/package/regexparam
+ *
+ * @param {string} str The input string.
+ *
+ * @returns {RegexParamResult} The result.
+ *
+ * @license MIT
+ */
+function parse(str: string): RegexParamResult {
+    let c, o, tmp, ext, keys = [], pattern = '', arr = str.split('/');
+    // eslint-disable-next-line no-unused-expressions
+    arr[0] || arr.shift();
+
+    while (tmp = arr.shift()) {
+        c = tmp[0];
+        if (c === '*') {
+            keys.push('wild');
+            pattern += '/(.*)';
+        } else if (c === ':') {
+            o = tmp.indexOf('?', 1);
+            ext = tmp.indexOf('.', 1);
+            keys.push(tmp.substring(1, !!~o ? o : !!~ext ? ext : tmp.length));
+            pattern += !!~o && !~ext ? '(?:/([^/]+?))?' : '/([^/]+?)';
+            if (!!~ext) {
+                pattern += (!!~o ? '?' : '') + '\\' + tmp.substring(ext);
+            }
+        } else {
+            pattern += '/' + tmp;
+        }
+    }
+
+    return {
+        keys,
+        pattern: new RegExp('^' + pattern + '\/?$', 'i')
+    };
 }
