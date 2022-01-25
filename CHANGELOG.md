@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-server)
 
-## 0.33.0
+## 0.33.1
 
 - remove [regexparam](https://github.com/lukeed/regexparam) by [Luke Edwards](https://github.com/lukeed) and use code directly to reduce dependencies
 - remove [mrmime](https://github.com/lukeed/mrmime) by [Luke Edwards](https://github.com/lukeed) to reduce dependencies
