@@ -54,6 +54,7 @@
     ],
     "dependencies": {
         "@types/node": "12.20.37",
+        "filtrex": "2.2.3",
         "joi": "17.5.0",
         "js-yaml": "4.1.0",
         "minimatch": "3.0.4",

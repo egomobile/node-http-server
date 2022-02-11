@@ -30,6 +30,11 @@ export interface IControllerInfo {
     controllerClass: IControllerClass;
 }
 
+export interface IInitControllerAuthorizeActionContext {
+    globalOptions: Nilable<IControllersOptions>;
+    middlewares: HttpMiddleware[];
+}
+
 export interface IInitControllerMethodActionContext {
     controller: IHttpController;
     controllerClass: Constructor<IHttpController>;
@@ -65,6 +70,8 @@ export interface IInitControllerValidationErrorHandlerActionContext {
 export interface IInitDocumentationUpdaterContext {
     controller: IHttpController<IHttpServer>;
 }
+
+export type InitControllerAuthorizeAction = (context: IInitControllerAuthorizeActionContext) => void;
 
 export type InitControllerMethodAction = (context: IInitControllerMethodActionContext) => void;
 

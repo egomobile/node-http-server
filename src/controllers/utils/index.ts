@@ -14,9 +14,9 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import path from 'path';
-import { buffer, IBufferOptions, IJsonOptions, json } from '../middlewares';
-import { HttpInputDataFormat, HttpMiddleware, IHttpBodyParserOptions } from '../types';
-import type { Nilable } from '../types/internal';
+import { buffer, IBufferOptions, IJsonOptions, json } from '../../middlewares';
+import { HttpInputDataFormat, HttpMiddleware, IHttpBodyParserOptions } from '../../types';
+import type { Nilable } from '../../types/internal';
 
 export function createBodyParserMiddlewareByFormat(format: HttpInputDataFormat, options?: Nilable<IHttpBodyParserOptions>): HttpMiddleware {
     switch (format) {
@@ -31,11 +31,17 @@ export function createBodyParserMiddlewareByFormat(format: HttpInputDataFormat, 
     }
 }
 
-export function getListFromObject<T extends any = any>(obj: any, key: PropertyKey, deleteKey = false): T[] {
+export function getListFromObject<T extends any = any>(
+    obj: any, key: PropertyKey, deleteKey = false, noInit = false
+): T[] {
     let list: Nilable<T[]> = obj[key];
 
     if (!list) {
-        obj[key] = list = [];
+        list = [];
+
+        if (!noInit) {
+            obj[key] = list;
+        }
     }
 
     if (deleteKey) {
@@ -78,3 +84,5 @@ export function normalizeRouterPath(p: Nilable<string>): string {
 
     return p;
 }
+
+export * from './authorize';
