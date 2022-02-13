@@ -30,7 +30,7 @@ import { createAuthorizeValidatorFromExpression, createInitControllerAuthorizeAc
  * import { Authorize, Controller, ControllerBase, GET, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
  *
  * @Controller()
- * @Authorize(['user'])  // required 'user' role
+ * @Authorize(['user'])  // requires 'user' role
  * export default class IndexController extends ControllerBase {
  *   // use global authorize
  *   @GET()

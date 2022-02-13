@@ -84,11 +84,20 @@ export function createAuthorizeValidatorFromExpression(expression: string): Auth
                 const filter = compileExpression(expression, {
                     extraFunctions: {
                         hasHeader: (name: string, value: any) => request.headers[name] === value,
-                        hasRole: (r: any) => !!request.authorizedUser?.roles.includes(r)
+                        hasRole: (r: any) => !!request.authorizedUser?.roles.includes(r),
+                        log: (value: any, returnValue = true) => {
+                            console.log(value);
+                            return returnValue;
+                        },
+                        trace: (value: any, returnValue = true) => {
+                            console.trace(value);
+                            return returnValue;
+                        }
                     }
                 });
 
                 return !!filter({
+                    request,
                     roles,
                     user: request.authorizedUser
                 });
