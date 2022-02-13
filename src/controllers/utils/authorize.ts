@@ -14,13 +14,13 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { compileExpression } from 'filtrex';
-import type { AuthorizeArgumentValue, AuthorizedUserProvider, AuthorizeFailedHandler, AuthorizeRolesProvider, AuthorizeRolesValue, AuthorizeValidator, HttpMiddleware, IAuthorizeOptions, IAuthorizeValidatorContext, SetupAuthorizeMiddlewareHandler } from '../../types';
+import type { AuthorizeArgumentValue, AuthorizedUserProvider, AuthorizeRolesProvider, AuthorizeRolesValue, AuthorizeValidationFailedHandler, AuthorizeValidator, AuthorizeValidatorValue, HttpMiddleware, IAuthorizeOptions, IAuthorizeValidatorContext, SetupAuthorizeMiddlewareHandler } from '../../types';
 import type { InitControllerAuthorizeAction, Nilable } from '../../types/internal';
 import { asAsync, getProp, isNil } from '../../utils';
 
 interface ICreateAuthorizeMiddlewareFromOptionsOptions {
     findAuthorizedUser: AuthorizedUserProvider;
-    onValidationFailed: Nilable<AuthorizeFailedHandler>;
+    onValidationFailed: Nilable<AuthorizeValidationFailedHandler>;
     rolesProvider: AuthorizeRolesProvider;
     validator: AuthorizeValidator;
 }
@@ -126,7 +126,7 @@ function createAuthorizeMiddlewareFromOptions({
             }
         };
     }
-    onValidationFailed = asAsync<AuthorizeFailedHandler>(onValidationFailed);
+    onValidationFailed = asAsync<AuthorizeValidationFailedHandler>(onValidationFailed);
 
     return async (request, response, next) => {
         let reason: any = new Error('Validation failed');
@@ -217,8 +217,8 @@ function toAuthorizeOptions(arg1: Nilable<AuthorizeArgumentValue>): Nilable<IAut
     }
 
     if (!isNil(options?.validator)) {
-        if (typeof options!.validator !== 'function') {
-            throw new TypeError('options.validator must be of type function');
+        if (typeof options!.validator !== 'function' && typeof options!.validator !== 'string') {
+            throw new TypeError('options.validator must be of type function or string');
         }
     }
 
@@ -249,9 +249,15 @@ function toAuthorizeRolesProviderSafe(value: Nilable<AuthorizeRolesValue>): Auth
     }
 }
 
-function toAuthorizeValidatorSafe(validator: Nilable<AuthorizeValidator>): AuthorizeValidator {
+function toAuthorizeValidatorSafe(validator: Nilable<AuthorizeValidatorValue>): AuthorizeValidator {
     if (validator) {
-        return validator;
+        if (typeof validator === 'function') {
+            return validator;
+        } else if (typeof validator === 'string') {
+            return createAuthorizeValidatorFromExpression(validator);
+        } else {
+            throw new TypeError('validator must be of type function or string');
+        }
     } else {
         return async ({ request, roles }) => {
             if (request.authorizedUser && roles.length) {

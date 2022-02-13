@@ -17,7 +17,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { INIT_CONTROLLER_AUTHORIZE } from '../constants';
-import type { AuthorizeArgumentValue, AuthorizeFailedHandler, AuthorizeOptionArgument1, AuthorizeRoles, AuthorizeValidator, IAuthorizeOptions } from '../types';
+import type { AuthorizeArgumentValue, AuthorizeOptionArgument1, AuthorizeRoles, AuthorizeValidationFailedHandler, AuthorizeValidator, IAuthorizeOptions } from '../types';
 import type { InitControllerAuthorizeAction, Nilable } from '../types/internal';
 import { isClass } from '../utils';
 import { createAuthorizeValidatorFromExpression, createInitControllerAuthorizeAction, getListFromObject } from './utils';
@@ -76,17 +76,17 @@ import { createAuthorizeValidatorFromExpression, createInitControllerAuthorizeAc
  * @param {AuthorizeValidator} validator The validator.
  * @param {string} validatorExpression The validator filter expression.
  * @param {AuthorizeRoles} roles The list of valid roles.
- * @param {Nilable<AuthorizeFailedHandler>} [onValidationFailed] The custom handler, if a validation fails.
+ * @param {Nilable<AuthorizeValidationFailedHandler>} [onValidationFailed] The custom handler, if a validation fails.
  *
  * @returns {ClassDecorator} The decorator.
  */
-export function Authorize(validator: AuthorizeValidator, onValidationFailed?: Nilable<AuthorizeFailedHandler>): ClassDecorator;
-export function Authorize(validatorExpression: string, onValidationFailed?: Nilable<AuthorizeFailedHandler>): ClassDecorator;
+export function Authorize(validator: AuthorizeValidator, onValidationFailed?: Nilable<AuthorizeValidationFailedHandler>): ClassDecorator;
+export function Authorize(validatorExpression: string, onValidationFailed?: Nilable<AuthorizeValidationFailedHandler>): ClassDecorator;
 export function Authorize(options: IAuthorizeOptions): ClassDecorator;
-export function Authorize(roles: AuthorizeRoles, onValidationFailed?: Nilable<AuthorizeFailedHandler>): ClassDecorator;
+export function Authorize(roles: AuthorizeRoles, onValidationFailed?: Nilable<AuthorizeValidationFailedHandler>): ClassDecorator;
 export function Authorize(
     arg1: AuthorizeArgumentValue,
-    arg2?: Nilable<AuthorizeValidator | AuthorizeFailedHandler>
+    arg2?: Nilable<AuthorizeValidator | AuthorizeValidationFailedHandler>
 ): ClassDecorator {
     let optionArg: AuthorizeOptionArgument1;
     if (Array.isArray(arg1)) {
@@ -94,21 +94,21 @@ export function Authorize(
 
         optionArg = {
             roles: arg1 as AuthorizeRoles,
-            onValidationFailed: arg2 as AuthorizeFailedHandler
+            onValidationFailed: arg2 as AuthorizeValidationFailedHandler
         };
     } else if (typeof arg1 === 'function') {
         // arg1 => validator
 
         optionArg = {
             validator: arg1 as AuthorizeValidator,
-            onValidationFailed: arg2 as AuthorizeFailedHandler
+            onValidationFailed: arg2 as AuthorizeValidationFailedHandler
         };
     } else if (typeof arg1 === 'string') {
         // arg1 => validatorExpression
 
         optionArg = {
             validator: createAuthorizeValidatorFromExpression(arg1),
-            onValidationFailed: arg2 as AuthorizeFailedHandler
+            onValidationFailed: arg2 as AuthorizeValidationFailedHandler
         };
     } else {
         optionArg = arg1 as AuthorizeOptionArgument1;

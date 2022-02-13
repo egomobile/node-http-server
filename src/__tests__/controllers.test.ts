@@ -13,9 +13,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import path from 'path';
 import request from 'supertest';
-import { binaryParser, createServer } from './utils';
+import { binaryParser, createServerAndInitControllers } from './utils';
 
 /*
 interface IMySchema {
@@ -23,17 +22,6 @@ interface IMySchema {
     name?: string;
 }
 */
-
-function createServerAndInitControllers() {
-    const server = createServer();
-
-    server.controllers(path.join(__dirname, 'controllers'), {
-        foo: () => 'bar',
-        baz: 42
-    });
-
-    return server;
-}
 
 /*
 const validInputData: IMySchema[] = [{

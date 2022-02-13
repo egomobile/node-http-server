@@ -40,7 +40,7 @@ export type AuthorizedUserProvider =
  * @param {IHttpRequest} request The request context.
  * @param {IHttpRequest} response The request context.
  */
-export type AuthorizeFailedHandler =
+export type AuthorizeValidationFailedHandler =
     (reason: any, request: IHttpRequest, response: IHttpResponse) => any;
 
 /**
@@ -55,13 +55,13 @@ export type AuthorizeRolesProvider =
     (context: IControllersAuthorizeRoleProviderContext) => AuthorizeRoles | Promise<AuthorizeRoles>;
 
 /**
-* Possible values for 'authorize' rules.
-*/
+ * Possible values for 'authorize' rules.
+ */
 export type AuthorizeRoles = any[];
 
 /**
-* A value, that provides 'authorize' roles.
-*/
+ * A value, that provides 'authorize' roles.
+ */
 export type AuthorizeRolesValue = AuthorizeRoles | AuthorizeRolesProvider;
 
 /**
@@ -72,6 +72,11 @@ export type AuthorizeRolesValue = AuthorizeRoles | AuthorizeRolesProvider;
  * @returns {any} A result, that indicates if request is authorized or not.
  */
 export type AuthorizeValidator = (context: IAuthorizeValidatorContext) => any;
+
+/**
+ *  A validator for 'authorize' actions.
+ */
+export type AuthorizeValidatorValue = AuthorizeValidator | string;
 
 /**
  * A possible value for a first argument of a HTTP method / controller route decorator
@@ -225,7 +230,7 @@ export interface IAuthorizeOptions {
     /**
      * Is invoked, when validationf failes.
      */
-    onValidationFailed?: Nilable<AuthorizeFailedHandler>;
+    onValidationFailed?: Nilable<AuthorizeValidationFailedHandler>;
     /**
      * The available roles to use, or the function that provide it.
      */
@@ -241,7 +246,7 @@ export interface IAuthorizeOptions {
     /**
      * The custom validator to use.
      */
-    validator?: Nilable<AuthorizeValidator>;
+    validator?: Nilable<AuthorizeValidatorValue>;
 }
 
 /**
@@ -344,7 +349,7 @@ export interface IControllersAuthorizeOptions {
     /**
      * Is invoked, when validationf failes.
      */
-    onValidationFailed?: Nilable<AuthorizeFailedHandler>;
+    onValidationFailed?: Nilable<AuthorizeValidationFailedHandler>;
     /**
      * A custom, global function to setup an 'authorize' middleware.
      */
@@ -356,7 +361,7 @@ export interface IControllersAuthorizeOptions {
     /**
      * The default validator.
      */
-    validator?: Nilable<AuthorizeValidator>;
+    validator?: Nilable<AuthorizeValidatorValue>;
 }
 
 /**
@@ -430,7 +435,7 @@ export interface IExistingAndAuthorizedUser {
     /**
      * The roles of the user.
      */
-    roles: AuthorizeRoles[];
+    roles: AuthorizeRoles;
 }
 
 /**

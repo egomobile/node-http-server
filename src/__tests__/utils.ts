@@ -13,8 +13,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import createHttpServer, { IHttpServer } from '..';
+import path from 'path';
 import { Response } from 'supertest';
+import createHttpServer, { IHttpServer } from '..';
 
 export function binaryParser(response: Response, callback: (err: any, data?: Buffer) => any) {
     response.setEncoding('binary');
@@ -36,4 +37,33 @@ export function binaryParser(response: Response, callback: (err: any, data?: Buf
 
 export function createServer(): IHttpServer {
     return createHttpServer();
+}
+
+export function createServerAndInitControllers() {
+    const server = createServer();
+
+    server.controllers({
+        rootDir: path.join(__dirname, 'controllers'),
+        imports: {
+            foo: () => 'bar',
+            baz: 42
+        },
+        authorize: {
+            findAuthorizedUser: async ({ request }) => {
+                if (request.headers['x-test-user'] === 'user') {
+                    return {
+                        roles: ['user']
+                    };
+                }
+
+                if (request.headers['x-test-user'] === 'admin') {
+                    return {
+                        roles: ['admin']
+                    };
+                }
+            }
+        }
+    });
+
+    return server;
 }
