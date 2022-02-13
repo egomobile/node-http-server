@@ -46,7 +46,7 @@ export type AuthorizeValidationFailedHandler =
 /**
  * An argument for authorize options.
  */
-export type AuthorizeOptionArgument1 = AuthorizeValidator | IAuthorizeOptions | string;
+export type AuthorizeOptionArgument1 = AuthorizeValidatorValue | IAuthorizeOptions;
 
 /**
  * A function, that provides 'authorize' roles.
