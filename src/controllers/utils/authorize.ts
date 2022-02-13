@@ -38,7 +38,7 @@ export function createInitControllerAuthorizeAction({ arg }: ICreateInitControll
         }
 
         // prepare and normalize functions and handlers
-        const onValidationFailed = options.validator || globalOptions?.authorize?.onValidationFailed;
+        const onValidationFailed = options.onValidationFailed || globalOptions?.authorize?.onValidationFailed;
         const setupAuthorizeMiddleware = toSetupAuthorizeMiddlewareHandlerSafe(
             options.setupMiddleware || globalOptions?.authorize?.setupMiddleware
         );
