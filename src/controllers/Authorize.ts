@@ -74,7 +74,6 @@ import { createAuthorizeValidatorFromExpression, createInitControllerAuthorizeAc
  *
  * @param {IAuthorizeOptions} options The options.
  * @param {AuthorizeValidatorValue} validator The validator.
- * @param {string} validatorExpression The validator filter expression.
  * @param {AuthorizeRoles} roles The list of valid roles.
  * @param {Nilable<AuthorizeValidationFailedHandler>} [onValidationFailed] The custom handler, if a validation fails.
  *
