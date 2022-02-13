@@ -16,7 +16,7 @@
 import { compileExpression } from 'filtrex';
 import type { AuthorizeArgumentValue, AuthorizedUserProvider, AuthorizeFailedHandler, AuthorizeRolesProvider, AuthorizeRolesValue, AuthorizeValidator, HttpMiddleware, IAuthorizeOptions, IAuthorizeValidatorContext, SetupAuthorizeMiddlewareHandler } from '../../types';
 import type { InitControllerAuthorizeAction, Nilable } from '../../types/internal';
-import { asAsync, isNil } from '../../utils';
+import { asAsync, getProp, isNil } from '../../utils';
 
 interface ICreateAuthorizeMiddlewareFromOptionsOptions {
     findAuthorizedUser: AuthorizedUserProvider;
@@ -83,12 +83,14 @@ export function createAuthorizeValidatorFromExpression(expression: string): Auth
             try {
                 const filter = compileExpression(expression, {
                     extraFunctions: {
+                        getProp: (value: any, propPath: string) => getProp(value, propPath),
                         hasHeader: (name: string, value: any) => request.headers[name] === value,
                         hasRole: (r: any) => !!request.authorizedUser?.roles.includes(r),
                         log: (value: any, returnValue = true) => {
                             console.log(value);
                             return returnValue;
                         },
+                        str: (value: any) => String(value),
                         trace: (value: any, returnValue = true) => {
                             console.trace(value);
                             return returnValue;
