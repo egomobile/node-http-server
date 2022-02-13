@@ -19,7 +19,7 @@
 import { INIT_CONTROLLER_AUTHORIZE } from '../constants';
 import type { AuthorizeArgumentValue, AuthorizeOptionArgument1, AuthorizeRoles, AuthorizeValidationFailedHandler, AuthorizeValidatorValue, IAuthorizeOptions } from '../types';
 import type { InitControllerAuthorizeAction, Nilable } from '../types/internal';
-import { isClass } from '../utils';
+import { isClass, isNil } from '../utils';
 import { createAuthorizeValidatorFromExpression, createInitControllerAuthorizeAction, getListFromObject } from './utils';
 
 /**
@@ -79,11 +79,12 @@ import { createAuthorizeValidatorFromExpression, createInitControllerAuthorizeAc
  *
  * @returns {ClassDecorator} The decorator.
  */
+export function Authorize(): ClassDecorator;
 export function Authorize(validator: AuthorizeValidatorValue, onValidationFailed?: Nilable<AuthorizeValidationFailedHandler>): ClassDecorator;
 export function Authorize(options: IAuthorizeOptions): ClassDecorator;
 export function Authorize(roles: AuthorizeRoles, onValidationFailed?: Nilable<AuthorizeValidationFailedHandler>): ClassDecorator;
 export function Authorize(
-    arg1: AuthorizeArgumentValue,
+    arg1?: AuthorizeArgumentValue,
     arg2?: Nilable<AuthorizeValidationFailedHandler>
 ): ClassDecorator {
     let optionArg: AuthorizeOptionArgument1;
@@ -108,6 +109,8 @@ export function Authorize(
             validator: createAuthorizeValidatorFromExpression(arg1),
             onValidationFailed: arg2 as AuthorizeValidationFailedHandler
         };
+    } else if (isNil(arg1)) {
+        optionArg = {};
     } else {
         optionArg = arg1 as AuthorizeOptionArgument1;
     }
