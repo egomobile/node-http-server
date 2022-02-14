@@ -14,6 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { compileExpression } from 'filtrex';
+import { AuthorizeError } from '../../errors';
 import type { AuthorizeArgumentValue, AuthorizedUserProvider, AuthorizeRolesProvider, AuthorizeRolesValue, AuthorizeValidationFailedHandler, AuthorizeValidator, AuthorizeValidatorValue, HttpMiddleware, IAuthorizeOptions, IAuthorizeValidatorContext, SetupAuthorizeMiddlewareHandler } from '../../types';
 import type { InitControllerAuthorizeAction, Nilable } from '../../types/internal';
 import { asAsync, getProp, isNil } from '../../utils';
@@ -29,81 +30,33 @@ export interface ICreateInitControllerAuthorizeActionOptions {
     arg: Nilable<AuthorizeArgumentValue>;
 }
 
-export function createInitControllerAuthorizeAction({ arg }: ICreateInitControllerAuthorizeActionOptions): InitControllerAuthorizeAction {
-    const options = toAuthorizeOptions(arg);
-
-    return ({ globalOptions, middlewares }) => {
-        if (!options) {
-            return;  // nothing to do here
-        }
-
-        // prepare and normalize functions and handlers
-        const onValidationFailed = options.onValidationFailed || globalOptions?.authorize?.onValidationFailed;
-        const setupAuthorizeMiddleware = toSetupAuthorizeMiddlewareHandlerSafe(
-            options.setupMiddleware || globalOptions?.authorize?.setupMiddleware
-        );
-        const findAuthorizedUser = asAsync<AuthorizedUserProvider>(
-            toControllersAuthorizedUserProviderSafe(
-                options.findAuthorizedUser || globalOptions?.authorize?.findAuthorizedUser
-            )
-        );
-        const rolesProvider = asAsync<AuthorizeRolesProvider>(
-            toAuthorizeRolesProviderSafe(options.roles)
-        );
-        const validator = asAsync<AuthorizeValidator>(
-            toAuthorizeValidatorSafe(options.validator || globalOptions?.authorize?.validator)
-        );
-        const use = options.use || globalOptions?.authorize?.use;
-
-        const authorizeMiddlewares = [
-            createAuthorizeMiddlewareFromOptions({
-                findAuthorizedUser,
-                onValidationFailed,
-                rolesProvider,
-                validator
-            })
-        ];
-
-        if (use?.length) {
-            authorizeMiddlewares.unshift(...use);
-        }
-
-        setupAuthorizeMiddleware({
-            authorizeMiddlewares,
-            middlewares: middlewares
-        });
-    };
-}
-
 export function createAuthorizeValidatorFromExpression(expression: string): AuthorizeValidator {
     return async ({ request, roles }) => {
         if (request.authorizedUser) {
-            // we new an authorized user here
+            // we have an authorized user here
 
-            try {
-                const filter = compileExpression(expression, {
-                    extraFunctions: {
-                        getProp: (value: any, propPath: string) => getProp(value, propPath),
-                        hasHeader: (name: string, value: any) => request.headers[name] === value,
-                        hasRole: (r: any) => !!request.authorizedUser?.roles.includes(r),
-                        log: (value: any, returnValue = true) => {
-                            console.log(value);
-                            return returnValue;
-                        },
-                        str: (value: any) => String(value),
-                        trace: (value: any, returnValue = true) => {
-                            console.trace(value);
-                            return returnValue;
-                        }
+            const filter = compileExpression(expression, {
+                extraFunctions: {
+                    getProp: (value: any, propPath: string) => getProp(value, propPath),
+                    hasHeader: (name: string, value: any) => request.headers[name] === value,
+                    hasRole: (r: any) => !!request.authorizedUser?.roles.includes(r),
+                    log: (value: any, returnValue = true) => {
+                        console.log(value);
+                        return returnValue;
+                    },
+                    str: (value: any) => String(value),
+                    trace: (value: any, returnValue = true) => {
+                        console.trace(value);
+                        return returnValue;
                     }
-                });
+                }
+            });
 
-                return !!filter({
-                    request,
-                    roles,
-                    user: request.authorizedUser
-                });
-            } catch { }
+            return !!filter({
+                request,
+                roles,
+                user: request.authorizedUser
+            });
         }
 
         return false;
@@ -126,10 +79,14 @@ function createAuthorizeMiddlewareFromOptions({
             }
         };
     }
+
+    findAuthorizedUser = asAsync<AuthorizedUserProvider>(findAuthorizedUser);
     onValidationFailed = asAsync<AuthorizeValidationFailedHandler>(onValidationFailed);
+    rolesProvider = asAsync<AuthorizeRolesProvider>(rolesProvider);
+    validator = asAsync<AuthorizeValidator>(validator);
 
     return async (request, response, next) => {
-        let reason: any = new Error('Validation failed');
+        let reason: AuthorizeError = new AuthorizeError('Validation failed');
 
         try {
             // get roles and convert from role names to objects
@@ -145,7 +102,7 @@ function createAuthorizeMiddlewareFromOptions({
                 // and set it to request context
 
                 request.authorizedUser = {
-                    roles: authorizedUser.roles || []
+                    roles: authorizedUser.roles
                 };
             }
 
@@ -160,13 +117,58 @@ function createAuthorizeMiddlewareFromOptions({
 
                 return;
             }
-        } catch (error) {
-            reason = error;
+        } catch (error: any) {
+            reason = new AuthorizeError(String(error?.message || ''), error);
         }
 
         await onValidationFailed!(reason, request, response);
 
         response.end();
+    };
+}
+
+export function createInitControllerAuthorizeAction({ arg }: ICreateInitControllerAuthorizeActionOptions): InitControllerAuthorizeAction {
+    const options = toAuthorizeOptions(arg);
+
+    return ({ globalOptions, middlewares }) => {
+        if (!options) {
+            return;  // nothing to do here
+        }
+
+        // prepare and normalize functions and handlers
+        const onValidationFailed = options.onValidationFailed || globalOptions?.authorize?.onValidationFailed;
+        const setupAuthorizeMiddleware = toSetupAuthorizeMiddlewareHandlerSafe(
+            options.setupMiddleware || globalOptions?.authorize?.setupMiddleware
+        );
+        const findAuthorizedUser = toControllersAuthorizedUserProviderSafe(
+            options.findAuthorizedUser || globalOptions?.authorize?.findAuthorizedUser
+        );
+        const rolesProvider = toAuthorizeRolesProviderSafe(options.roles);
+        const validator = toAuthorizeValidatorSafe(options.validator || globalOptions?.authorize?.validator);
+        const use = (options.use || globalOptions?.authorize?.use)
+            ?.filter(mw => !!mw);
+
+        const authorizeMiddlewares = [
+            createAuthorizeMiddlewareFromOptions({
+                findAuthorizedUser,
+                onValidationFailed,
+                rolesProvider,
+                validator
+            })
+        ];
+
+        if (use?.length) {
+            if (use.some(mw => typeof mw !== 'function')) {
+                throw new TypeError('All middlewares must be of type function');
+            }
+
+            authorizeMiddlewares.unshift(...use);
+        }
+
+        setupAuthorizeMiddleware({
+            authorizeMiddlewares,
+            middlewares
+        });
     };
 }
 

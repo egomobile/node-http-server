@@ -51,7 +51,7 @@ describe('Authroize feature tests', () => {
             .expect(200);
     });
 
-    it.each(['admin', 'user'])('should return 403 if no guest user accesses restricted endpoint (filter expression)', async (user) => {
+    it.each(['admin', 'user'])('should return 403 if guest user tries to access restricted endpoint (filter expression)', async (user) => {
         const server = createServerAndInitControllers();
 
         await request(server).get('/test_authorize/expression/' + encodeURIComponent(user))
@@ -59,7 +59,7 @@ describe('Authroize feature tests', () => {
             .expect(403);
     });
 
-    it.each(['admin', 'user'])('should return 404 if no guest user accesses restricted endpoint with custom error handler (filter expression)', async (user) => {
+    it.each(['admin', 'user'])('should return 404 if guest user tries to access restricted endpoint with custom error handler (filter expression)', async (user) => {
         const server = createServerAndInitControllers();
 
         await request(server).get('/test_authorize/custom-errors/expression/' + encodeURIComponent(user))
@@ -76,7 +76,7 @@ describe('Authroize feature tests', () => {
             .expect(200);
     });
 
-    it.each(['admin', 'user'])('should return 403 if no guest user accesses restricted endpoint (validator function)', async (user) => {
+    it.each(['admin', 'user'])('should return 403 if guest user tries to access restricted endpoint (validator function)', async (user) => {
         const server = createServerAndInitControllers();
 
         await request(server).get('/test_authorize/function/' + encodeURIComponent(user))
@@ -84,7 +84,7 @@ describe('Authroize feature tests', () => {
             .expect(403);
     });
 
-    it.each(['admin', 'user'])('should return 404 if no guest user accesses restricted endpoint with custom error handler (validator function)', async (user) => {
+    it.each(['admin', 'user'])('should return 404 if guest user tries to access restricted endpoint with custom error handler (validator function)', async (user) => {
         const server = createServerAndInitControllers();
 
         await request(server).get('/test_authorize/custom-errors/function/' + encodeURIComponent(user))
