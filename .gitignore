@@ -1,8 +1,7 @@
 .DS_Store
 node_modules/
-/sandbox.ts
 /docs
 /lib
-/sandbox.*
-/sandbox/**/*
+sandbox.*
+sandbox/
 /TODOs.md

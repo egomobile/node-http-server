@@ -23,11 +23,11 @@ Machine:
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     7.17ms    1.55ms  52.46ms   90.49%
-    Req/Sec     1.69k   152.25     1.91k    93.58%
-  403184 requests in 30.02s, 59.21MB read
-Requests/sec:  13431.47
-Transfer/sec:      1.97MB
+    Latency     6.76ms    1.39ms  40.85ms   86.95%
+    Req/Sec     1.79k   283.21    13.43k    97.00%
+  426942 requests in 30.10s, 62.70MB read
+Requests/sec:  14182.35
+Transfer/sec:      2.08MB
 ```
 
 #### [fastify](https://github.com/fastify/fastify)
@@ -36,11 +36,11 @@ Transfer/sec:      1.97MB
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     6.39ms    1.68ms  56.27ms   86.06%
-    Req/Sec     1.90k   173.71     2.18k    95.33%
-  453547 requests in 30.02s, 74.40MB read
-Requests/sec:  15107.04
-Transfer/sec:      2.48MB
+    Latency     6.28ms    1.57ms  49.39ms   84.69%
+    Req/Sec     1.93k   174.08     2.64k    94.54%
+  460390 requests in 30.03s, 75.52MB read
+Requests/sec:  15332.76
+Transfer/sec:      2.52MB
 ```
 
 #### [Polka](https://github.com/lukeed/polka)
@@ -49,11 +49,11 @@ Transfer/sec:      2.48MB
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     2.83ms  730.78us  41.88ms   97.21%
-    Req/Sec     4.29k   331.44     5.36k    94.76%
-  1028436 requests in 30.10s, 128.48MB read
-Requests/sec:  34162.46
-Transfer/sec:      4.27MB
+    Latency     2.80ms  747.93us  43.11ms   96.48%
+    Req/Sec     4.34k   369.08     6.78k    93.51%
+  1038529 requests in 30.10s, 129.74MB read
+Requests/sec:  34496.92
+Transfer/sec:      4.31MB
 ```
 
 #### [@egomobile/http-server](https://github.com/egomobile/node-http-server)
@@ -62,9 +62,9 @@ Transfer/sec:      4.27MB
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     2.58ms  702.54us  50.60ms   96.53%
-    Req/Sec     4.71k   413.76     9.06k    95.80%
-  1126136 requests in 30.10s, 140.69MB read
-Requests/sec:  37407.79
-Transfer/sec:      4.67MB
+    Latency     2.64ms  684.89us  42.46ms   95.68%
+    Req/Sec     4.59k   420.33     9.18k    94.22%
+  1099166 requests in 30.10s, 137.32MB read
+Requests/sec:  36513.48
+Transfer/sec:      4.56MB
 ```

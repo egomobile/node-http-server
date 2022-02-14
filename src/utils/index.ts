@@ -26,6 +26,8 @@ interface ICreateWithEntityTooLargeActionOptions {
     onLimitReached: HttpRequestHandler;
 }
 
+const propSepChar = String.fromCharCode(0);
+
 export function asAsync<TFunc extends Function = Function>(func: Function): TFunc {
     if (func.constructor.name === 'AsyncFunction') {
         return func as TFunc;
@@ -97,6 +99,23 @@ export function getBufferEncoding(encoding: Nilable<BufferEncoding>): BufferEnco
     }
 
     throw new TypeError('encoding must be of type string');
+}
+
+export function getProp(val: any, prop: string): any {
+    // first replace escaped dots with temp char
+    const escapedProp = prop.split('\\.').join(propSepChar);
+
+    // now prepare path and replace temp char
+    // in parts
+    const propPath = escapedProp.split('.')
+        .map(p => p.split(propSepChar).join('.'));
+
+    let result = val;
+    for (const p of propPath) {
+        result = result[p];
+    }
+
+    return result;
 }
 
 export function getUrlWithoutQuery(url: Optional<string>): Optional<string> {

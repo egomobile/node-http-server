@@ -9,7 +9,7 @@
     "url": "git+https://github.com/egomobile/node-http-server.git"
   },
   "dependencies": {
-    "@egomobile/http-server": "0.33.0",
+    "@egomobile/http-server": "0.33.1",
     "express": "4.17.2",
     "fastify": "3.27.0",
     "fastify-express": "0.3.3",

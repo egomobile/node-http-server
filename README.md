@@ -270,6 +270,7 @@ Transfer/sec:     11.36MB
 
 The module makes use of:
 
+- [Filtrex](https://github.com/m93a/filtrex) by [Michal Grňo](https://github.com/m93a)
 - [joi](https://joi.dev/) by [Sideway Inc.](https://github.com/sideway)
 - [js-yaml](https://github.com/nodeca/js-yaml) by
   [Nodeca](https://github.com/nodeca)

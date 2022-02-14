@@ -21,6 +21,64 @@ import type { ParseError } from '../errors/parse';
 import type { Nilable, ObjectKey, Optional } from './internal';
 
 /**
+ * An 'authorize' argument value.
+ */
+export type AuthorizeArgumentValue = AuthorizeOptionArgument1 | AuthorizeRoles;
+
+/**
+ * A function, that provides an authorized user, if possible.
+ *
+ * @returns {Nilable<IAuthorizedUser>|Promise<Nilable<IAuthorizedUser>>} The result with the authorized user, if possible.
+ */
+export type AuthorizedUserProvider =
+    (context: IAuthorizedUserProviderContext) => Nilable<IAuthorizedUser> | Promise<Nilable<IAuthorizedUser>>;
+
+/**
+ * Is invoked, when authorize fails.
+ *
+ * @param {any} reason The reason.
+ * @param {IHttpRequest} request The request context.
+ * @param {IHttpRequest} response The request context.
+ */
+export type AuthorizeValidationFailedHandler =
+    (reason: any, request: IHttpRequest, response: IHttpResponse) => any;
+
+/**
+ * An argument for authorize options.
+ */
+export type AuthorizeOptionArgument1 = AuthorizeValidatorValue | IAuthorizeOptions;
+
+/**
+ * A function, that provides 'authorize' roles.
+ */
+export type AuthorizeRolesProvider =
+    (context: IControllersAuthorizeRoleProviderContext) => AuthorizeRoles | Promise<AuthorizeRoles>;
+
+/**
+ * Possible values for 'authorize' rules.
+ */
+export type AuthorizeRoles = any[];
+
+/**
+ * A value, that provides 'authorize' roles.
+ */
+export type AuthorizeRolesValue = AuthorizeRoles | AuthorizeRolesProvider;
+
+/**
+ * A validator for 'authorize' actions.
+ *
+ * @param {IAuthorizeValidatorContext} context The context.
+ *
+ * @returns {any} A result, that indicates if request is authorized or not.
+ */
+export type AuthorizeValidator = (context: IAuthorizeValidatorContext) => any;
+
+/**
+ *  A validator for 'authorize' actions.
+ */
+export type AuthorizeValidatorValue = AuthorizeValidator | string;
+
+/**
  * A possible value for a first argument of a HTTP method / controller route decorator
  * like GET() or POST().
  */
@@ -38,8 +96,7 @@ export type ControllerRouteArgument2
  * A possible value for a third argument of a HTTP method / controller route decorator
  * like GET() or POST().
  */
-export type ControllerRouteArgument3
-    = number;
+export type ControllerRouteArgument3 = number;
 
 /**
  * A possible value for a path of a controller route.
@@ -143,9 +200,81 @@ export type HttpRequestHandler = (request: IHttpRequest, response: IHttpResponse
 export type HttpRequestPath = string | RegExp | HttpPathValidator;
 
 /**
+ * Information about an authorized user.
+ */
+export interface IAuthorizedUser {
+    /**
+     * The roles of the user.
+     */
+    roles: AuthorizeRoles;
+}
+
+/**
+ * Context for 'AuthorizedUserProvider'.
+ */
+export interface IAuthorizedUserProviderContext {
+    /**
+     * The underlying request.
+     */
+    request: IHttpRequest;
+}
+
+/**
+ * Options for an 'authorize' decorator or prop.
+ */
+export interface IAuthorizeOptions {
+    /**
+     * A function, which tries to find a user for the current request.
+     */
+    findAuthorizedUser?: Nilable<AuthorizedUserProvider>;
+    /**
+     * Is invoked, when validationf failes.
+     */
+    onValidationFailed?: Nilable<AuthorizeValidationFailedHandler>;
+    /**
+     * The available roles to use, or the function that provide it.
+     */
+    roles?: Nilable<AuthorizeRolesValue>;
+    /**
+     * A custom function to setup an 'authorize' middleware.
+     */
+    setupMiddleware?: Nilable<SetupAuthorizeMiddlewareHandler>;
+    /**
+     * A list of custom middlewares to add BEFORE the authorize middleware.
+     */
+    use?: Nilable<HttpMiddleware[]>;
+    /**
+     * The custom validator to use.
+     */
+    validator?: Nilable<AuthorizeValidatorValue>;
+}
+
+/**
+ * A context for a ''.
+ */
+export interface IAuthorizeValidatorContext {
+    /**
+     * The request context.
+     */
+    request: IHttpRequest;
+    /**
+     * The response context.
+     */
+    response: IHttpResponse;
+    /**
+     * List of roles.
+     */
+    roles: AuthorizeRoles;
+}
+
+/**
  * Options for a controller route without a body.
  */
 export interface IControllerRouteOptions {
+    /**
+     * Custom 'authorize' options.
+     */
+    authorize?: Nilable<AuthorizeArgumentValue>;
     /**
      * Optional Swagger documentation.
      */
@@ -200,9 +329,49 @@ export interface IControllerRouteWithBodyOptions extends IControllerRouteOptions
 }
 
 /**
+ * Context for a 'ControllersAuthorizeRoleProvider' function.
+ */
+export interface IControllersAuthorizeRoleProviderContext {
+    /**
+     * The request context.
+     */
+    request: IHttpRequest;
+}
+
+/**
+ * Describes the object for 'authorize' prop of 'IControllersOptions' interface.
+ */
+export interface IControllersAuthorizeOptions {
+    /**
+     * A default function, which tries to find a user for the current request.
+     */
+    findAuthorizedUser?: Nilable<AuthorizedUserProvider>;
+    /**
+     * Is invoked, when validationf failes.
+     */
+    onValidationFailed?: Nilable<AuthorizeValidationFailedHandler>;
+    /**
+     * A custom, global function to setup an 'authorize' middleware.
+     */
+    setupMiddleware?: Nilable<SetupAuthorizeMiddlewareHandler>;
+    /**
+     * A list of custom middlewares to add BEFORE the authorize middleware.
+     */
+    use?: Nilable<HttpMiddleware[]>;
+    /**
+     * The default validator.
+     */
+    validator?: Nilable<AuthorizeValidatorValue>;
+}
+
+/**
  * Options for 'controllers()' method of 'IHttpServer' instance.
  */
 export interface IControllersOptions {
+    /**
+     * Options for 'authorize' feature.
+     */
+    authorize?: Nilable<IControllersAuthorizeOptions>;
     /**
      * List of (value) imports.
      */
@@ -257,6 +426,16 @@ export interface IDocumentationUpdaterContext {
      * The path of the route.
      */
     path: HttpRequestPath;
+}
+
+/**
+ * Information about an existing and authorized user.
+ */
+export interface IExistingAndAuthorizedUser {
+    /**
+     * The roles of the user.
+     */
+    roles: AuthorizeRoles;
 }
 
 /**
@@ -828,6 +1007,20 @@ export interface IHttpStringBodyParserOptions extends IHttpBodyParserOptions {
 }
 
 /**
+ * Context for a 'SetupAuthorizeMiddlewareHandler' function.
+ */
+export interface ISetupAuthorizeMiddlewareHandlerContext {
+    /**
+     * The 'authorize' middleware to setup.
+     */
+    authorizeMiddlewares: HttpMiddleware[];
+    /**
+     * The array with the current list of middlewares.
+     */
+    middlewares: HttpMiddleware[];
+}
+
+/**
  * A next function.
  *
  * @param {Optional<any>} [error] The error, if occurred.
@@ -853,6 +1046,13 @@ export type ParseErrorHandler = (error: ParseError, request: IHttpRequest, respo
  */
 export type ResponseSerializer<TResult extends any = any> =
     (result: TResult, request: IHttpRequest, response: IHttpResponse) => any;
+
+/**
+ * A function, that sets up a 'authorize' middleware for a route.
+ *
+ * @param {ISetupAuthorizeMiddlewareHandlerContext} context The context.
+ */
+export type SetupAuthorizeMiddlewareHandler = (context: ISetupAuthorizeMiddlewareHandlerContext) => any;
 
 /**
  * A handler, that is executed, if data is invalid.

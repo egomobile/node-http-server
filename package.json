@@ -1,6 +1,6 @@
 {
     "name": "@egomobile/http-server",
-    "version": "0.33.1",
+    "version": "0.34.0",
     "description": "Very fast alternative HTTP server to Express, with simple routing and middleware support and which is compatible with Node.js 12 or later.",
     "main": "lib/index.js",
     "engines": {
@@ -11,7 +11,7 @@
         "docs:generate": "del ./docs && typedoc --out ./docs ./src",
         "lint": "eslint -c .eslintrc.js --ext .ts src",
         "lint:fix": "eslint --fix -c .eslintrc.js --ext .ts src",
-        "sandbox": "nodemon --watch './sandbox.ts' --exec node -r ts-node/register --inspect=0.0.0.0:9229 ./sandbox.ts",
+        "sandbox": "nodemon --watch './sandbox.ts' --watch './sandbox/**/*.ts' --exec node -r ts-node/register --inspect=0.0.0.0:9229 ./sandbox.ts",
         "test": "jest --no-cache --silent"
     },
     "jest": {
@@ -54,6 +54,7 @@
     ],
     "dependencies": {
         "@types/node": "12.20.37",
+        "filtrex": "2.2.3",
         "joi": "17.5.0",
         "js-yaml": "4.1.0",
         "minimatch": "3.0.4",

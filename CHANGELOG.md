@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.34.0
+
+- implement [@Authorize() decorator](https://egomobile.github.io/node-http-server/modules.html#Authorize) and [authorize](https://egomobile.github.io/node-http-server/interfaces/IControllerRouteOptions.html#authorize) options
+
 ## 0.33.1
 
 - remove [regexparam](https://github.com/lukeed/regexparam) by [Luke Edwards](https://github.com/lukeed) and use code directly to reduce dependencies
