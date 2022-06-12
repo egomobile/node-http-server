@@ -22,7 +22,7 @@ import { CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWA
 import { buffer, defaultValidationFailedHandler, json, query, validate } from "../middlewares";
 import { setupSwaggerUIForServerControllers } from "../swagger";
 import { toSwaggerPath } from "../swagger/utils";
-import { AuthorizeArgumentValue, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpServer, ImportValues, ResponseSerializer, ValidationFailedHandler } from "../types";
+import { AuthorizeArgumentValue, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpResponse, IHttpServer, ImportValues, ResponseSerializer, ValidationFailedHandler } from "../types";
 import type { GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable } from "../types/internal";
 import { asAsync, canHttpMethodHandleBodies, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, walkDirSync } from "../utils";
 import { params } from "../validators/params";
@@ -74,6 +74,7 @@ interface ICreateRequestHandlerWithSerializerOptions {
 interface IParameterValueUpdaterContext {
     args: any[];
     request: IHttpRequest;
+    response: IHttpResponse;
 }
 
 interface IUpdateMiddlewaresOptions {
@@ -117,7 +118,8 @@ function compileRouteHandler({ controller, method }: ICompileRouteHandlerOptions
             for (const updater of updaters) {
                 await updater({
                     args,
-                    request
+                    request,
+                    response
                 });
             }
 
@@ -872,6 +874,16 @@ function toParameterValueUpdaters(parameters: IControllerMethodParameter[]): Par
         else if (source === "query") {
             updaters.push(async ({ args, request }) => {
                 args[index] = request.query?.get(name);
+            });
+        }
+        else if (source === "request") {
+            updaters.push(async ({ args, request }) => {
+                args[index] = request;
+            });
+        }
+        else if (source === "response") {
+            updaters.push(async ({ args, response }) => {
+                args[index] = response;
             });
         }
         else if (source === "" || source === "url") {

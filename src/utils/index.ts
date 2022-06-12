@@ -104,6 +104,24 @@ export function getBufferEncoding(encoding: Nilable<BufferEncoding>): BufferEnco
     throw new TypeError("encoding must be of type string");
 }
 
+// s. https://stackoverflow.com/questions/1007981/how-to-get-function-parameter-names-values-dynamically
+export function getFunctionParamNames(func: Function) {
+    let result: Nilable<any[]>;
+
+    try {
+        const STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
+        const ARGUMENT_NAMES = /([^\s,]+)/g;
+
+        const fnStr = func.toString().replace(STRIP_COMMENTS, "");
+        result = fnStr.slice(fnStr.indexOf("(") + 1, fnStr.indexOf(")")).match(ARGUMENT_NAMES);
+    }
+    catch {
+        result = undefined;
+    }
+
+    return result ?? [];
+}
+
 export function getProp(val: any, prop: string): any {
     // first replace escaped dots with temp char
     const escapedProp = prop.split("\\.").join(propSepChar);

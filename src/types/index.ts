@@ -1039,6 +1039,28 @@ export interface IParameterOptionsWithQuerySource {
 
 /**
  * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as the current request context.
+ */
+export interface IParameterOptionsWithRequestSource {
+    /**
+     * The name of the source.
+     */
+    source: "request";
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as the current response context.
+ */
+export interface IParameterOptionsWithResponseSource {
+    /**
+     * The name of the source.
+     */
+    source: "response";
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
  * the paremeter from URL parameter.
  */
 export interface IParameterOptionsWithUrlSource {
@@ -1079,6 +1101,8 @@ export type NextFunction = (error?: Optional<any>) => void;
 export type ParameterOptions =
     IParameterOptionsWithHeaderSource |
     IParameterOptionsWithQuerySource |
+    IParameterOptionsWithRequestSource |
+    IParameterOptionsWithResponseSource |
     IParameterOptionsWithUrlSource;
 
 /**
