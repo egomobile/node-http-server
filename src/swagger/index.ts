@@ -20,7 +20,7 @@ import path from "path";
 import { knownFileMimes } from "../constants";
 import { normalizeRouterPath } from "../controllers/utils";
 import type { IControllersSwaggerOptions, IHttpServer } from "../types";
-import indexHtml from "./resources/index_html";
+import swaggerInitializerJs from "./resources/swagger-initializer_js";
 import { createSwaggerPathValidator, getSwaggerDocsBasePath } from "./utils";
 
 export interface ISetupSwaggerUIForServerControllersOptions {
@@ -32,6 +32,7 @@ export interface ISetupSwaggerUIForServerControllersOptions {
 const pathToSwaggerUi: string = require("swagger-ui-dist").absolutePath();
 
 const indexHtmlFilePath = path.join(pathToSwaggerUi, "index.html");
+const swaggerInitializerJSFilePath = path.join(pathToSwaggerUi, "swagger-initializer.js");
 
 const { readFile, stat } = fs.promises;
 
@@ -50,7 +51,7 @@ export function setupSwaggerUIForServerControllers({
         documentJson.toString("utf8")
     );
 
-    const indexHtmlContent = Buffer.from(indexHtml(), "utf8");
+    const swaggerInitializerJSContent = Buffer.from(swaggerInitializerJs(), "utf8");
 
     server.get(createSwaggerPathValidator(options.basePath), async (request, response) => {
         try {
@@ -112,12 +113,12 @@ export function setupSwaggerUIForServerControllers({
                     }
                 }
 
-                if (fullPath === indexHtmlFilePath) {  // index.html
+                if (fullPath === swaggerInitializerJSFilePath) { // swagger-initializer.js
                     response.writeHead(200, {
-                        "Content-Type": "text/html; charset=UTF-8",
-                        "Content-Length": String(indexHtmlContent.length)
+                        "Content-Type": "text/javascript; charset=UTF-8",
+                        "Content-Length": String(swaggerInitializerJSContent.length)
                     });
-                    response.write(indexHtmlContent);
+                    response.write(swaggerInitializerJSContent);
 
                     return;
                 }
