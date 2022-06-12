@@ -1,16 +1,18 @@
-import { binaryParser, createServer } from './utils';
-import request from 'supertest';
-import { HttpRequestPath, IHttpRequest, IHttpResponse } from '../types';
-import { text } from '../middlewares';
+import { binaryParser, createServer } from "./utils";
+import request from "supertest";
+import { HttpRequestPath, IHttpRequest, IHttpResponse } from "../types";
+import { text } from "../middlewares";
 
 const routePaths: HttpRequestPath[] = [
-    '/',
-    (request) => request.url === '/',
+    "/",
+    (request) => {
+        return request.url === "/";
+    },
     /^(\/)$/i
 ];
 
-describe('text() middleware', () => {
-    ['patch', 'put', 'post'].forEach(method => {
+describe("text() middleware", () => {
+    ["patch", "put", "post"].forEach(method => {
         const methodName = method.toUpperCase();
 
         it.each(routePaths)(`should return 200 when do a ${methodName} request`, async (path) => {
@@ -20,7 +22,7 @@ describe('text() middleware', () => {
                 text()
             ], async (request: IHttpRequest, response: IHttpResponse) => {
                 response.write(
-                    Buffer.from((typeof request.body).toUpperCase() + ': ' + request.body, 'utf8')
+                    Buffer.from((typeof request.body).toUpperCase() + ": " + request.body, "utf8")
                 );
             });
 
@@ -29,7 +31,7 @@ das, um die Herzen zu rühren,
 den Patriotismus trägt zur Schau,
 mit allen seinen Geschwüren.`;
 
-            const response = await (request(server) as any)[method]('/')
+            const response = await (request(server) as any)[method]("/")
                 .send(textToSend)
                 .parse(binaryParser)
                 .expect(200);
@@ -37,9 +39,9 @@ mit allen seinen Geschwüren.`;
             const data = response.body;
             expect(Buffer.isBuffer(data)).toBe(true);
 
-            const str = data.toString('utf8');
+            const str = data.toString("utf8");
 
-            expect(str).toEqual('STRING: ' + textToSend);
+            expect(str).toEqual("STRING: " + textToSend);
         });
 
         it.each(routePaths)(`should return 413 when do a ${methodName} request with data, which is bigger than the limit`, async (path) => {
@@ -51,14 +53,14 @@ Heute muss die Glocke werden
 Frisch Gesellen, seid zur Hand.`;
 
             (server as any)[method](path, [
-                text({ limit: textToSend.length - 1 })
+                text({ "limit": textToSend.length - 1 })
             ], async (request: IHttpRequest, response: IHttpResponse) => {
                 response.write(
-                    Buffer.from((typeof request.body) + ': ' + request.body, 'utf8')
+                    Buffer.from((typeof request.body) + ": " + request.body, "utf8")
                 );
             });
 
-            const response = await (request(server) as any)[method]('/')
+            const response = await (request(server) as any)[method]("/")
                 .send(textToSend)
                 .parse(binaryParser)
                 .expect(413);
@@ -71,12 +73,12 @@ Frisch Gesellen, seid zur Hand.`;
         it.each(routePaths)(`should return 400 when do a ${methodName} request with data, which is bigger than the limit and a custom error handler`, async (path) => {
             const server = createServer();
 
-            const textToSend = 'Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur.';
+            const textToSend = "Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae, aliam Aquitani, tertiam qui ipsorum lingua Celtae, nostra Galli appellantur.";
 
             (server as any)[method](path, [
                 text({
-                    limit: textToSend.length - 1,
-                    onLimitReached: async (request, response) => {
+                    "limit": textToSend.length - 1,
+                    "onLimitReached": async (request, response) => {
                         if (!response.headersSent) {
                             response.writeHead(400);
                         }
@@ -86,11 +88,11 @@ Frisch Gesellen, seid zur Hand.`;
                 })
             ], async (request: IHttpRequest, response: IHttpResponse) => {
                 response.write(
-                    Buffer.from((typeof request.body) + ': ' + request.body, 'utf8')
+                    Buffer.from((typeof request.body) + ": " + request.body, "utf8")
                 );
             });
 
-            const response = await (request(server) as any)[method]('/')
+            const response = await (request(server) as any)[method]("/")
                 .send(textToSend)
                 .parse(binaryParser)
                 .expect(400);

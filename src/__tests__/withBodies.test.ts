@@ -13,32 +13,34 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import request from 'supertest';
-import { HttpRequestPath, IHttpRequest, IHttpResponse } from '../types';
-import { readStream } from '../utils';
-import { binaryParser, createServer } from './utils';
+import request from "supertest";
+import { HttpRequestPath, IHttpRequest, IHttpResponse } from "../types";
+import { readStream } from "../utils";
+import { binaryParser, createServer } from "./utils";
 
 const routePaths: HttpRequestPath[] = [
-    '/',
-    (request) => request.url === '/',
+    "/",
+    (request) => {
+        return request.url === "/";
+    },
     /^(\/)$/i
 ];
 
-describe('Simple requests with common HTTP methods and input data', () => {
-    ['patch', 'put', 'post'].forEach(method => {
+describe("Simple requests with common HTTP methods and input data", () => {
+    ["patch", "put", "post"].forEach(method => {
         const methodName = method.toUpperCase();
 
         it.each(routePaths)(`should return 200 when do a ${methodName} request and send data`, async (path) => {
             const server = createServer();
-            const text = 'MK+TM';
+            const text = "MK+TM";
 
             (server as any)[method](path, async (req: IHttpRequest, resp: IHttpResponse) => {
                 resp.write(
-                    (await readStream(req)).toString('utf8')
+                    (await readStream(req)).toString("utf8")
                 );
             });
 
-            const response = await (request(server) as any)[method]('/')
+            const response = await (request(server) as any)[method]("/")
                 .send(text)
                 .parse(binaryParser)
                 .expect(200);
@@ -46,24 +48,24 @@ describe('Simple requests with common HTTP methods and input data', () => {
             const data = response.body;
             expect(Buffer.isBuffer(data)).toBe(true);
 
-            const str = data.toString('utf8');
+            const str = data.toString("utf8");
 
-            expect(typeof str).toBe('string');
+            expect(typeof str).toBe("string");
             expect(str.length).toBe(text.length);
             expect(str).toBe(text);
         });
 
         it.each(routePaths)(`should return 404 when do a ${methodName} request and /foo route is not defined`, async (path) => {
             const server = createServer();
-            const text = 'MK+TM';
+            const text = "MK+TM";
 
             (server as any)[method](path, async (req: IHttpRequest, resp: IHttpResponse) => {
                 resp.write(
-                    (await readStream(req)).toString('utf8')
+                    (await readStream(req)).toString("utf8")
                 );
             });
 
-            const response = await (request(server) as any)[method]('/foo')
+            const response = await (request(server) as any)[method]("/foo")
                 .send(text)
                 .parse(binaryParser)
                 .expect(404);
@@ -76,9 +78,9 @@ describe('Simple requests with common HTTP methods and input data', () => {
 
         it(`should return 404 when do a ${methodName} request and no route is defined`, async () => {
             const server = createServer();
-            const text = 'MK+TM';
+            const text = "MK+TM";
 
-            const response = await (request(server) as any)[method]('/')
+            const response = await (request(server) as any)[method]("/")
                 .send(text)
                 .parse(binaryParser)
                 .expect(404);

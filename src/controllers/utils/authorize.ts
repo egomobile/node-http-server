@@ -13,11 +13,11 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { compileExpression } from 'filtrex';
-import { AuthorizeError } from '../../errors';
-import type { AuthorizeArgumentValue, AuthorizedUserProvider, AuthorizeRolesProvider, AuthorizeRolesValue, AuthorizeValidationFailedHandler, AuthorizeValidator, AuthorizeValidatorValue, HttpMiddleware, IAuthorizeOptions, IAuthorizeValidatorContext, SetupAuthorizeMiddlewareHandler } from '../../types';
-import type { InitControllerAuthorizeAction, Nilable } from '../../types/internal';
-import { asAsync, getProp, isNil } from '../../utils';
+import { compileExpression } from "filtrex";
+import { AuthorizeError } from "../../errors";
+import type { AuthorizeArgumentValue, AuthorizedUserProvider, AuthorizeRolesProvider, AuthorizeRolesValue, AuthorizeValidationFailedHandler, AuthorizeValidator, AuthorizeValidatorValue, HttpMiddleware, IAuthorizeOptions, IAuthorizeValidatorContext, SetupAuthorizeMiddlewareHandler } from "../../types";
+import type { InitControllerAuthorizeAction, Nilable } from "../../types/internal";
+import { asAsync, getProp, isNil } from "../../utils";
 
 interface ICreateAuthorizeMiddlewareFromOptionsOptions {
     findAuthorizedUser: AuthorizedUserProvider;
@@ -36,16 +36,24 @@ export function createAuthorizeValidatorFromExpression(expression: string): Auth
             // we have an authorized user here
 
             const filter = compileExpression(expression, {
-                extraFunctions: {
-                    getProp: (value: any, propPath: string) => getProp(value, propPath),
-                    hasHeader: (name: string, value: any) => request.headers[name] === value,
-                    hasRole: (r: any) => !!request.authorizedUser?.roles.includes(r),
-                    log: (value: any, returnValue = true) => {
+                "extraFunctions": {
+                    "getProp": (value: any, propPath: string) => {
+                        return getProp(value, propPath);
+                    },
+                    "hasHeader": (name: string, value: any) => {
+                        return request.headers[name] === value;
+                    },
+                    "hasRole": (r: any) => {
+                        return !!request.authorizedUser?.roles.includes(r);
+                    },
+                    "log": (value: any, returnValue = true) => {
                         console.log(value);
                         return returnValue;
                     },
-                    str: (value: any) => String(value),
-                    trace: (value: any, returnValue = true) => {
+                    "str": (value: any) => {
+                        return String(value);
+                    },
+                    "trace": (value: any, returnValue = true) => {
                         console.trace(value);
                         return returnValue;
                     }
@@ -55,7 +63,7 @@ export function createAuthorizeValidatorFromExpression(expression: string): Auth
             return !!filter({
                 request,
                 roles,
-                user: request.authorizedUser
+                "user": request.authorizedUser
             });
         }
 
@@ -74,7 +82,7 @@ function createAuthorizeMiddlewareFromOptions({
         onValidationFailed = async (reason, request, response) => {
             if (!response.headersSent) {
                 response.writeHead(403, {
-                    'Content-Length': '0'
+                    "Content-Length": "0"
                 });
             }
         };
@@ -86,7 +94,7 @@ function createAuthorizeMiddlewareFromOptions({
     validator = asAsync<AuthorizeValidator>(validator);
 
     return async (request, response, next) => {
-        let reason: AuthorizeError = new AuthorizeError('Validation failed');
+        let reason: AuthorizeError = new AuthorizeError("Validation failed");
 
         try {
             // get roles and convert from role names to objects
@@ -102,7 +110,7 @@ function createAuthorizeMiddlewareFromOptions({
                 // and set it to request context
 
                 request.authorizedUser = {
-                    roles: authorizedUser.roles
+                    "roles": authorizedUser.roles
                 };
             }
 
@@ -117,8 +125,9 @@ function createAuthorizeMiddlewareFromOptions({
 
                 return;
             }
-        } catch (error: any) {
-            reason = new AuthorizeError(String(error?.message || ''), error);
+        }
+        catch (error: any) {
+            reason = new AuthorizeError(String(error?.message || ""), error);
         }
 
         await onValidationFailed!(reason, request, response);
@@ -146,7 +155,9 @@ export function createInitControllerAuthorizeAction({ arg }: ICreateInitControll
         const rolesProvider = toAuthorizeRolesProviderSafe(options.roles);
         const validator = toAuthorizeValidatorSafe(options.validator || globalOptions?.authorize?.validator);
         const use = (options.use || globalOptions?.authorize?.use)
-            ?.filter(mw => !!mw);
+            ?.filter(mw => {
+                return !!mw;
+            });
 
         const authorizeMiddlewares = [
             createAuthorizeMiddlewareFromOptions({
@@ -158,8 +169,10 @@ export function createInitControllerAuthorizeAction({ arg }: ICreateInitControll
         ];
 
         if (use?.length) {
-            if (use.some(mw => typeof mw !== 'function')) {
-                throw new TypeError('All middlewares must be of type function');
+            if (use.some(mw => {
+                return typeof mw !== "function";
+            })) {
+                throw new TypeError("All middlewares must be of type function");
             }
 
             authorizeMiddlewares.unshift(...use);
@@ -175,52 +188,58 @@ export function createInitControllerAuthorizeAction({ arg }: ICreateInitControll
 function toAuthorizeOptions(arg1: Nilable<AuthorizeArgumentValue>): Nilable<IAuthorizeOptions> {
     let options: Nilable<IAuthorizeOptions>;
     if (arg1) {
-        if (typeof arg1 === 'string') {
+        if (typeof arg1 === "string") {
             // arg1 => validatorExpression
             options = {
-                validator: createAuthorizeValidatorFromExpression(arg1)
+                "validator": createAuthorizeValidatorFromExpression(arg1)
             };
-        } else if (typeof arg1 === 'function') {
+        }
+        else if (typeof arg1 === "function") {
             // arg1 => AuthorizeValidator
             options = {
-                validator: arg1
+                "validator": arg1
             };
-        } else if (Array.isArray(arg1)) {
+        }
+        else if (Array.isArray(arg1)) {
             // arg1 => AuthorizeRoles
             options = {
-                roles: arg1
+                "roles": arg1
             };
-        } else {
+        }
+        else {
             // arg1 => options
             options = arg1;
         }
     }
 
     if (!isNil(options?.onValidationFailed)) {
-        if (typeof options!.onValidationFailed !== 'function') {
-            throw new TypeError('options.onValidationFailed must be of type function');
+        if (typeof options!.onValidationFailed !== "function") {
+            throw new TypeError("options.onValidationFailed must be of type function");
         }
     }
 
     if (!isNil(options?.roles)) {
         if (!Array.isArray(options!.roles)) {
-            throw new TypeError('options.roles must be of type Array');
+            throw new TypeError("options.roles must be of type Array");
         }
     }
 
     if (!isNil(options?.use)) {
         if (Array.isArray(options!.use)) {
-            if (options!.use.some(mw => typeof mw !== 'function')) {
-                throw new TypeError('All items of options.use must be of type function');
+            if (options!.use.some(mw => {
+                return typeof mw !== "function";
+            })) {
+                throw new TypeError("All items of options.use must be of type function");
             }
-        } else {
-            throw new TypeError('options.use must be of type Array');
+        }
+        else {
+            throw new TypeError("options.use must be of type Array");
         }
     }
 
     if (!isNil(options?.validator)) {
-        if (typeof options!.validator !== 'function' && typeof options!.validator !== 'string') {
-            throw new TypeError('options.validator must be of type function or string');
+        if (typeof options!.validator !== "function" && typeof options!.validator !== "string") {
+            throw new TypeError("options.validator must be of type function or string");
         }
     }
 
@@ -230,42 +249,57 @@ function toAuthorizeOptions(arg1: Nilable<AuthorizeArgumentValue>): Nilable<IAut
 function toAuthorizeRolesProviderSafe(value: Nilable<AuthorizeRolesValue>): AuthorizeRolesProvider {
     if (value) {
         let provider: Nilable<AuthorizeRolesProvider>;
-        if (typeof value === 'function') {
+        if (typeof value === "function") {
             provider = value;
-        } else if (Array.isArray(value)) {
-            const roleNames = value.filter(rn => !!rn);
-            if (roleNames.some(rn => typeof rn !== 'string')) {
-                throw new TypeError('all role names must be of type string');
+        }
+        else if (Array.isArray(value)) {
+            const roleNames = value.filter(rn => {
+                return !!rn;
+            });
+            if (roleNames.some(rn => {
+                return typeof rn !== "string";
+            })) {
+                throw new TypeError("all role names must be of type string");
             }
 
-            provider = () => roleNames;
+            provider = () => {
+                return roleNames;
+            };
         }
 
-        if (typeof provider !== 'function') {
-            throw new TypeError('value must be of type function or array');
+        if (typeof provider !== "function") {
+            throw new TypeError("value must be of type function or array");
         }
 
         return provider;
-    } else {
-        return () => [];
+    }
+    else {
+        return () => {
+            return [];
+        };
     }
 }
 
 function toAuthorizeValidatorSafe(validator: Nilable<AuthorizeValidatorValue>): AuthorizeValidator {
     if (validator) {
-        if (typeof validator === 'function') {
+        if (typeof validator === "function") {
             return validator;
-        } else if (typeof validator === 'string') {
-            return createAuthorizeValidatorFromExpression(validator);
-        } else {
-            throw new TypeError('validator must be of type function or string');
         }
-    } else {
+        else if (typeof validator === "string") {
+            return createAuthorizeValidatorFromExpression(validator);
+        }
+        else {
+            throw new TypeError("validator must be of type function or string");
+        }
+    }
+    else {
         return async ({ request, roles }) => {
             if (request.authorizedUser && roles.length) {
                 // check if any role of authorizedUser
                 // is part of 'roles'
-                return request.authorizedUser.roles.some(ur => roles.includes(ur));
+                return request.authorizedUser.roles.some(ur => {
+                    return roles.includes(ur);
+                });
             }
 
             return false;
@@ -276,15 +310,19 @@ function toAuthorizeValidatorSafe(validator: Nilable<AuthorizeValidatorValue>): 
 function toControllersAuthorizedUserProviderSafe(value: Nilable<AuthorizedUserProvider>): AuthorizedUserProvider {
     if (value) {
         return value;
-    } else {
-        return () => undefined;
+    }
+    else {
+        return () => {
+            return undefined;
+        };
     }
 }
 
 function toSetupAuthorizeMiddlewareHandlerSafe(handler: Nilable<SetupAuthorizeMiddlewareHandler>): SetupAuthorizeMiddlewareHandler {
     if (handler) {
         return handler;
-    } else {
+    }
+    else {
         // by default, add new at the end
 
         return ({ authorizeMiddlewares, middlewares }) => {

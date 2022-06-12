@@ -1,24 +1,27 @@
-import { AuthorizeValidator, Controller, IHttpRequest, IHttpResponse } from '../../..';
-import { Authorize, ControllerBase, GET } from '../../../controllers';
+import { AuthorizeValidator, Controller, IHttpRequest, IHttpResponse } from "../../..";
+import { Authorize, ControllerBase, GET } from "../../../controllers";
 
 function createAuthorizer(...requiredRoles: string[]): AuthorizeValidator {
-    return async ({ request }) => request.authorizedUser?.roles.some((usersRole) =>
-        requiredRoles.includes(usersRole)
-    );
+    return async ({ request }) => {
+        return request.authorizedUser?.roles.some((usersRole) => {
+            return requiredRoles.includes(usersRole);
+        }
+        );
+    };
 }
 
 @Controller()
-@Authorize(createAuthorizer('user'))
+@Authorize(createAuthorizer("user"))
 export default class TestAuthorizeValidatorFunctionController extends ControllerBase {
     @GET()
     async user(request: IHttpRequest, response: IHttpResponse) {
-        response.write('User');
+        response.write("User");
     }
 
     @GET({
-        authorize: createAuthorizer('admin')
+        "authorize": createAuthorizer("admin")
     })
     async admin(request: IHttpRequest, response: IHttpResponse) {
-        response.write('Admin');
+        response.write("Admin");
     }
 }

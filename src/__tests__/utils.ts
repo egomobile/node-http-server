@@ -13,25 +13,25 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import path from 'path';
-import { Response } from 'supertest';
-import createHttpServer, { IHttpServer } from '..';
+import path from "path";
+import { Response } from "supertest";
+import createHttpServer, { IHttpServer } from "..";
 
-export function binaryParser(response: Response, callback: (err: any, data?: Buffer) => any) {
-    response.setEncoding('binary');
+export function binaryParser(response: Response, done: (ex: any, data?: Buffer) => any) {
+    response.setEncoding("binary");
 
-    let data = '';
+    let data = "";
 
-    response.once('error', (error: any) => {
-        callback(error);
+    response.once("error", (error: any) => {
+        done(error);
     });
 
-    response.on('data', (chunk: string) => {
+    response.on("data", (chunk: string) => {
         data += chunk;
     });
 
-    response.once('end', () => {
-        callback(null, Buffer.from(data, 'binary'));
+    response.once("end", () => {
+        done(null, Buffer.from(data, "binary"));
     });
 }
 
@@ -43,22 +43,24 @@ export function createServerAndInitControllers() {
     const server = createServer();
 
     server.controllers({
-        rootDir: path.join(__dirname, 'controllers'),
-        imports: {
-            foo: () => 'bar',
-            baz: 42
+        "rootDir": path.join(__dirname, "controllers"),
+        "imports": {
+            "foo": () => {
+                return "bar";
+            },
+            "baz": 42
         },
-        authorize: {
-            findAuthorizedUser: async ({ request }) => {
-                if (request.headers['x-test-user'] === 'user') {
+        "authorize": {
+            "findAuthorizedUser": async ({ request }) => {
+                if (request.headers["x-test-user"] === "user") {
                     return {
-                        roles: ['user']
+                        "roles": ["user"]
                     };
                 }
 
-                if (request.headers['x-test-user'] === 'admin') {
+                if (request.headers["x-test-user"] === "admin") {
                     return {
-                        roles: ['admin']
+                        "roles": ["admin"]
                     };
                 }
             }

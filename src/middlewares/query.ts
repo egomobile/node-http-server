@@ -13,8 +13,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { URLSearchParams } from 'url';
-import type { HttpMiddleware } from '../types';
+import { URLSearchParams } from "url";
+import type { HttpMiddleware } from "../types";
 
 /**
  * Creates a new middleware that extracts query parameters
@@ -42,9 +42,9 @@ export function query(): HttpMiddleware {
     return async (request, response, next) => {
         try {
             if (request.url?.length) {
-                let qs = '';
+                let qs = "";
 
-                const qMark = request.url.indexOf('?');
+                const qMark = request.url.indexOf("?");
                 if (qMark > -1) {
                     qs = request.url.substring(qMark + 1);
                 }
@@ -53,7 +53,8 @@ export function query(): HttpMiddleware {
                     request.query = new URLSearchParams(qs);
                 }
             }
-        } catch { }
+        }
+        catch { }
 
         if (!request.query) {
             request.query = new URLSearchParams();

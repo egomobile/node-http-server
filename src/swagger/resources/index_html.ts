@@ -15,18 +15,18 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
 const indexHtmlFilePath = path.join(
-    require('swagger-ui-dist').absolutePath(),
-    'index.html'
+    require("swagger-ui-dist").absolutePath(),
+    "index.html"
 );
 
 export default (): string => {
-    const template = fs.readFileSync(indexHtmlFilePath, 'utf8');
+    const template = fs.readFileSync(indexHtmlFilePath, "utf8");
 
-    const oldLines = template.split('\n');
+    const oldLines = template.split("\n");
 
     const newLines: string[] = [];
     let linesToSkip = 0;
@@ -36,22 +36,24 @@ export default (): string => {
             continue;
         }
 
-        if (l.trim().startsWith('window.ui = ui')) {
+        if (l.trim().startsWith("window.ui = ui")) {
             // code to remove URL text field
 
             newLines.push(l);
-            newLines.push('document.querySelector(\'#swagger-ui .topbar-wrapper .download-url-wrapper\').remove()');
-        } else if (l.trim().startsWith('const ui = SwaggerUIBundle({')) {
+            newLines.push("document.querySelector('#swagger-ui .topbar-wrapper .download-url-wrapper').remove()");
+        }
+        else if (l.trim().startsWith("const ui = SwaggerUIBundle({")) {
             // change URL
 
             newLines.push(l);
-            newLines.push('url: \'./json\',');
+            newLines.push("url: './json',");
 
             linesToSkip = 1;
-        } else {
+        }
+        else {
             newLines.push(l);
         }
     }
 
-    return newLines.join('\n');
+    return newLines.join("\n");
 };

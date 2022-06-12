@@ -13,9 +13,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, IHttpRequest, IHttpResponse } from '../types';
-import type { Nilable, Nullable } from '../types/internal';
-import { asAsync, isNil } from '../utils';
+import type { HttpMiddleware, IHttpRequest, IHttpResponse } from "../types";
+import type { Nilable, Nullable } from "../types/internal";
+import { asAsync, isNil } from "../utils";
 
 /**
  * Usernames and passwords.
@@ -58,8 +58,8 @@ interface ICreateMiddlewareOptions {
 export const defaultBasicAuthFailedHandler: BasicAuthValidationFailedHandler = async (username, request, response) => {
     if (!response.headersSent) {
         response.writeHead(401, {
-            'Content-Type': '0',
-            'WWW-Authenticate': 'Basic realm="Restricted Area"'
+            "Content-Type": "0",
+            "WWW-Authenticate": "Basic realm=\"Restricted Area\""
         });
     }
 };
@@ -97,48 +97,53 @@ export function basicAuth(arg1: string | BasicAuthValidator | BasicAuthCredentia
     let validator: BasicAuthValidator;
     let onValidationFailed: Nilable<BasicAuthValidationFailedHandler>;
 
-    if (typeof arg1 === 'string') {
+    if (typeof arg1 === "string") {
         // [arg1] username
         // [arg2] password
         // [arg3] onValidationFailed
 
-        validator = (username, password) => username === arg1 && password === arg2;
+        validator = (username, password) => {
+            return username === arg1 && password === arg2;
+        };
         onValidationFailed = arg3 as BasicAuthValidationFailedHandler;
-    } else if (typeof arg1 === 'function') {
+    }
+    else if (typeof arg1 === "function") {
         // [arg1] validator
         // [arg2] onValidationFailed
 
         validator = arg1 as BasicAuthValidator;
         onValidationFailed = arg2 as BasicAuthValidationFailedHandler;
-    } else if (typeof arg1 === 'object') {
+    }
+    else if (typeof arg1 === "object") {
         // [arg1] credentails
         // [arg2] onValidationFailed
 
         validator = createValidatorFromCredentials(arg1 as BasicAuthCredentials);
         onValidationFailed = arg2 as BasicAuthValidationFailedHandler;
-    } else {
-        throw new TypeError('First argument must be of type string, object or function');
+    }
+    else {
+        throw new TypeError("First argument must be of type string, object or function");
     }
 
-    if (typeof validator !== 'function') {
-        throw new TypeError('Validator must be of type function');
+    if (typeof validator !== "function") {
+        throw new TypeError("Validator must be of type function");
     }
 
     if (!isNil(onValidationFailed)) {
-        if (typeof onValidationFailed !== 'function') {
-            throw new TypeError('onValidationFailed must be of type function');
+        if (typeof onValidationFailed !== "function") {
+            throw new TypeError("onValidationFailed must be of type function");
         }
     }
 
     return createMiddleware({
-        onValidationFailed: onValidationFailed || defaultBasicAuthFailedHandler,
+        "onValidationFailed": onValidationFailed || defaultBasicAuthFailedHandler,
         validator
     });
 }
 
 function createValidatorFromCredentials(credentials: BasicAuthCredentials): BasicAuthValidator {
     return async (username, password) => {
-        if (typeof credentials[username!] === 'string') {
+        if (typeof credentials[username!] === "string") {
             return credentials[username!] === password;
         }
 
@@ -155,36 +160,38 @@ function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOp
         let username: Nilable<string>;
 
         try {
-            const authorization = request.headers['authorization'];
-            if (typeof authorization === 'string') {
+            const authorization = request.headers["authorization"];
+            if (typeof authorization === "string") {
                 username = null;
 
                 let scheme: string;
                 let value: string;
 
                 // Authorization: <scheme> <value>
-                const sep = authorization.indexOf(' ');
+                const sep = authorization.indexOf(" ");
                 if (sep > -1) {
                     scheme = authorization.substring(0, sep);
                     value = authorization.substring(sep + 1);
-                } else {
+                }
+                else {
                     scheme = authorization;
-                    value = '';
+                    value = "";
                 }
 
-                if (scheme.toLowerCase() === 'basic') {  // must be 'basic'
+                if (scheme.toLowerCase() === "basic") {  // must be 'basic'
                     let password: Nullable<string>;
 
                     // BASE64(username:password)
-                    const usernameAndPassword = Buffer.from(value, 'base64')
-                        .toString('utf8');
+                    const usernameAndPassword = Buffer.from(value, "base64")
+                        .toString("utf8");
 
                     // username:password
-                    const sep2 = usernameAndPassword.indexOf(':');
+                    const sep2 = usernameAndPassword.indexOf(":");
                     if (sep2 > -1) {
                         username = usernameAndPassword.substring(0, sep2);
                         password = usernameAndPassword.substring(sep2 + 1);
-                    } else {
+                    }
+                    else {
                         username = usernameAndPassword;
                         password = null;
                     }
@@ -192,11 +199,13 @@ function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOp
                     isValid = await validator(username, password, request);
                 }
             }
-        } catch { }
+        }
+        catch { }
 
         if (isValid) {
             next();
-        } else {
+        }
+        else {
             await onValidationFailed(username, request, response);
 
             response.end();

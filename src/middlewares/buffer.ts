@@ -13,9 +13,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions } from '../types';
-import type { Nilable, Nullable } from '../types/internal';
-import { canHttpMethodHandleBodies, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
+import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions } from "../types";
+import type { Nilable, Nullable } from "../types/internal";
+import { canHttpMethodHandleBodies, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from "../utils";
 
 /**
  * Options for 'buffer()' function.
@@ -78,35 +78,35 @@ export function buffer(): HttpMiddleware;
 export function buffer(limit: number, onLimitReached?: Nilable<HttpRequestHandler>): HttpMiddleware;
 export function buffer(options: Nilable<IBufferOptions>): HttpMiddleware;
 export function buffer(optionsOrLimit?: Nilable<IBufferOptions | number>, onLimitReached?: Nilable<HttpRequestHandler>): HttpMiddleware {
-    if (typeof optionsOrLimit === 'number') {
+    if (typeof optionsOrLimit === "number") {
         optionsOrLimit = {
-            limit: limitToBytes(optionsOrLimit)
+            "limit": limitToBytes(optionsOrLimit)
         };
 
         optionsOrLimit.onLimitReached = onLimitReached;
     }
 
     let limit = optionsOrLimit?.limit;
-    if (typeof limit === 'undefined') {
+    if (typeof limit === "undefined") {
         limit = limitToBytes(128);
     }
 
     onLimitReached = optionsOrLimit?.onLimitReached;
 
     if (!isNil(limit)) {
-        if (typeof limit !== 'number') {
-            throw new TypeError('limit must be of type number');
+        if (typeof limit !== "number") {
+            throw new TypeError("limit must be of type number");
         }
     }
 
     if (!isNil(onLimitReached)) {
-        if (typeof onLimitReached !== 'function') {
-            throw new TypeError('onLimitReached must be of type function');
+        if (typeof onLimitReached !== "function") {
+            throw new TypeError("onLimitReached must be of type function");
         }
     }
 
     return createMiddleware({
-        limit: limit as Nullable<number>,
+        "limit": limit as Nullable<number>,
         onLimitReached
     });
 }
@@ -115,7 +115,8 @@ function createMiddleware({ limit, onLimitReached }: ICreateMiddlewareOptions) {
     return withEntityTooLarge(async (request, response, next) => {
         if (canHttpMethodHandleBodies(request.method)) {
             request.body = await readStreamWithLimit(request, limit);
-        } else {
+        }
+        else {
             request.body = null;
         }
 

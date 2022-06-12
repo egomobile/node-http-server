@@ -16,9 +16,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { RESPONSE_SERIALIZER, SETUP_RESPONSE_SERIALIZER } from '../constants';
-import type { InitControllerSerializerAction } from '../types/internal';
-import { getListFromObject, getMethodOrThrow } from './utils';
+import { RESPONSE_SERIALIZER, SETUP_RESPONSE_SERIALIZER } from "../constants";
+import type { InitControllerSerializerAction } from "../types/internal";
+import { getListFromObject, getMethodOrThrow } from "./utils";
 
 /**
  * Add a method of a controller as a response serializer.

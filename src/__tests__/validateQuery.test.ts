@@ -13,12 +13,12 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import request from 'supertest';
-import { URLSearchParams } from 'url';
-import { schema } from '..';
-import { query, validateQuery } from '../middlewares';
-import { IHttpRequest, IHttpResponse, ValidationFailedHandler } from '../types';
-import { binaryParser, createServer } from './utils';
+import request from "supertest";
+import { URLSearchParams } from "url";
+import { schema } from "..";
+import { query, validateQuery } from "../middlewares";
+import { IHttpRequest, IHttpResponse, ValidationFailedHandler } from "../types";
+import { binaryParser, createServer } from "./utils";
 
 interface IMyQuerySchema {
     offset: string;
@@ -26,32 +26,32 @@ interface IMyQuerySchema {
 }
 
 const myQuerySchema = schema.object({
-    offset: schema.string().strict().regex(/^([0-9]){1,}$/).required(),
-    limit: schema.string().strict().regex(/^([0-9]){1,}$/).optional()
+    "offset": schema.string().strict().regex(/^([0-9]){1,}$/).required(),
+    "limit": schema.string().strict().regex(/^([0-9]){1,}$/).optional()
 });
 
 const validData: IMyQuerySchema[] = [{
-    offset: '0'
+    "offset": "0"
 }, {
-    offset: '0',
-    limit: '10'
+    "offset": "0",
+    "limit": "10"
 }];
 
 const invalidData: any[] = [
     {},
     {
-        foo: '0'
+        "foo": "0"
     },
     {
-        limit: ''
+        "limit": ""
     },
     {
-        limit: '',
-        offset: '0'
+        "limit": "",
+        "offset": "0"
     },
     {
-        bar: '10',
-        offset: '0'
+        "bar": "10",
+        "offset": "0"
     }
 ];
 
@@ -64,19 +64,19 @@ function toQueryString(obj: any): string {
     return params.toString();
 }
 
-describe('validateQuery() middleware', () => {
-    ['get', 'delete', 'options', 'patch', 'put', 'post', 'trace'].forEach(method => {
+describe("validateQuery() middleware", () => {
+    ["get", "delete", "options", "patch", "put", "post", "trace"].forEach(method => {
         const methodName = method.toUpperCase();
 
         it.each(validData)(`should return 200 when do a ${methodName} request and send valid query params`, async (vd) => {
             const server = createServer();
-            const resultText = 'ok';
+            const resultText = "ok";
 
-            (server as any)[method]('/', [query(), validateQuery(myQuerySchema)], async (req: IHttpRequest, resp: IHttpResponse) => {
-                resp.write('ok');
+            (server as any)[method]("/", [query(), validateQuery(myQuerySchema)], async (req: IHttpRequest, resp: IHttpResponse) => {
+                resp.write("ok");
             });
 
-            const response = await (request(server) as any)[method]('/?' + toQueryString(vd))
+            const response = await (request(server) as any)[method]("/?" + toQueryString(vd))
                 .send(JSON.stringify(vd))
                 .parse(binaryParser)
                 .expect(200);
@@ -84,9 +84,9 @@ describe('validateQuery() middleware', () => {
             const data = response.body;
             expect(Buffer.isBuffer(data)).toBe(true);
 
-            const str = data.toString('utf8');
+            const str = data.toString("utf8");
 
-            expect(typeof str).toBe('string');
+            expect(typeof str).toBe("string");
             expect(str.length).toBe(resultText.length);
             expect(str).toBe(resultText);
         });
@@ -94,11 +94,11 @@ describe('validateQuery() middleware', () => {
         it.each(invalidData)(`should return 400 when do a ${methodName} request and send invalid query params`, async (ivd) => {
             const server = createServer();
 
-            (server as any)[method]('/', [query(), validateQuery(myQuerySchema)], async (req: IHttpRequest, resp: IHttpResponse) => {
-                resp.write('ok');
+            (server as any)[method]("/", [query(), validateQuery(myQuerySchema)], async (req: IHttpRequest, resp: IHttpResponse) => {
+                resp.write("ok");
             });
 
-            await (request(server) as any)[method]('/?' + toQueryString(ivd))
+            await (request(server) as any)[method]("/?" + toQueryString(ivd))
                 .send(JSON.stringify(ivd))
                 .parse(binaryParser)
                 .expect(400);
@@ -107,15 +107,15 @@ describe('validateQuery() middleware', () => {
         it.each(invalidData)(`should return 403 when do a ${methodName} request and send invalid query params and a custom handler`, async (ivd) => {
             const server = createServer();
 
-            const onValidationError: ValidationFailedHandler = async (err, req, resp) => {
+            const onValidationError: ValidationFailedHandler = async (ex, req, resp) => {
                 const errorMessage = Buffer.from(
-                    err.message,
-                    'utf8'
+                    ex.message,
+                    "utf8"
                 );
 
                 if (!resp.headersSent) {
                     resp.writeHead(403, {
-                        'Content-Length': String(errorMessage.length)
+                        "Content-Length": String(errorMessage.length)
                     });
                 }
 
@@ -123,11 +123,11 @@ describe('validateQuery() middleware', () => {
                 resp.end();
             };
 
-            (server as any)[method]('/', [query(), validateQuery(myQuerySchema, onValidationError)], async (req: IHttpRequest, resp: IHttpResponse) => {
-                resp.write('ok');
+            (server as any)[method]("/", [query(), validateQuery(myQuerySchema, onValidationError)], async (req: IHttpRequest, resp: IHttpResponse) => {
+                resp.write("ok");
             });
 
-            const response = await (request(server) as any)[method]('/?' + toQueryString(ivd))
+            const response = await (request(server) as any)[method]("/?" + toQueryString(ivd))
                 .send(JSON.stringify(ivd))
                 .parse(binaryParser)
                 .expect(403);
@@ -135,9 +135,9 @@ describe('validateQuery() middleware', () => {
             const data = response.body;
             expect(Buffer.isBuffer(data)).toBe(true);
 
-            const str = data.toString('utf8');
+            const str = data.toString("utf8");
 
-            expect(typeof str).toBe('string');
+            expect(typeof str).toBe("string");
             expect(str.length > 0).toBe(true);
         });
     });

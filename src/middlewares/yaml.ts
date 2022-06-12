@@ -13,14 +13,14 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import jsYaml, { YAMLException } from 'js-yaml';
-import { ParseError } from '../errors/parse';
-import type { HttpMiddleware, HttpRequestHandler, IHttpStringBodyParserOptions, ParseErrorHandler } from '../types';
-import type { Nilable, Nullable } from '../types/internal';
-import { canHttpMethodHandleBodies, getBufferEncoding, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from '../utils';
+import jsYaml, { YAMLException } from "js-yaml";
+import { ParseError } from "../errors/parse";
+import type { HttpMiddleware, HttpRequestHandler, IHttpStringBodyParserOptions, ParseErrorHandler } from "../types";
+import type { Nilable, Nullable } from "../types/internal";
+import { canHttpMethodHandleBodies, getBufferEncoding, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from "../utils";
 
 interface ICreateMiddlewareOptions {
-    encoding: string;
+    encoding: BufferEncoding;
     limit: Nullable<number>;
     onLimitReached: Nilable<HttpRequestHandler>;
     onParsingFailed: ParseErrorHandler;
@@ -87,12 +87,12 @@ export function yaml(): HttpMiddleware;
 export function yaml(limit: number, onLimitReached?: Nilable<HttpRequestHandler>, onParsingFailed?: Nilable<ParseErrorHandler>): HttpMiddleware;
 export function yaml(options: Nilable<IYamlOptions>): HttpMiddleware;
 export function yaml(optionsOrLimit?: Nilable<number | IYamlOptions>, onLimitReached?: Nilable<HttpRequestHandler>, onParsingFailed?: Nilable<ParseErrorHandler>): HttpMiddleware {
-    if (typeof optionsOrLimit === 'number') {
+    if (typeof optionsOrLimit === "number") {
         // [0] number
         // [1] HttpRequestHandler
 
         optionsOrLimit = {
-            limit: limitToBytes(optionsOrLimit)
+            "limit": limitToBytes(optionsOrLimit)
         };
 
         optionsOrLimit.onLimitReached = onLimitReached;
@@ -100,7 +100,7 @@ export function yaml(optionsOrLimit?: Nilable<number | IYamlOptions>, onLimitRea
     }
 
     let limit = optionsOrLimit?.limit;
-    if (typeof limit === 'undefined') {
+    if (typeof limit === "undefined") {
         limit = limitToBytes(128);
     }
 
@@ -108,30 +108,31 @@ export function yaml(optionsOrLimit?: Nilable<number | IYamlOptions>, onLimitRea
     onParsingFailed = optionsOrLimit?.onParsingFailed;
 
     if (!isNil(limit)) {
-        if (typeof limit !== 'number') {
-            throw new TypeError('limit must be of type number');
+        if (typeof limit !== "number") {
+            throw new TypeError("limit must be of type number");
         }
     }
 
     if (!isNil(onLimitReached)) {
-        if (typeof onLimitReached !== 'function') {
-            throw new TypeError('onLimitReached must be of type function');
+        if (typeof onLimitReached !== "function") {
+            throw new TypeError("onLimitReached must be of type function");
         }
     }
 
     if (isNil(onParsingFailed)) {
-        onParsingFailed = require('.').defaultParseErrorHandler;
-    } else {
-        if (typeof onParsingFailed !== 'function') {
-            throw new TypeError('onParsingFailed must be of type function');
+        onParsingFailed = require(".").defaultParseErrorHandler;
+    }
+    else {
+        if (typeof onParsingFailed !== "function") {
+            throw new TypeError("onParsingFailed must be of type function");
         }
     }
 
     return createMiddleware({
-        encoding: getBufferEncoding(optionsOrLimit?.encoding),
-        limit: limit as Nullable<number>,
+        "encoding": getBufferEncoding(optionsOrLimit?.encoding),
+        "limit": limit as Nullable<number>,
         onLimitReached,
-        onParsingFailed: onParsingFailed!
+        "onParsingFailed": onParsingFailed!
     });
 }
 
@@ -142,17 +143,20 @@ function createMiddleware({ encoding, limit, onLimitReached, onParsingFailed }: 
                 request.body = jsYaml.loadAll(
                     (await readStreamWithLimit(request, limit)).toString(encoding)
                 );
-            } else {
+            }
+            else {
                 request.body = null;
             }
 
             next();
-        } catch (error) {
+        }
+        catch (error) {
             if (error instanceof YAMLException) {
                 await onParsingFailed!(new ParseError(error), request, response);
 
                 response.end();
-            } else {
+            }
+            else {
                 throw error;
             }
         }

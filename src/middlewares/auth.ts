@@ -13,9 +13,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpRequestHandler, IHttpRequest } from '../types';
-import type { Nilable, Optional } from '../types/internal';
-import { asAsync, isNil } from '../utils';
+import type { HttpMiddleware, HttpRequestHandler, IHttpRequest } from "../types";
+import type { Nilable, Optional } from "../types/internal";
+import { asAsync, isNil } from "../utils";
 
 /**
  * Handler that is invoked, if validation of
@@ -52,39 +52,39 @@ export type IAuthValidators = {
     /**
      * @see https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-auth-using-authorization-header.html
      */
-    'aws4-hmac-sha256'?: Optional<AuthValidatorWithoutScheme>;
+    "aws4-hmac-sha256"?: Optional<AuthValidatorWithoutScheme>;
     /**
      * @see https://datatracker.ietf.org/doc/html/rfc7617
      */
-    'basic'?: Optional<AuthValidatorWithoutScheme>;
+    "basic"?: Optional<AuthValidatorWithoutScheme>;
     /**
      * @see https://datatracker.ietf.org/doc/html/rfc6750
      */
-    'bearer'?: Optional<AuthValidatorWithoutScheme>;
+    "bearer"?: Optional<AuthValidatorWithoutScheme>;
     /**
      * @see https://datatracker.ietf.org/doc/html/rfc7616
      */
-    'digest'?: Optional<AuthValidatorWithoutScheme>;
+    "digest"?: Optional<AuthValidatorWithoutScheme>;
     /**
      * @see https://datatracker.ietf.org/doc/html/rfc7486
      */
-    'hoba'?: Optional<AuthValidatorWithoutScheme>;
+    "hoba"?: Optional<AuthValidatorWithoutScheme>;
     /**
      * @see https://datatracker.ietf.org/doc/html/rfc8120
      */
-    'mutal'?: Optional<AuthValidatorWithoutScheme>;
+    "mutal"?: Optional<AuthValidatorWithoutScheme>;
     /**
      * @see https://www.ietf.org/rfc/rfc4559.txt
      */
-    'negotiate'?: Optional<AuthValidatorWithoutScheme>;
+    "negotiate"?: Optional<AuthValidatorWithoutScheme>;
     /**
      * @see https://datatracker.ietf.org/doc/html/rfc7804
      */
-    'scram-sha-256'?: Optional<AuthValidatorWithoutScheme>;
+    "scram-sha-256"?: Optional<AuthValidatorWithoutScheme>;
     /**
      * @see https://datatracker.ietf.org/doc/html/rfc8292
      */
-    'vapid'?: Optional<AuthValidatorWithoutScheme>;
+    "vapid"?: Optional<AuthValidatorWithoutScheme>;
 
     /**
      * Custom schemes and their validators.
@@ -106,7 +106,7 @@ interface ICreateMiddlewareOptions {
 export const defaultAuthFailedHandler: AuthValidationFailedHandler = async (request, response) => {
     if (!response.headersSent) {
         response.writeHead(401, {
-            'Content-Type': '0'
+            "Content-Type": "0"
         });
     }
 };
@@ -144,46 +144,52 @@ export function auth(arg1: string | IAuthValidators, arg2?: Nilable<string | Aut
     let validator: AuthValidator;
     let onValidationFailed: Nilable<AuthValidationFailedHandler>;
 
-    if (typeof arg1 === 'string') {
+    if (typeof arg1 === "string") {
         // [arg1] scheme
         // [arg3] onValidationFailed
 
         const validators: IAuthValidators = {};
 
-        if (typeof arg2 === 'string') {
+        if (typeof arg2 === "string") {
             // [arg2] value
-            validators[arg1] = (value) => value === arg2 as string;
-        } else if (typeof arg2 === 'function') {
+            validators[arg1] = (value) => {
+                return value === arg2 as string;
+            };
+        }
+        else if (typeof arg2 === "function") {
             // [arg2] validator
             validators[arg1] = arg2 as AuthValidatorWithoutScheme;
-        } else {
-            throw new TypeError('Second argument must be of type string or function');
+        }
+        else {
+            throw new TypeError("Second argument must be of type string or function");
         }
 
         validator = createValidatorFromObject(validators);
         onValidationFailed = arg3 as AuthValidationFailedHandler;
-    } else if (typeof arg1 === 'object') {
+    }
+    else if (typeof arg1 === "object") {
         // [arg1] validators
         // [arg2] onValidationFailed
 
         validator = createValidatorFromObject(arg1);
         onValidationFailed = arg2 as AuthValidationFailedHandler;
-    } else {
-        throw new TypeError('First argument must be of type string or object');
+    }
+    else {
+        throw new TypeError("First argument must be of type string or object");
     }
 
-    if (typeof validator !== 'function') {
-        throw new TypeError('validator must be of type function');
+    if (typeof validator !== "function") {
+        throw new TypeError("validator must be of type function");
     }
 
     if (!isNil(onValidationFailed)) {
-        if (typeof onValidationFailed !== 'function') {
-            throw new TypeError('onValidationFailed must be of type function');
+        if (typeof onValidationFailed !== "function") {
+            throw new TypeError("onValidationFailed must be of type function");
         }
     }
 
     return createMiddleware({
-        onValidationFailed: onValidationFailed || defaultAuthFailedHandler,
+        "onValidationFailed": onValidationFailed || defaultAuthFailedHandler,
         validator
     });
 }
@@ -195,27 +201,30 @@ function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOp
     return async (request, response, next) => {
         let isValid = false;
         try {
-            const authorization = request.headers['authorization'];
-            if (typeof authorization === 'string') {
+            const authorization = request.headers["authorization"];
+            if (typeof authorization === "string") {
                 let scheme: string;
                 let value: string;
 
-                const sep = authorization.indexOf(' ');
+                const sep = authorization.indexOf(" ");
                 if (sep > -1) {
                     scheme = authorization.substring(0, sep);
                     value = authorization.substring(sep + 1);
-                } else {
+                }
+                else {
                     scheme = authorization;
-                    value = '';
+                    value = "";
                 }
 
                 isValid = await validator(scheme.toLowerCase(), value, request);
             }
-        } catch { }
+        }
+        catch { }
 
         if (isValid) {
             next();
-        } else {
+        }
+        else {
             await onValidationFailed(request, response);
 
             response.end();

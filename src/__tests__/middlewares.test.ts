@@ -13,18 +13,20 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import request from 'supertest';
-import { HttpRequestPath, IHttpRequest, IHttpResponse, NextFunction } from '../types';
-import { binaryParser, createServer } from './utils';
+import request from "supertest";
+import { HttpRequestPath, IHttpRequest, IHttpResponse, NextFunction } from "../types";
+import { binaryParser, createServer } from "./utils";
 
 const routePaths: HttpRequestPath[] = [
-    '/',
-    (request) => request.url === '/',
+    "/",
+    (request) => {
+        return request.url === "/";
+    },
     /^(\/)$/i
 ];
 
-describe('Middlewares', () => {
-    ['delete', 'get', 'options', 'patch', 'put', 'post', 'trace'].forEach(method => {
+describe("Middlewares", () => {
+    ["delete", "get", "options", "patch", "put", "post", "trace"].forEach(method => {
         const methodName = method.toUpperCase();
 
         it.each(routePaths)(`should return 200 and sum from route middlewares as text when do a ${methodName}`, async (path) => {
@@ -32,24 +34,24 @@ describe('Middlewares', () => {
 
             (server as any)[method](path, [
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-                    (request as any).foo = 'MK';
+                    (request as any).foo = "MK";
                     next();
                 },
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-                    (request as any).foo += '';
+                    (request as any).foo += "";
                     next();
                 },
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-                    (request as any).foo += 'TM';
+                    (request as any).foo += "TM";
                     next();
                 }
             ], async (request: IHttpRequest, response: IHttpResponse) => {
                 response.write((request as any).foo);
             });
 
-            const expectedResponse = 'MKTM';
+            const expectedResponse = "MKTM";
 
-            const response = await (request(server) as any)[method]('/')
+            const response = await (request(server) as any)[method]("/")
                 .send()
                 .parse(binaryParser)
                 .expect(200);
@@ -57,9 +59,9 @@ describe('Middlewares', () => {
             const data = response.body;
             expect(Buffer.isBuffer(data)).toBe(true);
 
-            const str = data.toString('utf8');
+            const str = data.toString("utf8");
 
-            expect(typeof str).toBe('string');
+            expect(typeof str).toBe("string");
             expect(str.length).toBe(expectedResponse.length);
             expect(str).toBe(expectedResponse);
         });
@@ -69,15 +71,15 @@ describe('Middlewares', () => {
 
             server.use(
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-                    (request as any).foo = 'MK';
+                    (request as any).foo = "MK";
                     next();
                 },
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-                    (request as any).foo += '+';
+                    (request as any).foo += "+";
                     next();
                 },
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-                    (request as any).foo += 'TM';
+                    (request as any).foo += "TM";
                     next();
                 }
             );
@@ -86,9 +88,9 @@ describe('Middlewares', () => {
                 response.write((request as any).foo);
             });
 
-            const expectedResponse = 'MK+TM';
+            const expectedResponse = "MK+TM";
 
-            const response = await (request(server) as any)[method]('/')
+            const response = await (request(server) as any)[method]("/")
                 .send()
                 .parse(binaryParser)
                 .expect(200);
@@ -96,9 +98,9 @@ describe('Middlewares', () => {
             const data = response.body;
             expect(Buffer.isBuffer(data)).toBe(true);
 
-            const str = data.toString('utf8');
+            const str = data.toString("utf8");
 
-            expect(typeof str).toBe('string');
+            expect(typeof str).toBe("string");
             expect(str.length).toBe(expectedResponse.length);
             expect(str).toBe(expectedResponse);
         });
@@ -108,27 +110,27 @@ describe('Middlewares', () => {
 
             server.use(
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-                    (request as any).foo = 'TM';
+                    (request as any).foo = "TM";
                     next();
                 },
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-                    (request as any).foo += '+';
+                    (request as any).foo += "+";
                     next();
                 },
             );
 
             (server as any)[method](path, [
                 async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-                    (request as any).foo += 'MK';
+                    (request as any).foo += "MK";
                     next();
                 }
             ], async (request: IHttpRequest, response: IHttpResponse) => {
                 response.write((request as any).foo);
             });
 
-            const expectedResponse = 'TM+MK';
+            const expectedResponse = "TM+MK";
 
-            const response = await (request(server) as any)[method]('/')
+            const response = await (request(server) as any)[method]("/")
                 .send()
                 .parse(binaryParser)
                 .expect(200);
@@ -136,9 +138,9 @@ describe('Middlewares', () => {
             const data = response.body;
             expect(Buffer.isBuffer(data)).toBe(true);
 
-            const str = data.toString('utf8');
+            const str = data.toString("utf8");
 
-            expect(typeof str).toBe('string');
+            expect(typeof str).toBe("string");
             expect(str.length).toBe(expectedResponse.length);
             expect(str).toBe(expectedResponse);
         });

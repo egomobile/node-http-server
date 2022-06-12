@@ -16,11 +16,11 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { INIT_CONTROLLER_AUTHORIZE } from '../constants';
-import type { AuthorizeArgumentValue, AuthorizeOptionArgument1, AuthorizeRoles, AuthorizeValidationFailedHandler, AuthorizeValidatorValue, IAuthorizeOptions } from '../types';
-import type { InitControllerAuthorizeAction, Nilable } from '../types/internal';
-import { isClass, isNil } from '../utils';
-import { createAuthorizeValidatorFromExpression, createInitControllerAuthorizeAction, getListFromObject } from './utils';
+import { INIT_CONTROLLER_AUTHORIZE } from "../constants";
+import type { AuthorizeArgumentValue, AuthorizeOptionArgument1, AuthorizeRoles, AuthorizeValidationFailedHandler, AuthorizeValidatorValue, IAuthorizeOptions } from "../types";
+import type { InitControllerAuthorizeAction, Nilable } from "../types/internal";
+import { isClass, isNil } from "../utils";
+import { createAuthorizeValidatorFromExpression, createInitControllerAuthorizeAction, getListFromObject } from "./utils";
 
 /**
  * Marks a class as controller.
@@ -92,46 +92,50 @@ export function Authorize(
         // arg1 => roles
 
         optionArg = {
-            roles: arg1 as AuthorizeRoles,
-            onValidationFailed: arg2 as AuthorizeValidationFailedHandler
+            "roles": arg1 as AuthorizeRoles,
+            "onValidationFailed": arg2 as AuthorizeValidationFailedHandler
         };
-    } else if (typeof arg1 === 'function') {
+    }
+    else if (typeof arg1 === "function") {
         // arg1 => validator
 
         optionArg = {
-            validator: arg1 as AuthorizeValidatorValue,
-            onValidationFailed: arg2 as AuthorizeValidationFailedHandler
+            "validator": arg1 as AuthorizeValidatorValue,
+            "onValidationFailed": arg2 as AuthorizeValidationFailedHandler
         };
-    } else if (typeof arg1 === 'string') {
+    }
+    else if (typeof arg1 === "string") {
         // arg1 => validatorExpression
 
         optionArg = {
-            validator: createAuthorizeValidatorFromExpression(arg1),
-            onValidationFailed: arg2 as AuthorizeValidationFailedHandler
+            "validator": createAuthorizeValidatorFromExpression(arg1),
+            "onValidationFailed": arg2 as AuthorizeValidationFailedHandler
         };
-    } else if (isNil(arg1)) {
+    }
+    else if (isNil(arg1)) {
         optionArg = {};
-    } else {
+    }
+    else {
         optionArg = arg1 as AuthorizeOptionArgument1;
     }
 
     if (
-        typeof optionArg !== 'function' &&
-        typeof optionArg !== 'string' &&
-        typeof optionArg !== 'object'
+        typeof optionArg !== "function" &&
+        typeof optionArg !== "string" &&
+        typeof optionArg !== "object"
     ) {
-        throw new TypeError('arg1 must be of type array, object, function or string');
+        throw new TypeError("arg1 must be of type array, object, function or string");
     }
 
     return function (classFunction: Function) {
         if (!isClass(classFunction)) {
-            throw new TypeError('classFunction must be of type class');
+            throw new TypeError("classFunction must be of type class");
         }
 
         const controllerClass: any = classFunction.prototype;
 
         getListFromObject<InitControllerAuthorizeAction>(controllerClass, INIT_CONTROLLER_AUTHORIZE).push(
-            createInitControllerAuthorizeAction({ arg: optionArg })
+            createInitControllerAuthorizeAction({ "arg": optionArg })
         );
     };
 }

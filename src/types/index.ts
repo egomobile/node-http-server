@@ -13,12 +13,12 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { IncomingMessage, ServerResponse } from 'http';
-import type { AnySchema, ValidationError as JoiValidationError } from 'joi';
-import type { OpenAPIV3 } from 'openapi-types';
-import type { URLSearchParams } from 'url';
-import type { ParseError } from '../errors/parse';
-import type { Nilable, ObjectKey, Optional } from './internal';
+import type { IncomingMessage, ServerResponse } from "http";
+import type { AnySchema, ValidationError as JoiValidationError } from "joi";
+import type { OpenAPIV3 } from "openapi-types";
+import type { URLSearchParams } from "url";
+import type { ParseError } from "../errors/parse";
+import type { Nilable, ObjectKey, Optional } from "./internal";
 
 /**
  * An 'authorize' argument value.
@@ -106,7 +106,7 @@ export type ControllerRoutePath = string;
 /**
  * Base document of an 'IControllersSwaggerOptions' object.
  */
-export type ControllersSwaggerBaseDocument = Pick<Pick<OpenAPIV3.Document, Exclude<keyof OpenAPIV3.Document, 'paths'>>, Exclude<keyof Pick<OpenAPIV3.Document, Exclude<keyof OpenAPIV3.Document, 'paths'>>, 'openapi'>>;
+export type ControllersSwaggerBaseDocument = Pick<Pick<OpenAPIV3.Document, Exclude<keyof OpenAPIV3.Document, "paths">>, Exclude<keyof Pick<OpenAPIV3.Document, Exclude<keyof OpenAPIV3.Document, "paths">>, "openapi">>;
 
 /**
  * Possible values for Swagger options for controllers.
@@ -153,7 +153,7 @@ export enum HttpInputDataFormat {
 /**
  * A possible value for a HTTP method.
  */
-export type HttpMethod = 'connect' | 'delete' | 'get' | 'head' | 'options' | 'patch' | 'post' | 'put' | 'trace';
+export type HttpMethod = "connect" | "delete" | "get" | "head" | "options" | "patch" | "post" | "put" | "trace";
 
 /**
  * A middleware.

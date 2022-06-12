@@ -13,10 +13,10 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import path from 'path';
-import { buffer, IBufferOptions, IJsonOptions, json } from '../../middlewares';
-import { HttpInputDataFormat, HttpMiddleware, IHttpBodyParserOptions } from '../../types';
-import type { Nilable } from '../../types/internal';
+import path from "path";
+import { buffer, IBufferOptions, IJsonOptions, json } from "../../middlewares";
+import { HttpInputDataFormat, HttpMiddleware, IHttpBodyParserOptions } from "../../types";
+import type { Nilable } from "../../types/internal";
 
 export function createBodyParserMiddlewareByFormat(format: HttpInputDataFormat, options?: Nilable<IHttpBodyParserOptions>): HttpMiddleware {
     switch (format) {
@@ -53,8 +53,8 @@ export function getListFromObject<T extends any = any>(
 
 export function getMethodOrThrow<T extends Function = Function>(descriptor: PropertyDescriptor): T {
     const method: any = descriptor?.value;
-    if (typeof method !== 'function') {
-        throw new TypeError('descriptor.value must be function');
+    if (typeof method !== "function") {
+        throw new TypeError("descriptor.value must be function");
     }
 
     return method;
@@ -62,27 +62,31 @@ export function getMethodOrThrow<T extends Function = Function>(descriptor: Prop
 
 export function normalizeRouterPath(p: Nilable<string>): string {
     if (!p?.length) {
-        p = '';
+        p = "";
     }
 
     p = p.split(path.sep)
-        .map(x => x.trim())
-        .filter(x => x !== '')
-        .join('/')
+        .map(x => {
+            return x.trim();
+        })
+        .filter(x => {
+            return x !== "";
+        })
+        .join("/")
         .trim();
 
-    while (p.endsWith('/')) {
+    while (p.endsWith("/")) {
         p = p.substring(0, p.length - 1).trim();
     }
-    while (p.startsWith('/')) {
+    while (p.startsWith("/")) {
         p = p.substring(1).trim();
     }
 
-    if (!p.startsWith('/')) {
-        p = '/' + p.trim();
+    if (!p.startsWith("/")) {
+        p = "/" + p.trim();
     }
 
     return p;
 }
 
-export * from './authorize';
+export * from "./authorize";

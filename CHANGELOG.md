@@ -2,6 +2,8 @@
 
 ## 0.35.0
 
+- fix typings
+- apply new [eslint-config-ego](https://github.com/egomobile/eslint-config-ego) settings
 - module requires at least [Node 14+](https://nodejs.org/gl/blog/release/v14.0.0/) now
 - `npm update`s
 

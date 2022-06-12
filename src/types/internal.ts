@@ -1,13 +1,13 @@
-import type { ServerResponse } from 'http';
-import type { OpenAPIV3 } from 'openapi-types';
-import type { HttpMiddleware, HttpPathValidator, HttpRequestHandler, IControllersOptions, IHttpController, IHttpServer, ImportValues } from '.';
+import type { ServerResponse } from "http";
+import type { OpenAPIV3 } from "openapi-types";
+import type { HttpMiddleware, HttpPathValidator, HttpRequestHandler, IControllersOptions, IHttpController, IHttpServer, ImportValues } from ".";
 
 export type Constructor<T extends any = any> = (new (...args: any[]) => T);
 
 export type GetterFunc<TValue extends any = any> = () => TValue;
 
 export type GroupedHttpRequestHandlers = {
-    [method: string]: RequestHandlerContext[];
+    [method: string]: IRequestHandlerContext[];
 };
 
 export interface IControllerClass {
@@ -100,7 +100,7 @@ export type ObjectKey = string | symbol;
 
 export type Optional<T extends any = any> = T | undefined;
 
-export interface RequestHandlerContext {
+export interface IRequestHandlerContext {
     end: (response: ServerResponse) => void;
     handler: HttpRequestHandler;
     isPathValid: HttpPathValidator;

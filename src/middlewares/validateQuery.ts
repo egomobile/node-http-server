@@ -13,11 +13,11 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { AnySchema, isSchema } from 'joi';
-import { defaultQueryValidationFailedHandler } from '.';
-import type { HttpMiddleware, ValidationFailedHandler } from '../types';
-import type { Nilable } from '../types/internal';
-import { isNil, urlSearchParamsToObject } from '../utils';
+import { AnySchema, isSchema } from "joi";
+import { defaultQueryValidationFailedHandler } from ".";
+import type { HttpMiddleware, ValidationFailedHandler } from "../types";
+import type { Nilable } from "../types/internal";
+import { isNil, urlSearchParamsToObject } from "../utils";
 
 interface ICreateMiddlewareOptions {
     onValidationFailed: ValidationFailedHandler;
@@ -76,23 +76,24 @@ export function validateQuery(schema: AnySchema, onValidationFailed: ValidationF
 export function validateQuery(schema: AnySchema, options: IValidateQueryOptions): HttpMiddleware;
 export function validateQuery(schema: AnySchema, optionsOrErrorHandler?: Nilable<IValidateQueryOptions | ValidationFailedHandler>): HttpMiddleware {
     if (!isSchema(schema)) {
-        throw new TypeError('schema must be a Joi object');
+        throw new TypeError("schema must be a Joi object");
     }
 
     let options: Nilable<IValidateQueryOptions>;
     if (!isNil(optionsOrErrorHandler)) {
-        if (typeof optionsOrErrorHandler === 'function') {
+        if (typeof optionsOrErrorHandler === "function") {
             options = {
-                onValidationFailed: optionsOrErrorHandler
+                "onValidationFailed": optionsOrErrorHandler
             };
-        } else {
+        }
+        else {
             options = optionsOrErrorHandler;
         }
     }
 
     const onValidationFailed = options?.onValidationFailed || defaultQueryValidationFailedHandler;
-    if (typeof onValidationFailed !== 'function') {
-        throw new TypeError('onValidationFailed must be of type function');
+    if (typeof onValidationFailed !== "function") {
+        throw new TypeError("onValidationFailed must be of type function");
     }
 
     return createMiddleware({
@@ -111,7 +112,8 @@ function createMiddleware({ onValidationFailed, schema }: ICreateMiddlewareOptio
             await onValidationFailed(validationResult.error, request, response);
 
             response.end();
-        } else {
+        }
+        else {
             next();
         }
     };
