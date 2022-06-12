@@ -1,5 +1,10 @@
 # Change Log (@egomobile/http-server)
 
+## 0.35.0
+
+- module requires at least [Node 14+](https://nodejs.org/gl/blog/release/v14.0.0/) now
+- `npm update`s
+
 ## 0.34.0
 
 - implement [@Authorize() decorator](https://egomobile.github.io/node-http-server/modules.html#Authorize) and [authorize](https://egomobile.github.io/node-http-server/interfaces/IControllerRouteOptions.html#authorize) options
