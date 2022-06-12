@@ -21,7 +21,7 @@ import { createServer as createHttpServer, IncomingMessage, Server, ServerRespon
 import joi from "joi";
 import { setupHttpServerControllerMethod } from "./controllers/factories";
 import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction } from "./types";
-import type { GroupedHttpRequestHandlers, Nilable, Optional } from "./types/internal";
+import type { GroupedHttpRequestHandlers, IRequestHandlerContext, Nilable, Optional } from "./types/internal";
 import { asAsync, getUrlWithoutQuery, isNil } from "./utils";
 
 /**
@@ -103,11 +103,22 @@ export const createServer = (): IHttpServer => {
 
     const server: IHttpServer = (async (request: IncomingMessage, response: ServerResponse) => {
         try {
-            const context = compiledHandlers[request.method!]?.find(ctx => {
-                return ctx.isPathValid(request);
-            });
+            let context: Optional<IRequestHandlerContext>;
 
-            if (context?.handler) {
+            const methodContextes = compiledHandlers[request.method!];
+            const methodContextCount = methodContextes?.length ?? 0;
+
+            for (let i = 0; i < methodContextCount; i++) {
+                const ctx = methodContextes[i];
+
+                // eslint-disable-next-line @typescript-eslint/await-thenable
+                if (await ctx.isPathValid(request)) {
+                    context = ctx;
+                    break;
+                }
+            }
+
+            if (context) {
                 await context.handler(request as IHttpRequest, response as IHttpResponse);
 
                 context.end(response);
@@ -227,7 +238,7 @@ export const createServer = (): IHttpServer => {
             groupedHandlers[method].push({
                 "end": autoEnd ? endRequest : doNotEndRequest,
                 handler,
-                isPathValid,
+                "isPathValid": asAsync<HttpPathValidator>(isPathValid),
                 "middlewares": middlewares?.map(mw => {
                     return asAsync<HttpMiddleware>(mw);
                 })
@@ -410,14 +421,14 @@ function endRequest(response: ServerResponse) {
     response.end();
 }
 
-function isPathValidByRegex(path: RegExp) {
-    return (req: IncomingMessage) => {
+function isPathValidByRegex(path: RegExp): HttpPathValidator {
+    return async (req: IncomingMessage) => {
         return path.test(getUrlWithoutQuery(req.url)!);
     };
 }
 
-function isPathValidByString(path: string) {
-    return (req: IncomingMessage) => {
+function isPathValidByString(path: string): HttpPathValidator {
+    return async (req: IncomingMessage) => {
         return getUrlWithoutQuery(req.url) === path;
     };
 }

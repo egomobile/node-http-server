@@ -182,9 +182,9 @@ export type HttpOptionsOrMiddlewares = IHttpRequestHandlerOptions | HttpMiddlewa
  *
  * @param {IncomingMessage} request The request context.
  *
- * @returns {boolean} Path does match or not.
+ * @returns {boolean|PromiseLike<boolean>} A value, which indicates, that path does match or not.
  */
-export type HttpPathValidator = (request: IncomingMessage) => boolean;
+export type HttpPathValidator = (request: IncomingMessage) => boolean | PromiseLike<boolean>;
 
 /**
  * A request handler.
