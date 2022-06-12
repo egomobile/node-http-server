@@ -51,7 +51,7 @@ export function Parameter(options?: Nilable<ParameterOptions>): ParameterDecorat
         const method: Function = (target as any)[propertyKey];
 
         let parameterName = options!.name;
-        if (isNil(parameterName)) {
+        if (!parameterName?.trim().length) {
             parameterName = getParamNames(method)[parameterIndex];
         }
 
