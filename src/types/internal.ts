@@ -1,6 +1,6 @@
 import type { ServerResponse } from "http";
 import type { OpenAPIV3 } from "openapi-types";
-import type { HttpMiddleware, HttpPathValidator, HttpRequestHandler, IControllersOptions, IHttpController, IHttpServer, ImportValues } from ".";
+import type { HttpMiddleware, HttpPathValidator, HttpRequestHandler, IControllersOptions, IHttpController, IHttpServer, ImportValues, ParameterOptions } from ".";
 
 export type Constructor<T extends any = any> = (new (...args: any[]) => T);
 
@@ -30,6 +30,13 @@ export interface IControllerInfo {
     controllerClass: IControllerClass;
 }
 
+export interface IControllerMethodParameter {
+    index: number;
+    method: Function;
+    name: string;
+    options: ParameterOptions;
+}
+
 export interface IInitControllerAuthorizeActionContext {
     globalOptions: Nilable<IControllersOptions>;
     middlewares: HttpMiddleware[];
@@ -43,6 +50,9 @@ export interface IInitControllerMethodActionContext {
     method: Function;
     relativeFilePath: string;
     server: IHttpServer;
+}
+
+export interface IInitControllerMethodParametersActionContext {
 }
 
 export interface IInitControllerErrorHandlerActionContext {
@@ -74,6 +84,8 @@ export interface IInitDocumentationUpdaterContext {
 export type InitControllerAuthorizeAction = (context: IInitControllerAuthorizeActionContext) => void;
 
 export type InitControllerMethodAction = (context: IInitControllerMethodActionContext) => void;
+
+export type InitControllerMethodParametersAction = (context: IInitControllerMethodParametersActionContext) => void;
 
 export type InitControllerErrorHandlerAction = (context: IInitControllerErrorHandlerActionContext) => void;
 

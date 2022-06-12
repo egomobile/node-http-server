@@ -16,19 +16,24 @@
 import fs from "fs";
 import { isSchema } from "joi";
 import minimatch from "minimatch";
-import type { OpenAPIV3 } from "openapi-types";
+import { OpenAPIV3 } from "openapi-types";
 import path from "path";
-import { CONTROLLERS_CONTEXES, CONTROLLER_MIDDLEWARES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from "../constants";
+import { CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from "../constants";
 import { buffer, defaultValidationFailedHandler, json, query, validate } from "../middlewares";
 import { setupSwaggerUIForServerControllers } from "../swagger";
 import { toSwaggerPath } from "../swagger/utils";
-import { AuthorizeArgumentValue, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ResponseSerializer, ValidationFailedHandler } from "../types";
-import type { GetterFunc, IControllerClass, IControllerContext, IControllerFile, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable } from "../types/internal";
+import { AuthorizeArgumentValue, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpServer, ImportValues, ResponseSerializer, ValidationFailedHandler } from "../types";
+import type { GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable } from "../types/internal";
 import { asAsync, canHttpMethodHandleBodies, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, walkDirSync } from "../utils";
 import { params } from "../validators/params";
 import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath } from "./utils";
 
 type GetContollerValue<TValue extends any = any> = (controller: IHttpController, server: IHttpServer) => TValue;
+
+interface ICompileRouteHandlerOptions {
+    controller: IHttpController<IHttpServer>;
+    method: Function;
+}
 
 interface ICreateControllerMethodRequestHandlerOptions {
     getErrorHandler: GetterFunc<HttpErrorHandler>;
@@ -66,10 +71,70 @@ interface ICreateRequestHandlerWithSerializerOptions {
     serializer: ResponseSerializer;
 }
 
+interface IParameterValueUpdaterContext {
+    args: any[];
+    request: IHttpRequest;
+}
+
 interface IUpdateMiddlewaresOptions {
     controller: IHttpController<IHttpServer>;
     globalOptions: Nilable<IControllersOptions>;
     middlewares: HttpMiddleware[];
+}
+
+type ParameterValueUpdater = (context: IParameterValueUpdaterContext) => Promise<any>;
+
+function compileRouteHandler({ controller, method }: ICompileRouteHandlerOptions): HttpRequestHandler {
+    const baseMethod = method.bind(controller) as ((...args: any[]) => any);
+
+    const parameters = getListFromObject<IControllerMethodParameter>(
+        method,
+        CONTROLLER_METHOD_PARAMETERS,
+        true,
+        false
+    );
+    if (parameters.length) {
+        const willRequestBeOverwritten = parameters.some((p) => {
+            return p.index === 0;
+        });
+        const willResponseBeOverwritten = parameters.some((p) => {
+            return p.index === 1;
+        });
+        const paramCount = Math.max(...parameters.map(p => {
+            return p.index;
+        }));
+
+        const updaters = toParameterValueUpdaters(parameters);
+
+        return async (request, response) => {
+            const args: any[] = Array.from({
+                "length": paramCount
+            }, function () { });
+
+            args[0] = request;
+            args[1] = response;
+
+            for (const updater of updaters) {
+                await updater({
+                    args,
+                    request
+                });
+            }
+
+            if (willRequestBeOverwritten) {
+                args.push(request);
+            }
+
+            if (willResponseBeOverwritten) {
+                args.push(response);
+            }
+
+            return baseMethod(...args);
+        };
+    }
+    else {
+        return baseMethod as HttpRequestHandler;
+    }
 }
 
 function createControllerMethodRequestHandler({ getErrorHandler, handler }: ICreateControllerMethodRequestHandlerOptions): HttpRequestHandler {
@@ -268,8 +333,8 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                 middlewares,
                 "getErrorHandler": (controller, server) => {
                     return decoratorOptions?.onError ||
-                    (controller as any)[ERROR_HANDLER] ||
-                    server.errorHandler;
+                        (controller as any)[ERROR_HANDLER] ||
+                        server.errorHandler;
                 },
                 "serializer": decoratorOptions?.serializer,
                 "updateMiddlewares": ({ controller, globalOptions, middlewares }) => {
@@ -377,7 +442,10 @@ function createInitControllerMethodAction({
         }
 
         let routeSerializer: Nilable<ResponseSerializer> = serializer || (controller as any)[RESPONSE_SERIALIZER];
-        let routeHandler: HttpRequestHandler = (method as HttpRequestHandler).bind(controller);
+        const routeHandler: HttpRequestHandler = compileRouteHandler({
+            controller,
+            method
+        });
 
         let handler: HttpRequestHandler = asAsync(routeHandler);
         if (routeSerializer) {
@@ -785,4 +853,36 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
 
         return server;
     };
+}
+
+function toParameterValueUpdaters(parameters: IControllerMethodParameter[]): ParameterValueUpdater[] {
+    const updaters: ParameterValueUpdater[] = [];
+
+    parameters.forEach((p) => {
+        const { index, name, options } = p;
+        const source = options.source?.toLowerCase().trim() ?? "";
+
+        if (source === "header") {
+            const headerName = name.toLowerCase().trim();
+
+            updaters.push(async ({ args, request }) => {
+                args[index] = request.headers[headerName];
+            });
+        }
+        else if (source === "query") {
+            updaters.push(async ({ args, request }) => {
+                args[index] = request.query?.get(name);
+            });
+        }
+        else if (source === "" || source === "url") {
+            updaters.push(async ({ args, request }) => {
+                args[index] = request.params?.[name];
+            });
+        }
+        else {
+            throw new TypeError(`Source of type ${source} is not supported`);
+        }
+    });
+
+    return updaters;
 }

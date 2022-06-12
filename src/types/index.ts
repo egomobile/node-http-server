@@ -1006,6 +1006,52 @@ export interface IHttpStringBodyParserOptions extends IHttpBodyParserOptions {
     encoding?: Nilable<BufferEncoding>;
 }
 
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as from HTTP request header.
+ */
+export interface IParameterOptionsWithHeaderSource {
+    /**
+     * The custom header name.
+     */
+    name?: Nilable<string>;
+    /**
+     * The name of the source.
+     */
+    source: "header";
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as from query search parameter.
+ */
+export interface IParameterOptionsWithQuerySource {
+    /**
+     * The custom name of the query parameter.
+     */
+    name?: Nilable<string>;
+    /**
+     * The name of the source.
+     */
+    source: "query";
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter from URL parameter.
+ */
+export interface IParameterOptionsWithUrlSource {
+    /**
+     * The custom name of the url parameter.
+     */
+    name?: Nilable<string>;
+    /**
+     * The name of the source.
+     */
+    source?: Nilable<"url">;
+}
+
 /**
  * Context for a 'SetupAuthorizeMiddlewareHandler' function.
  */
@@ -1026,6 +1072,14 @@ export interface ISetupAuthorizeMiddlewareHandlerContext {
  * @param {Optional<any>} [error] The error, if occurred.
  */
 export type NextFunction = (error?: Optional<any>) => void;
+
+/**
+ * Possible option values for `Parameter` decorator.
+ */
+export type ParameterOptions =
+    IParameterOptionsWithHeaderSource |
+    IParameterOptionsWithQuerySource |
+    IParameterOptionsWithUrlSource;
 
 /**
  * A handler, that is executed, if data could not be parsed.

@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+export const CONTROLLER_METHOD_PARAMETERS = Symbol("CONTROLLER_METHOD_PARAMETERS");
 export const CONTROLLERS_CONTEXES = Symbol("CONTROLLERS_CONTEXES");
 export const CONTROLLER_MIDDLEWARES = Symbol("CONTROLLER_MIDDLEWARES");
 export const DOCUMENTATION_UPDATER = Symbol("DOCUMENTATION_UPDATER");

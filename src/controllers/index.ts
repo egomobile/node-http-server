@@ -56,6 +56,7 @@ export * from "./GET";
 export * from "./HEAD";
 export * from "./Import";
 export * from "./OPTIONS";
+export * from "./Parameter";
 export * from "./PATCH";
 export * from "./POST";
 export * from "./PUT";
