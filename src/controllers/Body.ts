@@ -1,11 +1,8 @@
 /* eslint-disable unicorn/filename-case */
 /* eslint-disable @typescript-eslint/naming-convention */
 
-import { CONTROLLER_METHOD_PARAMETERS } from "../constants";
 import { ParameterDataTransformTo } from "../types";
-import type { IControllerMethodParameter } from "../types/internal";
-import { getFunctionParamNames } from "../utils";
-import { getListFromObject } from "./utils";
+import { createParameterDecorator } from "./factories";
 
 /**
  * Imports one or more query parameters from URL into an argument / parameter of a handler
@@ -36,24 +33,10 @@ import { getListFromObject } from "./utils";
  * @returns {ParameterDecorator} The new decorator function.
  */
 export function Body(transformTo?: ParameterDataTransformTo): ParameterDecorator {
-    return function (target, propertyKey, parameterIndex) {
-        const method: Function = (target as any)[propertyKey];
-
-        const parameterName = getFunctionParamNames(method)[parameterIndex];
-        if (!parameterName?.trim().length) {
-            throw new Error(`Could not get name for parameter ${parameterIndex} of method ${method.name}`);
+    return createParameterDecorator({
+        "options": {
+            "source": "body",
+            transformTo
         }
-
-        getListFromObject<IControllerMethodParameter>(method, CONTROLLER_METHOD_PARAMETERS).push(
-            {
-                "index": parameterIndex,
-                "name": parameterName,
-                method,
-                "options": {
-                    "source": "body",
-                    transformTo
-                }
-            }
-        );
-    };
+    });
 }

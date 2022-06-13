@@ -1,11 +1,10 @@
 /* eslint-disable unicorn/filename-case */
 /* eslint-disable @typescript-eslint/naming-convention */
 
-import { CONTROLLER_METHOD_PARAMETERS } from "../constants";
 import { ParameterDataTransformer } from "../types";
-import type { IControllerMethodParameter, Nilable } from "../types/internal";
-import { getFunctionParamNames, isNil } from "../utils";
-import { getListFromObject } from "./utils";
+import type { Nilable } from "../types/internal";
+import { isNil } from "../utils";
+import { createParameterDecorator } from "./factories";
 
 /**
  * Imports one or more HTTP request header into an argument / parameter of a handler
@@ -77,25 +76,11 @@ export function Headers(transformerOrName: ParameterDataTransformer | string, ..
         }
     }
 
-    return function (target, propertyKey, parameterIndex) {
-        const method: Function = (target as any)[propertyKey];
-
-        const parameterName = getFunctionParamNames(method)[parameterIndex];
-        if (!parameterName?.trim().length) {
-            throw new Error(`Could not get name for parameter ${parameterIndex} of method ${method.name}`);
+    return createParameterDecorator({
+        "options": {
+            names,
+            "source": "headers",
+            "transformTo": transformer
         }
-
-        getListFromObject<IControllerMethodParameter>(method, CONTROLLER_METHOD_PARAMETERS).push(
-            {
-                "index": parameterIndex,
-                "name": parameterName,
-                method,
-                "options": {
-                    names,
-                    "source": "headers",
-                    "transformTo": transformer
-                }
-            }
-        );
-    };
+    });
 }

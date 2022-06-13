@@ -1,10 +1,7 @@
 /* eslint-disable unicorn/filename-case */
 /* eslint-disable @typescript-eslint/naming-convention */
 
-import { CONTROLLER_METHOD_PARAMETERS } from "../constants";
-import type { IControllerMethodParameter } from "../types/internal";
-import { getFunctionParamNames } from "../utils";
-import { getListFromObject } from "./utils";
+import { createParameterDecorator } from "./factories";
 
 /**
  * Imports the response context into an argument / parameter of a handler.
@@ -30,23 +27,9 @@ import { getListFromObject } from "./utils";
  * @returns {ParameterDecorator} The new decorator function.
  */
 export function Response(): ParameterDecorator {
-    return function (target, propertyKey, parameterIndex) {
-        const method: Function = (target as any)[propertyKey];
-
-        const parameterName = getFunctionParamNames(method)[parameterIndex];
-        if (!parameterName?.trim().length) {
-            throw new Error(`Could not get name for parameter ${parameterIndex} of method ${method.name}`);
+    return createParameterDecorator({
+        "options": {
+            "source": "response"
         }
-
-        getListFromObject<IControllerMethodParameter>(method, CONTROLLER_METHOD_PARAMETERS).push(
-            {
-                "index": parameterIndex,
-                "name": parameterName,
-                method,
-                "options": {
-                    "source": "response"
-                }
-            }
-        );
-    };
+    });
 }

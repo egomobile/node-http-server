@@ -99,12 +99,24 @@ export type InitControllerValidationErrorHandlerAction = (context: IInitControll
 
 export type InitDocumentationUpdaterAction = (context: IInitDocumentationUpdaterContext) => void;
 
+export interface IPrepareControllerMethodActionContext {
+    controller: IHttpController;
+    controllerClass: Constructor<IHttpController>;
+    fullFilePath: string;
+    globalOptions: Nilable<IControllersOptions>;
+    method: Function;
+    relativeFilePath: string;
+    server: IHttpServer;
+}
+
 export interface ISwaggerMethodInfo {
     doc: OpenAPIV3.PathItemObject;
     method: Function;
 }
 
 export type ObjectNameListResolver = (obj: any) => string[];
+
+export type PrepareControllerMethodAction = (context: IPrepareControllerMethodActionContext) => void;
 
 export type Nilable<T extends any = any> = Nullable<T> | Optional<T>;
 

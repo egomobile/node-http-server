@@ -18,13 +18,13 @@ import { isSchema } from "joi";
 import minimatch from "minimatch";
 import { OpenAPIV3 } from "openapi-types";
 import path from "path";
-import { CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from "../constants";
+import { CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from "../constants";
 import { buffer, defaultValidationFailedHandler, json, query, validate } from "../middlewares";
 import { setupSwaggerUIForServerControllers } from "../swagger";
 import { toSwaggerPath } from "../swagger/utils";
-import { AuthorizeArgumentValue, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpResponse, IHttpServer, ImportValues, IParameterOptionsWithHeadersSource, IParameterOptionsWithQueriesSource, IParameterOptionsWithUrlsSource, ParameterDataTransformer, ParameterDataTransformTo, ResponseSerializer, ValidationFailedHandler } from "../types";
-import type { GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable } from "../types/internal";
-import { asAsync, canHttpMethodHandleBodies, createObjectNameListResolver, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, urlSearchParamsToObject, walkDirSync } from "../utils";
+import { AuthorizeArgumentValue, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpResponse, IHttpServer, ImportValues, IParameterOptionsWithHeadersSource, IParameterOptionsWithQueriesSource, IParameterOptionsWithUrlsSource, ParameterDataTransformer, ParameterDataTransformTo, ParameterOptions, ResponseSerializer, ValidationFailedHandler } from "../types";
+import type { GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable, PrepareControllerMethodAction } from "../types/internal";
+import { asAsync, canHttpMethodHandleBodies, createObjectNameListResolver, getAllClassProps, getFunctionParamNames, isClass, isNil, limitToBytes, sortObjectByKeys, urlSearchParamsToObject, walkDirSync } from "../utils";
 import { params } from "../validators/params";
 import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath } from "./utils";
 
@@ -66,6 +66,10 @@ interface ICreateInitControllerMethodSwaggerActionOptions {
     methodName: string | symbol;
 }
 
+export interface ICreateParameterDecoratorOptions {
+    options: ParameterOptions;
+}
+
 interface ICreateRequestHandlerWithSerializerOptions {
     handler: HttpRequestHandler;
     serializer: ResponseSerializer;
@@ -95,7 +99,7 @@ function compileRouteHandler({ controller, method }: ICompileRouteHandlerOptions
     const parameters = getListFromObject<IControllerMethodParameter>(
         method,
         CONTROLLER_METHOD_PARAMETERS,
-        false,
+        true,
         false
     );
     if (parameters.length) {
@@ -569,6 +573,36 @@ function createInitControllerMethodSwaggerAction({ doc, method, methodName }: IC
     };
 }
 
+export function createParameterDecorator({
+    options
+}: ICreateParameterDecoratorOptions): ParameterDecorator {
+    return function (target, propertyKey, parameterIndex) {
+        const method: Function = (target as any)[propertyKey];
+
+        let parameterName: Nilable<string> = (options as any)?.name;
+        if (!parameterName?.trim().length) {
+            parameterName = getFunctionParamNames(method)[parameterIndex];
+        }
+
+        if (!parameterName?.trim().length) {
+            throw new Error(`Could not get name for parameter ${parameterIndex} of method ${method.name}`);
+        }
+
+        getListFromObject<PrepareControllerMethodAction>((target as any)[propertyKey], PREPARE_CONTROLLER_METHOD_ACTIONS).push(
+            ({ method }) => {
+                getListFromObject<IControllerMethodParameter>(method, CONTROLLER_METHOD_PARAMETERS).push(
+                    {
+                        "index": parameterIndex,
+                        "name": parameterName!,
+                        method,
+                        "options": options
+                    }
+                );
+            }
+        );
+    };
+}
+
 function createRequestHandlerWithSerializer({ handler, serializer }: ICreateRequestHandlerWithSerializerOptions): HttpRequestHandler {
     return async (request, response) => {
         await serializer(
@@ -793,6 +827,22 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                     if (prop === "constructor") {
                         return;  // not the constructor
                     }
+
+                    // cleanups
+                    delete (propValue as any)[CONTROLLER_METHOD_PARAMETERS];
+
+                    // (pre) controller methods
+                    getListFromObject<PrepareControllerMethodAction>(propValue, PREPARE_CONTROLLER_METHOD_ACTIONS).forEach(action => {
+                        action({
+                            controller,
+                            "controllerClass": cls["class"],
+                            "fullFilePath": cls.file.fullPath,
+                            "method": propValue,
+                            "relativeFilePath": cls.file.relativePath,
+                            server,
+                            "globalOptions": options
+                        });
+                    }, true);
 
                     // controller methods
                     getListFromObject<InitControllerMethodAction>(propValue, INIT_CONTROLLER_METHOD_ACTIONS).forEach(action => {
