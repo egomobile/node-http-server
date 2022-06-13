@@ -79,7 +79,7 @@ export default class TestParameterController extends ControllerBase {
         "path": "/header"
     })
     async testHeader(@Response() response: IHttpResponse,
-        @Parameter({ "source": "header", "name": "x-ego-test", "transformTo": "bool" }) egoTest: string
+        @Parameter("header", "x-ego-test", "bool") egoTest: string
     ) {
         const str = `x-ego-test: ${egoTest} (${typeof egoTest})`;
 
