@@ -1150,7 +1150,7 @@ export type ParameterArgument2 = ParameterDataTransformer | string;
 /**
  * A possible value for a third argument for `Parameter` decorator.
  */
-export type ParameterArgument3 = ParameterDataTransformer;
+export type ParameterArgument3 = ParameterDataTransformerTo;
 
 /**
  * A function, which transforms an input parameter value

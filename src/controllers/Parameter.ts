@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 import { CONTROLLER_METHOD_PARAMETERS } from "../constants";
-import type { ParameterArgument1, ParameterArgument2, ParameterArgument3, ParameterDataTransformer, ParameterOptions, ParameterSource } from "../types";
+import type { ParameterArgument1, ParameterArgument2, ParameterArgument3, ParameterDataTransformer, ParameterDataTransformerTo, ParameterOptions, ParameterSource } from "../types";
 import type { IControllerMethodParameter, Nilable } from "../types/internal";
 import { getFunctionParamNames, isNil } from "../utils";
 import { getListFromObject } from "./utils";
@@ -28,16 +28,16 @@ import { getListFromObject } from "./utils";
  * }
  * ```
  *
- * @param {Nilable<string>} [name] The name / key in the source.
- * @param {Nilable<ParameterSource>} [source] The source.
+ * @param {Nilable<string>} [name] The name / key in the source. Default: Name of the function/method argument.
+ * @param {Nilable<ParameterSource>} [source] The source. Default: `url`
  * @param {Nilable<ParameterOptions>} [options] Custom and additional options.
- * @param {Nilable<ParameterDataTransformer>} [transformer] The custom data transformer.
+ * @param {Nilable<ParameterDataTransformer|ParameterDataTransformerTo>} [transformer] The custom data transformer.
  *
  * @returns {ParameterDecorator} The new decorator function.
  */
 export function Parameter(): ParameterDecorator;
 export function Parameter(source: ParameterSource, transformer?: Nilable<ParameterDataTransformer>): ParameterDecorator;
-export function Parameter(source: ParameterSource, name: string, transformer?: Nilable<ParameterDataTransformer>): ParameterDecorator;
+export function Parameter(source: ParameterSource, name: string, transformer?: Nilable<ParameterDataTransformerTo>): ParameterDecorator;
 export function Parameter(transformer: ParameterDataTransformer): ParameterDecorator;
 export function Parameter(options: ParameterOptions): ParameterDecorator;
 export function Parameter(
