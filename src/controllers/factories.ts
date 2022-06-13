@@ -925,28 +925,28 @@ function toParameterDataTransformerSafe({
     let transformer: Nilable<ParameterDataTransformer>;
 
     if (isNil(transformTo)) {
-        transformer = async (source) => {
+        transformer = async ({ source }) => {
             return source;
         };
     }
     else {
         if (transformTo === "bool") {
-            transformer = async (source) => {
+            transformer = async ({ source }) => {
                 return Boolean(String(source ?? "").toLowerCase().trim());
             };
         }
         else if (transformTo === "int") {
-            transformer = async (source) => {
+            transformer = async ({ source }) => {
                 return parseInt(String(source ?? "").trim());
             };
         }
         else if (transformTo === "float") {
-            transformer = async (source) => {
+            transformer = async ({ source }) => {
                 return parseFloat(String(source ?? "").trim());
             };
         }
         else if (transformTo === "string") {
-            transformer = async (source) => {
+            transformer = async ({ source }) => {
                 return String(source ?? "");
             };
         }
