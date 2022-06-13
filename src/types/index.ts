@@ -18,7 +18,7 @@ import type { AnySchema, ValidationError as JoiValidationError } from "joi";
 import type { OpenAPIV3 } from "openapi-types";
 import type { URLSearchParams } from "url";
 import type { ParseError } from "../errors/parse";
-import type { Nilable, ObjectKey, Optional } from "./internal";
+import type { Nilable, ObjectKey, Optional, PartialBy } from "./internal";
 
 /**
  * An 'authorize' argument value.
@@ -1028,71 +1028,69 @@ export interface IParameterDataTransformerContext {
     source: any;
 }
 
+export interface IParameterOptions<TSource extends ParameterSource> {
+    /**
+     * The name of the source.
+     */
+    source: Nilable<TSource>;
+}
+
 /**
  * Options for `Parameter` decorator, which defines the source of
  * the paremeter as from HTTP request header.
  */
-export interface IParameterOptionsWithHeaderSource extends IParameterOptionsWithTransformableDataSource {
+export interface IParameterOptionsWithHeaderSource extends IParameterOptions<"header">, IParameterOptionsWithTransformableDataSource {
     /**
      * The custom header name.
      */
     name?: Nilable<string>;
-    /**
-     * The name of the source.
-     */
-    source: "header";
 }
 
 /**
  * Options for `Parameter` decorator, which defines the source of
  * the paremeter as from one or more HTTP request header.
  */
-export interface IParameterOptionsWithHeadersSource extends IParameterOptionsWithTransformableDataSource {
+export interface IParameterOptionsWithHeadersSource extends IParameterOptions<"headers">, IParameterOptionsWithTransformableDataSource {
     /**
      * One or more header names.
      */
     names: string[];
-    /**
-     * The name of the source.
-     */
-    source: "headers";
 }
 
 /**
  * Options for `Parameter` decorator, which defines the source of
  * the paremeter as from query search parameter.
  */
-export interface IParameterOptionsWithQuerySource extends IParameterOptionsWithTransformableDataSource {
+export interface IParameterOptionsWithQuerySource extends IParameterOptions<"query">, IParameterOptionsWithTransformableDataSource {
     /**
      * The custom name of the query parameter.
      */
     name?: Nilable<string>;
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as from one or more query parameter.
+ */
+export interface IParameterOptionsWithQueriesSource extends IParameterOptions<"queries">, IParameterOptionsWithTransformableDataSource {
     /**
-     * The name of the source.
+     * One or more query parameter names.
      */
-    source: "query";
+    names: string[];
 }
 
 /**
  * Options for `Parameter` decorator, which defines the source of
  * the paremeter as the current request context.
  */
-export interface IParameterOptionsWithRequestSource {
-    /**
-     * The name of the source.
-     */
-    source: "request";
+export interface IParameterOptionsWithRequestSource extends IParameterOptions<"request"> {
 }
 
 /**
  * Options for `Parameter` decorator, which defines the source of
  * the paremeter as the current response context.
  */
-export interface IParameterOptionsWithResponseSource {
-    /**
-     * The name of the source.
-     */
-    source: "response";
+export interface IParameterOptionsWithResponseSource extends IParameterOptions<"response"> {
 }
 
 /**
@@ -1111,15 +1109,11 @@ export interface IParameterOptionsWithTransformableDataSource {
  * Options for `Parameter` decorator, which defines the source of
  * the paremeter from URL parameter.
  */
-export interface IParameterOptionsWithUrlSource extends IParameterOptionsWithTransformableDataSource {
+export interface IParameterOptionsWithUrlSource extends PartialBy<IParameterOptions<"url">, "source">, IParameterOptionsWithTransformableDataSource {
     /**
      * The custom name of the url parameter.
      */
     name?: Nilable<string>;
-    /**
-     * The name of the source.
-     */
-    source?: Nilable<"url">;
 }
 
 /**
@@ -1146,23 +1140,17 @@ export type NextFunction = (error?: Optional<any>) => void;
 /**
  * A possible value for a first argument for `Parameter` decorator.
  */
-export type ParameterArgument1 = string | ParameterDataTransformerTo | ParameterOptions;
+export type ParameterArgument1 = ParameterSource | ParameterDataTransformer | ParameterOptions;
 
 /**
  * A possible value for a second argument for `Parameter` decorator.
  */
-export type ParameterArgument2 = ParameterDataTransformerTo;
+export type ParameterArgument2 = ParameterDataTransformer | string;
 
 /**
- * Possible option values for `Parameter` decorator.
+ * A possible value for a third argument for `Parameter` decorator.
  */
-export type ParameterOptions =
-    IParameterOptionsWithHeaderSource |
-    IParameterOptionsWithHeadersSource |
-    IParameterOptionsWithQuerySource |
-    IParameterOptionsWithRequestSource |
-    IParameterOptionsWithResponseSource |
-    IParameterOptionsWithUrlSource;
+export type ParameterArgument3 = ParameterDataTransformer;
 
 /**
  * A function, which transforms an input parameter value
@@ -1175,10 +1163,34 @@ export type ParameterOptions =
 export type ParameterDataTransformer = (context: IParameterDataTransformerContext) => any | PromiseLike<any>;
 
 /**
+ * Possible option values for `Parameter` decorator.
+ */
+export type ParameterOptions =
+    IParameterOptionsWithHeaderSource |
+    IParameterOptionsWithHeadersSource |
+    IParameterOptionsWithQueriesSource |
+    IParameterOptionsWithQuerySource |
+    IParameterOptionsWithRequestSource |
+    IParameterOptionsWithResponseSource |
+    IParameterOptionsWithUrlSource;
+
+/**
  * A possible value for `transformTo` property of an
  * `IParameterOptionsWithTransformableDataSource` object.
  */
 export type ParameterDataTransformerTo = "bool" | "float" | "int" | "string" | ParameterDataTransformer;
+
+/**
+ * A possible value for a parameter source.
+ */
+export type ParameterSource =
+    "header" |
+    "headers" |
+    "queries" |
+    "query" |
+    "request" |
+    "response" |
+    "url";
 
 /**
  * A handler, that is executed, if data could not be parsed.

@@ -7,9 +7,15 @@ interface IMultiHeadersParameter {
     "x-ego-3": number;
 }
 
+interface IMultiQueryParameter {
+    "xEgo1": string;
+    "xEgo2": number;
+    "xEgo3": number;
+}
+
 const CONTEXT_KEY = Symbol("CONTEXT_KEY");
 
-const testrQueryParamOptions: ParameterOptions = {
+const testQueryParamOptions: ParameterOptions = {
     "source": "query",
     "transformTo": ({ source }) => {
         return source.toUpperCase().trim();
@@ -25,7 +31,7 @@ const testrQueryParamOptions: ParameterOptions = {
 })
 export default class TestParameterController extends ControllerBase {
     @GET({
-        "path": "/foo/:bar/:buzz"
+        "path": "/url/:bar/:buzz"
     })
     async testUrl(@Response() response: IHttpResponse,
         @Parameter() bar: string,
@@ -37,7 +43,7 @@ export default class TestParameterController extends ControllerBase {
     }
 
     @GET({
-        "path": "/bar"
+        "path": "/header"
     })
     async testHeader(@Response() response: IHttpResponse,
         @Parameter({ "source": "header", "name": "x-ego-test", "transformTo": "bool" }) egoTest: string
@@ -48,9 +54,9 @@ export default class TestParameterController extends ControllerBase {
     }
 
     @GET({
-        "path": "/baz"
+        "path": "/query"
     })
-    async testQuery(@Parameter(testrQueryParamOptions) testParam: string,
+    async testQuery(@Parameter(testQueryParamOptions) testParam: string,
         @Request() request: any, @Response() response: any,
     ) {
         let str = `testParam: ${testParam} (${typeof testParam})\n`;
@@ -61,7 +67,34 @@ export default class TestParameterController extends ControllerBase {
     }
 
     @GET({
-        "path": "/buzz"
+        "path": "/multi-query"
+    })
+    async testMultiQuery(
+        request: IHttpRequest, response: IHttpResponse,
+        @Parameter({
+            "source": "queries",
+            "names": ["xEgo1", "xEgo2", "xEgo3"],
+            "transformTo": (({ key, source }) => {
+                if (key === "xEgo2") {
+                    return parseFloat(source);
+                }
+                else if (key === "xEgo3") {
+                    return Boolean(source);
+                }
+
+                return source;
+            })
+        }) query: IMultiQueryParameter
+    ) {
+        let str = `${query["xEgo1"]} (${typeof query["xEgo1"]})\n`;
+        str += `${query["xEgo2"]} (${typeof query["xEgo2"]})\n`;
+        str += `${query["xEgo3"]} (${typeof query["xEgo3"]})\n`;
+
+        response.write(str);
+    }
+
+    @GET({
+        "path": "/multi-headers"
     })
     async testMultiHeaders(
         request: IHttpRequest, response: IHttpResponse,

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 import { CONTROLLER_METHOD_PARAMETERS } from "../constants";
-import type { ParameterArgument1, ParameterArgument2, ParameterDataTransformer, ParameterDataTransformerTo, ParameterOptions } from "../types";
+import type { ParameterArgument1, ParameterArgument2, ParameterArgument3, ParameterDataTransformer, ParameterOptions, ParameterSource } from "../types";
 import type { IControllerMethodParameter, Nilable } from "../types/internal";
 import { getFunctionParamNames, isNil } from "../utils";
 import { getListFromObject } from "./utils";
@@ -28,16 +28,23 @@ import { getListFromObject } from "./utils";
  * }
  * ```
  *
+ * @param {Nilable<string>} [name] The name / key in the source.
+ * @param {Nilable<ParameterSource>} [source] The source.
  * @param {Nilable<ParameterOptions>} [options] Custom and additional options.
+ * @param {Nilable<ParameterDataTransformer>} [transformer] The custom data transformer.
  *
  * @returns {ParameterDecorator} The new decorator function.
  */
 export function Parameter(): ParameterDecorator;
-export function Parameter(name: string): ParameterDecorator;
-export function Parameter(name: string, transformTo: Nilable<ParameterDataTransformerTo>): ParameterDecorator;
+export function Parameter(source: ParameterSource, transformer?: Nilable<ParameterDataTransformer>): ParameterDecorator;
+export function Parameter(source: ParameterSource, name: string, transformer?: Nilable<ParameterDataTransformer>): ParameterDecorator;
 export function Parameter(transformer: ParameterDataTransformer): ParameterDecorator;
 export function Parameter(options: ParameterOptions): ParameterDecorator;
-export function Parameter(arg1?: Nilable<ParameterArgument1>, arg2?: Nilable<ParameterArgument2>): ParameterDecorator {
+export function Parameter(
+    arg1?: Nilable<ParameterArgument1>,
+    arg2?: Nilable<ParameterArgument2>,
+    arg3?: Nilable<ParameterArgument3>,
+): ParameterDecorator {
     let options: ParameterOptions;
 
     if (isNil(arg1)) {
@@ -45,12 +52,27 @@ export function Parameter(arg1?: Nilable<ParameterArgument1>, arg2?: Nilable<Par
     }
     else {
         if (typeof arg1 === "string") {
-            // arg1 => name
+            // arg1 => source
 
             options = {
-                "name": arg1,
-                "transformTo": arg2 as ParameterDataTransformerTo
-            };
+                "source": arg1 as ParameterSource
+            } as any;
+
+            if (typeof arg2 === "string") {
+                // arg2 => name
+                // arg3 => transformer
+
+                (options as any).name = arg2;
+                (options as any).transformTo = arg3;
+            }
+            else if (typeof arg2 === "function") {
+                // arg2 => transformer
+
+                (options as any).transformTo = arg2;
+            }
+            else {
+                throw new TypeError("arg2 must be of type string or function if arg1 is string");
+            }
         }
         else if (typeof arg1 === "function") {
             // arg1 => transformer
@@ -60,6 +82,8 @@ export function Parameter(arg1?: Nilable<ParameterArgument1>, arg2?: Nilable<Par
             };
         }
         else {
+            // arg1 => options
+
             options = arg1 as ParameterOptions;
         }
     }

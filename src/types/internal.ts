@@ -112,6 +112,9 @@ export type ObjectKey = string | symbol;
 
 export type Optional<T extends any = any> = T | undefined;
 
+// s. https://stackoverflow.com/questions/43159887/make-a-single-property-optional-in-typescript
+export type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>;
+
 export interface IRequestHandlerContext {
     end: (response: ServerResponse) => void;
     handler: HttpRequestHandler;
