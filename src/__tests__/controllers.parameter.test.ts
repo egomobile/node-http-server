@@ -19,9 +19,9 @@ import { binaryParser, createServerAndInitControllers } from "./utils";
 describe("Parameter feature tests (controllers)", () => {
     it("should return 200 when do a GET request, submitting URL parameters, for existing TestParameterController with expected result", async () => {
         const bar = "Marcel";
-        const buzz = "Kloubert";
+        const buzz = 239.79;
 
-        const url = `/test_parameter/foo/${encodeURIComponent(bar)}/${encodeURIComponent(buzz)}`;
+        const url = `/test_parameter/foo/${encodeURIComponent(bar)}/${encodeURIComponent(String(buzz))}`;
         const expectedResult = `bar: ${bar} (${typeof bar}); buzz: ${buzz} (${typeof buzz})`;
 
         const server = createServerAndInitControllers();
@@ -42,7 +42,8 @@ describe("Parameter feature tests (controllers)", () => {
     });
 
     it("should return 200 when do a GET request, submitting header, for existing TestParameterController with expected result", async () => {
-        const egoTest = "Marcel Kloubert";
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const egoTest = true;
 
         const url = "/test_parameter/bar";
         const expectedResult = `x-ego-test: ${egoTest} (${typeof egoTest})`;
@@ -50,7 +51,7 @@ describe("Parameter feature tests (controllers)", () => {
         const server = createServerAndInitControllers();
 
         const response = await request(server).get(url)
-            .set("X-Ego-Test", egoTest)
+            .set("X-Ego-Test", String(egoTest))
             .send()
             .parse(binaryParser)
             .expect(200);
@@ -69,7 +70,7 @@ describe("Parameter feature tests (controllers)", () => {
         const testParam = "Marcel Kloubert";
 
         const url = `/test_parameter/baz?testParam=${encodeURIComponent(testParam)}`;
-        const expectedResult = `testParam: ${testParam} (${typeof testParam})`;
+        const expectedResult = `testParam: ${testParam.toUpperCase().trim()} (${typeof testParam})`;
 
         const server = createServerAndInitControllers();
 

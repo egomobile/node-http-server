@@ -9,7 +9,7 @@ export default class TestParameterController extends ControllerBase {
     async testUrl(
         request: IHttpRequest, response: IHttpResponse,
         @Parameter() bar: string,
-        @Parameter({ "source": "url" }) buzz: string
+        @Parameter({ "source": "url", "transformTo": "float" }) buzz: number
     ) {
         const str = `bar: ${bar} (${typeof bar}); buzz: ${buzz} (${typeof buzz})`;
 
@@ -21,7 +21,7 @@ export default class TestParameterController extends ControllerBase {
     })
     async testHeader(
         request: IHttpRequest, response: IHttpResponse,
-        @Parameter({ "source": "header", "name": "x-ego-test" }) egoTest: string
+        @Parameter({ "source": "header", "name": "x-ego-test", "transformTo": "bool" }) egoTest: string
     ) {
         const str = `x-ego-test: ${egoTest} (${typeof egoTest})`;
 
@@ -33,7 +33,12 @@ export default class TestParameterController extends ControllerBase {
     })
     async testQuery(
         request: IHttpRequest, response: IHttpResponse,
-        @Parameter({ "source": "query" }) testParam: string
+        @Parameter({
+            "source": "query",
+            "transformTo": ({ source }) => {
+                return source.toUpperCase().trim();
+            }
+        }) testParam: string
     ) {
         const str = `testParam: ${testParam} (${typeof testParam})`;
 
