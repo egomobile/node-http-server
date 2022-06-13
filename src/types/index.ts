@@ -1006,12 +1006,29 @@ export interface IHttpStringBodyParserOptions extends IHttpBodyParserOptions {
     encoding?: Nilable<BufferEncoding>;
 }
 
+/**
+ * Context for an execution of a `ParameterDataTransformer` function.
+ */
+export interface IParameterDataTransformerContext {
+    /**
+     * The request context.
+     */
+    request: IHttpRequest;
+    /**
+     * The response context.
+     */
+    response: IHttpResponse;
+    /**
+     * The source value.
+     */
+    source: any;
+}
 
 /**
  * Options for `Parameter` decorator, which defines the source of
  * the paremeter as from HTTP request header.
  */
-export interface IParameterOptionsWithHeaderSource {
+export interface IParameterOptionsWithHeaderSource extends IParameterOptionsWithTransformableDataSource {
     /**
      * The custom header name.
      */
@@ -1026,7 +1043,7 @@ export interface IParameterOptionsWithHeaderSource {
  * Options for `Parameter` decorator, which defines the source of
  * the paremeter as from query search parameter.
  */
-export interface IParameterOptionsWithQuerySource {
+export interface IParameterOptionsWithQuerySource extends IParameterOptionsWithTransformableDataSource {
     /**
      * The custom name of the query parameter.
      */
@@ -1060,10 +1077,22 @@ export interface IParameterOptionsWithResponseSource {
 }
 
 /**
+ * Base type for options for `Parameter` decorator, which allows to
+ * transform and validate its input data.
+ */
+export interface IParameterOptionsWithTransformableDataSource {
+    /**
+     * A custom function, which transforms input data
+     * to a new format / type.
+     */
+    transformTo?: Nilable<ParameterDataTransformerTo>;
+}
+
+/**
  * Options for `Parameter` decorator, which defines the source of
  * the paremeter from URL parameter.
  */
-export interface IParameterOptionsWithUrlSource {
+export interface IParameterOptionsWithUrlSource extends IParameterOptionsWithTransformableDataSource {
     /**
      * The custom name of the url parameter.
      */
@@ -1104,6 +1133,22 @@ export type ParameterOptions =
     IParameterOptionsWithRequestSource |
     IParameterOptionsWithResponseSource |
     IParameterOptionsWithUrlSource;
+
+/**
+ * A function, which transforms an input parameter value
+ * into a new one.
+ *
+ * @param {IParameterDataTransformerContext} context The context.
+ *
+ * @returns {any|PromiseLike<any>} The new value or the promise with it.
+ */
+export type ParameterDataTransformer = (context: IParameterDataTransformerContext) => any | PromiseLike<any>;
+
+/**
+ * A possible value for `transformTo` property of an
+ * `IParameterOptionsWithTransformableDataSource` object.
+ */
+export type ParameterDataTransformerTo = "bool" | "float" | "int" | "string" | ParameterDataTransformer;
 
 /**
  * A handler, that is executed, if data could not be parsed.

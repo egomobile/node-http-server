@@ -22,7 +22,7 @@ import { CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWA
 import { buffer, defaultValidationFailedHandler, json, query, validate } from "../middlewares";
 import { setupSwaggerUIForServerControllers } from "../swagger";
 import { toSwaggerPath } from "../swagger/utils";
-import { AuthorizeArgumentValue, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpResponse, IHttpServer, ImportValues, ResponseSerializer, ValidationFailedHandler } from "../types";
+import { AuthorizeArgumentValue, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpResponse, IHttpServer, ImportValues, ParameterDataTransformer, ParameterDataTransformerTo, ResponseSerializer, ValidationFailedHandler } from "../types";
 import type { GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable } from "../types/internal";
 import { asAsync, canHttpMethodHandleBodies, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, walkDirSync } from "../utils";
 import { params } from "../validators/params";
@@ -75,6 +75,10 @@ interface IParameterValueUpdaterContext {
     args: any[];
     request: IHttpRequest;
     response: IHttpResponse;
+}
+
+interface IToParameterDataTransformerWithValidatorOptions {
+    transformTo: Nilable<ParameterDataTransformerTo>;
 }
 
 interface IUpdateMiddlewaresOptions {
@@ -863,17 +867,28 @@ function toParameterValueUpdaters(parameters: IControllerMethodParameter[]): Par
     parameters.forEach((p) => {
         const { index, name, options } = p;
         const source = options.source?.toLowerCase().trim() ?? "";
+        const transformTo: Nilable<ParameterDataTransformerTo> = (options as any).transformTo;
 
         if (source === "header") {
             const headerName = name.toLowerCase().trim();
 
-            updaters.push(async ({ args, request }) => {
-                args[index] = request.headers[headerName];
+            const transformer = toParameterDataTransformerSafe({ transformTo });
+
+            updaters.push(async ({ args, request, response }) => {
+                args[index] = await transformer({
+                    request, response,
+                    "source": request.headers[headerName]
+                });
             });
         }
         else if (source === "query") {
-            updaters.push(async ({ args, request }) => {
-                args[index] = request.query?.get(name);
+            const transformer = toParameterDataTransformerSafe({ transformTo });
+
+            updaters.push(async ({ args, request, response }) => {
+                args[index] = await transformer({
+                    request, response,
+                    "source": request.query?.get(name)
+                });
             });
         }
         else if (source === "request") {
@@ -887,8 +902,13 @@ function toParameterValueUpdaters(parameters: IControllerMethodParameter[]): Par
             });
         }
         else if (["", "url"].includes(source)) {
-            updaters.push(async ({ args, request }) => {
-                args[index] = request.params?.[name];
+            const transformer = toParameterDataTransformerSafe({ transformTo });
+
+            updaters.push(async ({ args, request, response }) => {
+                args[index] = await transformer({
+                    request, response,
+                    "source": request.params?.[name]
+                });
             });
         }
         else {
@@ -897,4 +917,47 @@ function toParameterValueUpdaters(parameters: IControllerMethodParameter[]): Par
     });
 
     return updaters;
+}
+
+function toParameterDataTransformerSafe({
+    transformTo
+}: IToParameterDataTransformerWithValidatorOptions): ParameterDataTransformer {
+    let transformer: Nilable<ParameterDataTransformer>;
+
+    if (isNil(transformTo)) {
+        transformer = async (source) => {
+            return source;
+        };
+    }
+    else {
+        if (transformTo === "bool") {
+            transformer = async (source) => {
+                return Boolean(String(source ?? "").toLowerCase().trim());
+            };
+        }
+        else if (transformTo === "int") {
+            transformer = async (source) => {
+                return parseInt(String(source ?? "").trim());
+            };
+        }
+        else if (transformTo === "float") {
+            transformer = async (source) => {
+                return parseFloat(String(source ?? "").trim());
+            };
+        }
+        else if (transformTo === "string") {
+            transformer = async (source) => {
+                return String(source ?? "");
+            };
+        }
+        else if (typeof transformTo === "function") {
+            transformer = transformTo;
+        }
+    }
+
+    if (typeof transformer !== "function") {
+        throw new TypeError("transformTo must be of type function or a valid constant");
+    }
+
+    return asAsync<ParameterDataTransformer>(transformer);
 }
