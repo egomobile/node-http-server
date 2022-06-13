@@ -1,5 +1,5 @@
-import { Controller, IHttpRequest, IHttpResponse, ParameterOptions } from "../../..";
-import { ControllerBase, GET, Parameter, Request, Response, Use } from "../../../controllers";
+import { Controller, IHttpRequest, IHttpResponse, ParameterDataTransformer, ParameterOptions } from "../../..";
+import { ControllerBase, GET, Headers, Parameter, Query, Request, Response, Use } from "../../../controllers";
 
 interface IMultiHeadersParameter {
     "x-ego-1": string;
@@ -14,6 +14,28 @@ interface IMultiQueryParameter {
 }
 
 const CONTEXT_KEY = Symbol("CONTEXT_KEY");
+
+const headersDataTransformer: ParameterDataTransformer = ({ key, source }) => {
+    if (key === "x-ego-2") {
+        return parseFloat(source);
+    }
+    else if (key === "x-ego-3") {
+        return Boolean(source);
+    }
+
+    return source;
+};
+
+const queryDataTransformer: ParameterDataTransformer = ({ key, source }) => {
+    if (key === "xEgo2") {
+        return parseFloat(source);
+    }
+    else if (key === "xEgo3") {
+        return Boolean(source);
+    }
+
+    return source;
+};
 
 const testQueryParamOptions: ParameterOptions = {
     "source": "query",
@@ -71,20 +93,7 @@ export default class TestParameterController extends ControllerBase {
     })
     async testMultiQuery(
         request: IHttpRequest, response: IHttpResponse,
-        @Parameter({
-            "source": "queries",
-            "names": ["xEgo1", "xEgo2", "xEgo3"],
-            "transformTo": (({ key, source }) => {
-                if (key === "xEgo2") {
-                    return parseFloat(source);
-                }
-                else if (key === "xEgo3") {
-                    return Boolean(source);
-                }
-
-                return source;
-            })
-        }) query: IMultiQueryParameter
+        @Query(queryDataTransformer, "xEgo1", "xEgo2", "xEgo3") query: IMultiQueryParameter
     ) {
         let str = `${query["xEgo1"]} (${typeof query["xEgo1"]})\n`;
         str += `${query["xEgo2"]} (${typeof query["xEgo2"]})\n`;
@@ -98,20 +107,7 @@ export default class TestParameterController extends ControllerBase {
     })
     async testMultiHeaders(
         request: IHttpRequest, response: IHttpResponse,
-        @Parameter({
-            "source": "headers",
-            "names": ["x-ego-1", "x-ego-2", "x-ego-3"],
-            "transformTo": (({ key, source }) => {
-                if (key === "x-ego-2") {
-                    return parseFloat(source);
-                }
-                else if (key === "x-ego-3") {
-                    return Boolean(source);
-                }
-
-                return source;
-            })
-        }) headers: IMultiHeadersParameter
+        @Headers(headersDataTransformer, "x-ego-1", "x-ego-2", "x-ego-3") headers: IMultiHeadersParameter
     ) {
         let str = `${headers["x-ego-1"]} (${typeof headers["x-ego-1"]})\n`;
         str += `${headers["x-ego-2"]} (${typeof headers["x-ego-2"]})\n`;

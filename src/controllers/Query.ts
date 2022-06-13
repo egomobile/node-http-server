@@ -2,8 +2,9 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 import { CONTROLLER_METHOD_PARAMETERS } from "../constants";
-import type { IControllerMethodParameter } from "../types/internal";
-import { getFunctionParamNames } from "../utils";
+import { ParameterDataTransformer } from "../types";
+import type { IControllerMethodParameter, Nilable } from "../types/internal";
+import { getFunctionParamNames, isNil } from "../utils";
 import { getListFromObject } from "./utils";
 
 /**
@@ -34,7 +35,7 @@ import { getListFromObject } from "./utils";
  *       }
  *
  *       return source
- *     }) importedQuery: IQuery,
+ *     }, 'xEgo1', 'xEgo2', 'xEgo3') importedQuery: IQuery,
  *
  *     @Response() response: IHttpResponse
  *   ) {
@@ -49,11 +50,30 @@ import { getListFromObject } from "./utils";
  *
  * @returns {ParameterDecorator} The new decorator function.
  */
-export function Query(...names: string[]): ParameterDecorator {
+export function Query(transformer: ParameterDataTransformer, ...names: string[]): ParameterDecorator;
+export function Query(...names: string[]): ParameterDecorator;
+export function Query(transformerOrName: ParameterDataTransformer | string, ...moreNames: string[]): ParameterDecorator {
+    const names: string[] = [];
+
+    let transformer: Nilable<ParameterDataTransformer>;
+    if (typeof transformerOrName === "function") {
+        transformer = transformerOrName;
+        names.push(...moreNames);
+    }
+    else {
+        names.push(transformerOrName, ...moreNames);
+    }
+
     if (names.some((n) => {
         return typeof n !== "string";
     })) {
         throw new TypeError("All items of names must be of type string");
+    }
+
+    if (!isNil(transformer)) {
+        if (typeof transformer !== "function") {
+            throw new TypeError("transformerOrName must be of type string or function");
+        }
     }
 
     return function (target, propertyKey, parameterIndex) {
@@ -71,7 +91,8 @@ export function Query(...names: string[]): ParameterDecorator {
                 method,
                 "options": {
                     names,
-                    "source": "queries"
+                    "source": "queries",
+                    "transformTo": transformer
                 }
             }
         );
