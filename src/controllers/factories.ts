@@ -24,7 +24,7 @@ import { setupSwaggerUIForServerControllers } from "../swagger";
 import { toSwaggerPath } from "../swagger/utils";
 import { AuthorizeArgumentValue, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpResponse, IHttpServer, ImportValues, IParameterOptionsWithHeadersSource, IParameterOptionsWithQueriesSource, IParameterOptionsWithUrlsSource, ParameterDataTransformer, ParameterDataTransformTo, ResponseSerializer, ValidationFailedHandler } from "../types";
 import type { GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable } from "../types/internal";
-import { asAsync, canHttpMethodHandleBodies, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, walkDirSync } from "../utils";
+import { asAsync, canHttpMethodHandleBodies, createObjectNameListResolver, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, urlSearchParamsToObject, walkDirSync } from "../utils";
 import { params } from "../validators/params";
 import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath } from "./utils";
 
@@ -900,16 +900,17 @@ function toParameterValueUpdaters(parameters: IControllerMethodParameter[]): Par
             });
         }
         else if (source === "headers") {
-            const headerNames: string[] = (options as IParameterOptionsWithHeadersSource).names
+            const headerNames: string[] = ((options as IParameterOptionsWithHeadersSource).names ?? [])
                 .map((name) => {
                     return name.toLowerCase().trim();
                 });
 
+            const getNames = createObjectNameListResolver(headerNames);
             const transformer = toParameterDataTransformerSafe({ transformTo });
 
             updaters.push(async ({ args, request, response }) => {
                 const headers: any = {};
-                for (const key of headerNames) {
+                for (const key of getNames(request.headers)) {
                     headers[key] = await transformer({
                         key,
                         request, response,
@@ -921,17 +922,22 @@ function toParameterValueUpdaters(parameters: IControllerMethodParameter[]): Par
             });
         }
         else if (source === "queries") {
-            const queryParamNames: string[] = [...(options as IParameterOptionsWithQueriesSource).names];
+            const queryParamNames: string[] = [
+                ...((options as IParameterOptionsWithQueriesSource).names ?? [])
+            ];
 
+            const getNames = createObjectNameListResolver(queryParamNames);
             const transformer = toParameterDataTransformerSafe({ transformTo });
 
             updaters.push(async ({ args, request, response }) => {
+                const queryParams: any = urlSearchParamsToObject(request.query);
+
                 const query: any = {};
-                for (const key of queryParamNames) {
+                for (const key of getNames(queryParams)) {
                     query[key] = await transformer({
                         key,
                         request, response,
-                        "source": request.query?.get(key)
+                        "source": queryParams![key]
                     });
                 }
 
@@ -959,17 +965,20 @@ function toParameterValueUpdaters(parameters: IControllerMethodParameter[]): Par
             });
         }
         else if (source === "urls") {
-            const urlParamNames: string[] = [...(options as IParameterOptionsWithUrlsSource).names];
+            const urlParamNames: string[] = [
+                ...((options as IParameterOptionsWithUrlsSource).names ?? [])
+            ];
 
+            const getNames = createObjectNameListResolver(urlParamNames);
             const transformer = toParameterDataTransformerSafe({ transformTo });
 
             updaters.push(async ({ args, request, response }) => {
                 const params: any = {};
-                for (const key of urlParamNames) {
+                for (const key of getNames(request.params)) {
                     params[key] = await transformer({
                         key,
                         request, response,
-                        "source": request.params?.[key]
+                        "source": request.params![key]
                     });
                 }
 

@@ -19,7 +19,7 @@ import type { URLSearchParams } from "url";
 import { httpMethodsWithBodies } from "../constants";
 import { EntityTooLargeError } from "../errors";
 import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction } from "../types";
-import type { Constructor, Nilable, Nullable, Optional } from "../types/internal";
+import type { Constructor, Nilable, Nullable, ObjectNameListResolver, Optional } from "../types/internal";
 
 interface ICreateWithEntityTooLargeActionOptions {
     action: HttpMiddleware;
@@ -61,6 +61,30 @@ export function compareValuesBy<T1, T2>(x: T1, y: T1, selector: (item: T1) => T2
     }
 
     return 0;
+}
+
+export function createObjectNameListResolver(names: string[]): ObjectNameListResolver {
+    if (names.some((n) => {
+        return typeof n !== "string";
+    })) {
+        throw new TypeError("All names must be of type string");
+    }
+
+    if (names.length) {
+        return () => {
+            return names;
+        };
+    }
+    else {
+        return (obj) => {
+            if (!isNil(obj)) {
+                return Object.keys(obj);
+            }
+            else {
+                return [];
+            }
+        };
+    }
 }
 
 export function getAllClassProps(startClass: any): string[] {

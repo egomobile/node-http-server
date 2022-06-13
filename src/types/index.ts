@@ -1059,9 +1059,9 @@ export interface IParameterOptionsWithHeaderSource extends IParameterOptions<"he
  */
 export interface IParameterOptionsWithHeadersSource extends IParameterOptions<"headers">, IParameterOptionsWithTransformableDataSource {
     /**
-     * One or more header names.
+     * One or more header names. If not defined, all headers are taken.
      */
-    names: string[];
+    names?: Nilable<string[]>;
 }
 
 /**
@@ -1081,9 +1081,9 @@ export interface IParameterOptionsWithQuerySource extends IParameterOptions<"que
  */
 export interface IParameterOptionsWithQueriesSource extends IParameterOptions<"queries">, IParameterOptionsWithTransformableDataSource {
     /**
-     * One or more query parameter names.
+     * One or more query parameter names. If not defined, all parameters are taken.
      */
-    names: string[];
+    names?: Nilable<string[]>;
 }
 
 /**
@@ -1129,9 +1129,9 @@ export interface IParameterOptionsWithUrlSource extends PartialBy<IParameterOpti
  */
 export interface IParameterOptionsWithUrlsSource extends IParameterOptions<"urls">, IParameterOptionsWithTransformableDataSource {
     /**
-     * One or more url parameter names.
+     * One or more url parameter names. If not defined, all parameters are taken.
      */
-    names: string[];
+    names?: Nilable<string[]>;
 }
 
 /**

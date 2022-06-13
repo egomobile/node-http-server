@@ -104,6 +104,8 @@ export interface ISwaggerMethodInfo {
     method: Function;
 }
 
+export type ObjectNameListResolver = (obj: any) => string[];
+
 export type Nilable<T extends any = any> = Nullable<T> | Optional<T>;
 
 export type Nullable<T extends any = any> = T | null;
