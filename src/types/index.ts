@@ -1124,6 +1124,17 @@ export interface IParameterOptionsWithUrlSource extends PartialBy<IParameterOpti
 }
 
 /**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as from one or more url parameter.
+ */
+export interface IParameterOptionsWithUrlsSource extends IParameterOptions<"urls">, IParameterOptionsWithTransformableDataSource {
+    /**
+     * One or more url parameter names.
+     */
+    names: string[];
+}
+
+/**
  * Context for a 'SetupAuthorizeMiddlewareHandler' function.
  */
 export interface ISetupAuthorizeMiddlewareHandlerContext {
@@ -1180,7 +1191,8 @@ export type ParameterOptions =
     IParameterOptionsWithQuerySource |
     IParameterOptionsWithRequestSource |
     IParameterOptionsWithResponseSource |
-    IParameterOptionsWithUrlSource;
+    IParameterOptionsWithUrlSource |
+    IParameterOptionsWithUrlsSource;
 
 /**
  * A possible value for `transformTo` property of an
@@ -1199,7 +1211,8 @@ export type ParameterSource =
     "query" |
     "request" |
     "response" |
-    "url";
+    "url" |
+    "urls";
 
 /**
  * A handler, that is executed, if data could not be parsed.

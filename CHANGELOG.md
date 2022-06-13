@@ -9,6 +9,7 @@
   - `@Query()`: import [query parameters from URL](https://egomobile.github.io/node-http-server/interfaces/IHttpRequest.html#query) as key/value pair object
   - `@Request()`: import [request context](https://egomobile.github.io/node-http-server/interfaces/IHttpRequest.html)
   - `@Response()`: import [response context](https://egomobile.github.io/node-http-server/interfaces/IHttpResponse.html)
+  - `@Url()`: import [URL parameters](https://egomobile.github.io/node-http-server/interfaces/IHttpRequest.html#params) as key/value pair object
 - [HttpPathValidator](https://egomobile.github.io/node-http-server/modules.html#HttpPathValidator) can be asynchronious now
 - fix typings
 - apply new [eslint-config-ego](https://github.com/egomobile/eslint-config-ego) settings

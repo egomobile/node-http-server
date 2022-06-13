@@ -22,7 +22,7 @@ import { CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWA
 import { buffer, defaultValidationFailedHandler, json, query, validate } from "../middlewares";
 import { setupSwaggerUIForServerControllers } from "../swagger";
 import { toSwaggerPath } from "../swagger/utils";
-import { AuthorizeArgumentValue, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpResponse, IHttpServer, ImportValues, IParameterOptionsWithHeadersSource, IParameterOptionsWithQueriesSource, ParameterDataTransformer, ParameterDataTransformTo, ResponseSerializer, ValidationFailedHandler } from "../types";
+import { AuthorizeArgumentValue, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpResponse, IHttpServer, ImportValues, IParameterOptionsWithHeadersSource, IParameterOptionsWithQueriesSource, IParameterOptionsWithUrlsSource, ParameterDataTransformer, ParameterDataTransformTo, ResponseSerializer, ValidationFailedHandler } from "../types";
 import type { GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable } from "../types/internal";
 import { asAsync, canHttpMethodHandleBodies, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, walkDirSync } from "../utils";
 import { params } from "../validators/params";
@@ -956,6 +956,24 @@ function toParameterValueUpdaters(parameters: IControllerMethodParameter[]): Par
         else if (source === "response") {
             updaters.push(async ({ args, response }) => {
                 args[index] = response;
+            });
+        }
+        else if (source === "urls") {
+            const urlParamNames: string[] = [...(options as IParameterOptionsWithUrlsSource).names];
+
+            const transformer = toParameterDataTransformerSafe({ transformTo });
+
+            updaters.push(async ({ args, request, response }) => {
+                const params: any = {};
+                for (const key of urlParamNames) {
+                    params[key] = await transformer({
+                        key,
+                        request, response,
+                        "source": request.params?.[key]
+                    });
+                }
+
+                args[index] = params;
             });
         }
         else if (["", "url"].includes(source)) {

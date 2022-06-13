@@ -1,4 +1,4 @@
-import { Body, Controller, ControllerBase, GET, Headers, IHttpRequest, IHttpResponse, Parameter, ParameterDataTransformer, ParameterOptions, POST, Query, Request, Response, text, Use } from "../../..";
+import { Body, Controller, ControllerBase, GET, Headers, IHttpRequest, IHttpResponse, Parameter, ParameterDataTransformer, ParameterOptions, POST, Query, Request, Response, text, Url, Use } from "../../..";
 
 interface IMultiHeadersParameter {
     "x-ego-1": string;
@@ -10,6 +10,11 @@ interface IMultiQueryParameter {
     "xEgo1": string;
     "xEgo2": number;
     "xEgo3": number;
+}
+
+interface IMultiUrlParameter {
+    "bar": string;
+    "buzz": number;
 }
 
 const CONTEXT_KEY = Symbol("CONTEXT_KEY");
@@ -43,6 +48,14 @@ const testQueryParamOptions: ParameterOptions = {
     }
 };
 
+const urlDataTransformer: ParameterDataTransformer = ({ key, source }) => {
+    if (key === "buzz") {
+        return parseFloat(source);
+    }
+
+    return source;
+};
+
 @Controller()
 @Use(async function (request: any, response: any, next) {
     request[CONTEXT_KEY] = "request";
@@ -52,11 +65,10 @@ const testQueryParamOptions: ParameterOptions = {
 })
 export default class TestParameterController extends ControllerBase {
     @GET({
-        "path": "/url/:bar/:buzz"
+        "path": "/multi-url/:bar/:buzz"
     })
     async testUrl(@Response() response: IHttpResponse,
-        @Parameter() bar: string,
-        @Parameter({ "source": "url", "transformTo": "float" }) buzz: number
+        @Url(urlDataTransformer, "bar", "buzz") { bar, buzz }: IMultiUrlParameter
     ) {
         const str = `bar: ${bar} (${typeof bar}); buzz: ${buzz} (${typeof buzz})`;
 

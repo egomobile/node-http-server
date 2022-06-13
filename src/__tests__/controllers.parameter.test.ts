@@ -23,7 +23,7 @@ describe("Parameter feature tests (controllers)", () => {
         const bar = "Marcel";
         const buzz = 239.79;
 
-        const url = `/test_parameter/url/${encodeURIComponent(bar)}/${encodeURIComponent(String(buzz))}`;
+        const url = `/test_parameter/multi-url/${encodeURIComponent(bar)}/${encodeURIComponent(String(buzz))}`;
         const expectedResult = `bar: ${bar} (${typeof bar}); buzz: ${buzz} (${typeof buzz})`;
 
         const server = createServerAndInitControllers();

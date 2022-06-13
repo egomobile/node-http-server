@@ -67,6 +67,7 @@ export * from "./Request";
 export * from "./Response";
 export * from "./Serializer";
 export * from "./TRACE";
+export * from "./Url";
 export * from "./Use";
 export * from "./ValidationErrorHandler";
 
