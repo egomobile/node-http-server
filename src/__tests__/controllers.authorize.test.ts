@@ -16,7 +16,7 @@
 import request from "supertest";
 import { createServerAndInitControllers } from "./utils";
 
-describe("Authroize feature tests", () => {
+describe("Authroize feature tests (controllers)", () => {
     it.each(["admin", "user"])("should return 200 if user accesses non-restricted endpoint (role array)", async (user) => {
         const server = createServerAndInitControllers();
 

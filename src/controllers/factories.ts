@@ -91,7 +91,7 @@ function compileRouteHandler({ controller, method }: ICompileRouteHandlerOptions
     const parameters = getListFromObject<IControllerMethodParameter>(
         method,
         CONTROLLER_METHOD_PARAMETERS,
-        true,
+        false,
         false
     );
     if (parameters.length) {
@@ -101,8 +101,8 @@ function compileRouteHandler({ controller, method }: ICompileRouteHandlerOptions
         const willResponseBeOverwritten = parameters.some((p) => {
             return p.index === 1;
         });
-        const paramCount = Math.max(...parameters.map(p => {
-            return p.index;
+        const paramCount = Math.max(2, ...parameters.map(p => {
+            return p.index + 1;
         }));
 
         const updaters = toParameterValueUpdaters(parameters);
@@ -497,7 +497,7 @@ function createInitControllerMethodAction({
             });
         }
 
-        (server as any)[httpMethod](routerPath, middlewares, createControllerMethodRequestHandler({
+        server[httpMethod](routerPath, middlewares, createControllerMethodRequestHandler({
             "getErrorHandler": () => {
                 return getErrorHandler(controller, server);
             },
@@ -886,7 +886,7 @@ function toParameterValueUpdaters(parameters: IControllerMethodParameter[]): Par
                 args[index] = response;
             });
         }
-        else if (source === "" || source === "url") {
+        else if (["", "url"].includes(source)) {
             updaters.push(async ({ args, request }) => {
                 args[index] = request.params?.[name];
             });

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 import { CONTROLLER_METHOD_PARAMETERS } from "../constants";
-import { ParameterOptions } from "../types";
+import type { ParameterOptions } from "../types";
 import type { IControllerMethodParameter, Nilable } from "../types/internal";
 import { getFunctionParamNames, isNil } from "../utils";
 import { getListFromObject } from "./utils";

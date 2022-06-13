@@ -105,8 +105,8 @@ export function getBufferEncoding(encoding: Nilable<BufferEncoding>): BufferEnco
 }
 
 // s. https://stackoverflow.com/questions/1007981/how-to-get-function-parameter-names-values-dynamically
-export function getFunctionParamNames(func: Function) {
-    let result: Nilable<any[]>;
+export function getFunctionParamNames(func: Function): string[] {
+    let result: Nilable<string[]>;
 
     try {
         const STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;

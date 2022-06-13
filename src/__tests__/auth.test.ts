@@ -26,7 +26,7 @@ const onValidationFailed: AuthValidationFailedHandler = async (request, response
     response.write(errorMessage);
 };
 
-describe("apiKey() middleware", () => {
+describe("auth() middleware", () => {
     ["get", "delete", "options", "patch", "put", "post", "trace"].forEach(method => {
         const methodName = method.toUpperCase();
 
