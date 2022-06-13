@@ -158,4 +158,29 @@ describe("Parameter feature tests (controllers)", () => {
         expect(str.length).toBe(expectedResult.length);
         expect(str).toBe(expectedResult);
     });
+
+    it("should return 200 when do a POST request, submitting valid JSON data, for existing TestParameterController with expected result", async () => {
+        const obj = {
+            "foo": "bar",
+            "buzz": 42
+        };
+
+        const server = createServerAndInitControllers();
+
+        const url = "/test_parameter/body";
+
+        const response = await request(server).post(url)
+            .send(obj)
+            .parse(binaryParser)
+            .expect(200);
+
+        const data = response.body;
+        expect(Buffer.isBuffer(data)).toBe(true);
+
+        const jsonStr = data.toString("utf8");
+        const resultObj = JSON.parse(jsonStr);
+
+        expect(typeof resultObj).toBe("object");
+        expect(resultObj).toEqual(obj);
+    });
 });

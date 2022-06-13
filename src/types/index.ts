@@ -1037,6 +1037,13 @@ export interface IParameterOptions<TSource extends ParameterSource> {
 
 /**
  * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as the current value of `body` property of request context.
+ */
+export interface IParameterOptionsWithBodySource extends IParameterOptions<"body">, IParameterOptionsWithTransformableDataSource {
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
  * the paremeter as from HTTP request header.
  */
 export interface IParameterOptionsWithHeaderSource extends IParameterOptions<"header">, IParameterOptionsWithTransformableDataSource {
@@ -1102,7 +1109,7 @@ export interface IParameterOptionsWithTransformableDataSource {
      * A custom function, which transforms input data
      * to a new format / type.
      */
-    transformTo?: Nilable<ParameterDataTransformerTo>;
+    transformTo?: Nilable<ParameterDataTransformTo>;
 }
 
 /**
@@ -1150,7 +1157,7 @@ export type ParameterArgument2 = ParameterDataTransformer | string;
 /**
  * A possible value for a third argument for `Parameter` decorator.
  */
-export type ParameterArgument3 = ParameterDataTransformerTo;
+export type ParameterArgument3 = ParameterDataTransformTo;
 
 /**
  * A function, which transforms an input parameter value
@@ -1166,6 +1173,7 @@ export type ParameterDataTransformer = (context: IParameterDataTransformerContex
  * Possible option values for `Parameter` decorator.
  */
 export type ParameterOptions =
+    IParameterOptionsWithBodySource |
     IParameterOptionsWithHeaderSource |
     IParameterOptionsWithHeadersSource |
     IParameterOptionsWithQueriesSource |
@@ -1178,12 +1186,13 @@ export type ParameterOptions =
  * A possible value for `transformTo` property of an
  * `IParameterOptionsWithTransformableDataSource` object.
  */
-export type ParameterDataTransformerTo = "bool" | "float" | "int" | "string" | ParameterDataTransformer;
+export type ParameterDataTransformTo = "bool" | "buffer" | "float" | "int" | "string" | ParameterDataTransformer;
 
 /**
  * A possible value for a parameter source.
  */
 export type ParameterSource =
+    "body" |
     "header" |
     "headers" |
     "queries" |

@@ -47,6 +47,7 @@ export abstract class ControllerBase<TApp extends any = IHttpServer> implements 
 }
 
 export * from "./Authorize";
+export * from "./Body";
 export * from "./CONNECT";
 export * from "./Controller";
 export * from "./DELETE";

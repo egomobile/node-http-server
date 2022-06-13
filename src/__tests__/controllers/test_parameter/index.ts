@@ -1,5 +1,4 @@
-import { Controller, IHttpRequest, IHttpResponse, ParameterDataTransformer, ParameterOptions } from "../../..";
-import { ControllerBase, GET, Headers, Parameter, Query, Request, Response, Use } from "../../../controllers";
+import { Body, Controller, ControllerBase, GET, Headers, IHttpRequest, IHttpResponse, Parameter, ParameterDataTransformer, ParameterOptions, POST, Query, Request, Response, text, Use } from "../../..";
 
 interface IMultiHeadersParameter {
     "x-ego-1": string;
@@ -105,8 +104,7 @@ export default class TestParameterController extends ControllerBase {
     @GET({
         "path": "/multi-headers"
     })
-    async testMultiHeaders(
-        request: IHttpRequest, response: IHttpResponse,
+    async testMultiHeaders(@Response() response: IHttpResponse,
         @Headers(headersDataTransformer, "x-ego-1", "x-ego-2", "x-ego-3") headers: IMultiHeadersParameter
     ) {
         let str = `${headers["x-ego-1"]} (${typeof headers["x-ego-1"]})\n`;
@@ -114,5 +112,26 @@ export default class TestParameterController extends ControllerBase {
         str += `${headers["x-ego-3"]} (${typeof headers["x-ego-3"]})\n`;
 
         response.write(str);
+    }
+
+    @POST({
+        "path": "/body",
+        "use": [text()]
+    })
+    async testBody(@Response() response: IHttpResponse,
+        @Body(({ source }) => {
+            return JSON.parse(source);
+        }) body: any
+    ) {
+        const jsonStr = Buffer.from(
+            JSON.stringify(body), "utf8"
+        );
+
+        response.writeHead(200, {
+            "Content-Type": "application/json; charset=UTF-8",
+            "Content-Length": String(jsonStr.length)
+        });
+
+        response.write(jsonStr);
     }
 }

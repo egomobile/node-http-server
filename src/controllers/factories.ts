@@ -22,7 +22,7 @@ import { CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWA
 import { buffer, defaultValidationFailedHandler, json, query, validate } from "../middlewares";
 import { setupSwaggerUIForServerControllers } from "../swagger";
 import { toSwaggerPath } from "../swagger/utils";
-import { AuthorizeArgumentValue, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpResponse, IHttpServer, ImportValues, IParameterOptionsWithHeadersSource, IParameterOptionsWithQueriesSource, ParameterDataTransformer, ParameterDataTransformerTo, ResponseSerializer, ValidationFailedHandler } from "../types";
+import { AuthorizeArgumentValue, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpResponse, IHttpServer, ImportValues, IParameterOptionsWithHeadersSource, IParameterOptionsWithQueriesSource, ParameterDataTransformer, ParameterDataTransformTo, ResponseSerializer, ValidationFailedHandler } from "../types";
 import type { GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable } from "../types/internal";
 import { asAsync, canHttpMethodHandleBodies, getAllClassProps, isClass, isNil, limitToBytes, sortObjectByKeys, walkDirSync } from "../utils";
 import { params } from "../validators/params";
@@ -78,7 +78,7 @@ interface IParameterValueUpdaterContext {
 }
 
 interface IToParameterDataTransformerWithValidatorOptions {
-    transformTo: Nilable<ParameterDataTransformerTo>;
+    transformTo: Nilable<ParameterDataTransformTo>;
 }
 
 interface IUpdateMiddlewaresOptions {
@@ -875,9 +875,19 @@ function toParameterValueUpdaters(parameters: IControllerMethodParameter[]): Par
     parameters.forEach((p) => {
         const { index, name, options } = p;
         const source = options.source?.toLowerCase().trim() ?? "";
-        const transformTo: Nilable<ParameterDataTransformerTo> = (options as any).transformTo;
+        const transformTo: Nilable<ParameterDataTransformTo> = (options as any).transformTo;
 
-        if (source === "header") {
+        if (source === "body") {
+            const transformer = toParameterDataTransformerSafe({ transformTo });
+
+            updaters.push(async ({ args, request, response }) => {
+                args[index] = await transformer({
+                    request, response,
+                    "source": request.body
+                });
+            });
+        }
+        else if (source === "header") {
             const headerName = name.toLowerCase().trim();
 
             const transformer = toParameterDataTransformerSafe({ transformTo });
@@ -980,6 +990,19 @@ function toParameterDataTransformerSafe({
         if (transformTo === "bool") {
             transformer = async ({ source }) => {
                 return Boolean(String(source ?? "").toLowerCase().trim());
+            };
+        }
+        else if (transformTo === "buffer") {
+            transformer = async ({ source }) => {
+                if (Buffer.isBuffer(source)) {
+                    return source;
+                }
+
+                if (isNil(source)) {
+                    return Buffer.alloc(0);
+                }
+
+                return Buffer.from(String(source ?? ""), "utf8");
             };
         }
         else if (transformTo === "int") {
