@@ -2,6 +2,13 @@
 
 ## 0.35.0
 
+- implement decorators to import values into a request handler argument / parameter:
+  - `@Parameter()`: Generic way to import a value
+  - `@Body()`: import [request body](https://egomobile.github.io/node-http-server/interfaces/IHttpRequest.html#body)
+  - `@Headers()`: import [HTTP request headers](https://egomobile.github.io/node-http-server/interfaces/IHttpRequest.html#headers) as key/value pair object
+  - `@Query()`: import [query parameters from URL](https://egomobile.github.io/node-http-server/interfaces/IHttpRequest.html#query) as key/value pair object
+  - `@Request()`: import [request context](https://egomobile.github.io/node-http-server/interfaces/IHttpRequest.html)
+  - `@Response()`: import [response context](https://egomobile.github.io/node-http-server/interfaces/IHttpResponse.html)
 - [HttpPathValidator](https://egomobile.github.io/node-http-server/modules.html#HttpPathValidator) can be asynchronious now
 - fix typings
 - apply new [eslint-config-ego](https://github.com/egomobile/eslint-config-ego) settings
