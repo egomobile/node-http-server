@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 import { CONTROLLER_METHOD_PARAMETERS } from "../constants";
-import type { ParameterOptions } from "../types";
+import type { ParameterArgument1, ParameterArgument2, ParameterDataTransformer, ParameterDataTransformerTo, ParameterOptions } from "../types";
 import type { IControllerMethodParameter, Nilable } from "../types/internal";
 import { getFunctionParamNames, isNil } from "../utils";
 import { getListFromObject } from "./utils";
@@ -32,13 +32,40 @@ import { getListFromObject } from "./utils";
  *
  * @returns {ParameterDecorator} The new decorator function.
  */
-export function Parameter(options?: Nilable<ParameterOptions>): ParameterDecorator {
-    if (isNil(options)) {
+export function Parameter(): ParameterDecorator;
+export function Parameter(name: string): ParameterDecorator;
+export function Parameter(name: string, transformTo: Nilable<ParameterDataTransformerTo>): ParameterDecorator;
+export function Parameter(transformer: ParameterDataTransformer): ParameterDecorator;
+export function Parameter(options: ParameterOptions): ParameterDecorator;
+export function Parameter(arg1?: Nilable<ParameterArgument1>, arg2?: Nilable<ParameterArgument2>): ParameterDecorator {
+    let options: ParameterOptions;
+
+    if (isNil(arg1)) {
         options = {};
+    }
+    else {
+        if (typeof arg1 === "string") {
+            // arg1 => name
+
+            options = {
+                "name": arg1,
+                "transformTo": arg2 as ParameterDataTransformerTo
+            };
+        }
+        else if (typeof arg1 === "function") {
+            // arg1 => transformer
+
+            options = {
+                "transformTo": arg1 as ParameterDataTransformer
+            };
+        }
+        else {
+            options = arg1 as ParameterOptions;
+        }
     }
 
     if (typeof options !== "object") {
-        throw new TypeError("options must be of type object");
+        throw new TypeError("arg1 must be of type object, function or string");
     }
 
     if (!isNil((options as any).name)) {

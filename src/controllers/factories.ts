@@ -102,9 +102,17 @@ function compileRouteHandler({ controller, method }: ICompileRouteHandlerOptions
         const willRequestBeOverwritten = parameters.some((p) => {
             return p.index === 0;
         });
+        const hasRequestImport = parameters.some((p) => {
+            return p.options.source === "request";
+        });
+
         const willResponseBeOverwritten = parameters.some((p) => {
             return p.index === 1;
         });
+        const hasResponseImport = parameters.some((p) => {
+            return p.options.source === "response";
+        });
+
         const paramCount = Math.max(2, ...parameters.map(p => {
             return p.index + 1;
         }));
@@ -127,11 +135,11 @@ function compileRouteHandler({ controller, method }: ICompileRouteHandlerOptions
                 });
             }
 
-            if (willRequestBeOverwritten) {
+            if (!hasResponseImport && willRequestBeOverwritten) {
                 args.push(request);
             }
 
-            if (willResponseBeOverwritten) {
+            if (!hasRequestImport && willResponseBeOverwritten) {
                 args.push(response);
             }
 

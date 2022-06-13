@@ -60,6 +60,8 @@ export * from "./Parameter";
 export * from "./PATCH";
 export * from "./POST";
 export * from "./PUT";
+export * from "./Request";
+export * from "./Response";
 export * from "./Serializer";
 export * from "./TRACE";
 export * from "./Use";

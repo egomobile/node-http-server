@@ -1,13 +1,27 @@
-import { Controller, IHttpRequest, IHttpResponse } from "../../..";
-import { ControllerBase, GET, Parameter } from "../../../controllers";
+import { Controller, IHttpResponse, ParameterOptions } from "../../..";
+import { ControllerBase, GET, Parameter, Request, Response, Use } from "../../../controllers";
+
+const CONTEXT_KEY = Symbol("CONTEXT_KEY");
+
+const testrQueryParamOptions: ParameterOptions = {
+    "source": "query",
+    "transformTo": ({ source }) => {
+        return source.toUpperCase().trim();
+    }
+};
 
 @Controller()
+@Use(async function (request: any, response: any, next) {
+    request[CONTEXT_KEY] = "request";
+    response[CONTEXT_KEY] = "response";
+
+    next();
+})
 export default class TestParameterController extends ControllerBase {
     @GET({
         "path": "/foo/:bar/:buzz"
     })
-    async testUrl(
-        request: IHttpRequest, response: IHttpResponse,
+    async testUrl(@Response() response: IHttpResponse,
         @Parameter() bar: string,
         @Parameter({ "source": "url", "transformTo": "float" }) buzz: number
     ) {
@@ -19,8 +33,7 @@ export default class TestParameterController extends ControllerBase {
     @GET({
         "path": "/bar"
     })
-    async testHeader(
-        request: IHttpRequest, response: IHttpResponse,
+    async testHeader(@Response() response: IHttpResponse,
         @Parameter({ "source": "header", "name": "x-ego-test", "transformTo": "bool" }) egoTest: string
     ) {
         const str = `x-ego-test: ${egoTest} (${typeof egoTest})`;
@@ -31,16 +44,12 @@ export default class TestParameterController extends ControllerBase {
     @GET({
         "path": "/baz"
     })
-    async testQuery(
-        request: IHttpRequest, response: IHttpResponse,
-        @Parameter({
-            "source": "query",
-            "transformTo": ({ source }) => {
-                return source.toUpperCase().trim();
-            }
-        }) testParam: string
+    async testQuery(@Parameter(testrQueryParamOptions) testParam: string,
+        @Request() request: any, @Response() response: any,
     ) {
-        const str = `testParam: ${testParam} (${typeof testParam})`;
+        let str = `testParam: ${testParam} (${typeof testParam})\n`;
+        str += request[CONTEXT_KEY] + "\n";
+        str += response[CONTEXT_KEY] + "\n";
 
         response.write(str);
     }

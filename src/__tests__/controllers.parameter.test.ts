@@ -68,9 +68,13 @@ describe("Parameter feature tests (controllers)", () => {
 
     it("should return 200 when do a GET request, submitting query parameters, for existing TestParameterController with expected result", async () => {
         const testParam = "Marcel Kloubert";
+        const expectedTestParam = testParam.toUpperCase().trim();
 
         const url = `/test_parameter/baz?testParam=${encodeURIComponent(testParam)}`;
-        const expectedResult = `testParam: ${testParam.toUpperCase().trim()} (${typeof testParam})`;
+
+        let expectedResult = `testParam: ${expectedTestParam} (${typeof expectedTestParam})\n`;
+        expectedResult += "request\n";
+        expectedResult += "response\n";
 
         const server = createServerAndInitControllers();
 

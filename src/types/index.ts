@@ -1125,6 +1125,16 @@ export interface ISetupAuthorizeMiddlewareHandlerContext {
 export type NextFunction = (error?: Optional<any>) => void;
 
 /**
+ * A possible value for a first argument for `Parameter` decorator.
+ */
+export type ParameterArgument1 = string | ParameterDataTransformerTo | ParameterOptions;
+
+/**
+ * A possible value for a second argument for `Parameter` decorator.
+ */
+export type ParameterArgument2 = ParameterDataTransformerTo;
+
+/**
  * Possible option values for `Parameter` decorator.
  */
 export type ParameterOptions =
