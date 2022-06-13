@@ -12,7 +12,7 @@ function mw2(request, response, next) {
 
 const app = fastify();
 
-app.register(require('fastify-express')).then(() => {
+app.register(require('@fastify/express')).then(async () => {
     app.use(mw1, mw2);
 
     app.get('/favicon.ico', () => { });
@@ -21,5 +21,7 @@ app.register(require('fastify-express')).then(() => {
         response.send(`User: ${request.params.id}`);
     });
 
-    app.listen(3000);
+    await app.listen({
+        port: 3000
+    });
 });

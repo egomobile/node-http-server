@@ -15,7 +15,7 @@ Machine:
 - MacBook Pro (15-inch, 2018)
 - CPU: 2,9 GHz 6-Core Intel Core i9
 - Memory: 32 GB 2400 MHz DDR4
-- OS: MacOS 12.1
+- OS: MacOS 12.4
 
 #### [Express](https://expressjs.com/)
 
@@ -23,11 +23,11 @@ Machine:
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     6.76ms    1.39ms  40.85ms   86.95%
-    Req/Sec     1.79k   283.21    13.43k    97.00%
-  426942 requests in 30.10s, 62.70MB read
-Requests/sec:  14182.35
-Transfer/sec:      2.08MB
+    Latency     7.18ms    1.34ms  38.68ms   89.35%
+    Req/Sec     1.68k   134.66     1.89k    92.67%
+  401745 requests in 30.01s, 59.00MB read
+Requests/sec:  13385.25
+Transfer/sec:      1.97MB
 ```
 
 #### [fastify](https://github.com/fastify/fastify)
@@ -36,11 +36,11 @@ Transfer/sec:      2.08MB
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     6.28ms    1.57ms  49.39ms   84.69%
-    Req/Sec     1.93k   174.08     2.64k    94.54%
-  460390 requests in 30.03s, 75.52MB read
-Requests/sec:  15332.76
-Transfer/sec:      2.52MB
+    Latency     7.18ms    1.67ms  53.86ms   87.03%
+    Req/Sec     1.69k   153.73     2.30k    96.00%
+  402881 requests in 30.02s, 66.47MB read
+Requests/sec:  13419.19
+Transfer/sec:      2.21MB
 ```
 
 #### [Polka](https://github.com/lukeed/polka)
@@ -49,10 +49,10 @@ Transfer/sec:      2.52MB
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     2.80ms  747.93us  43.11ms   96.48%
-    Req/Sec     4.34k   369.08     6.78k    93.51%
-  1038529 requests in 30.10s, 129.74MB read
-Requests/sec:  34496.92
+    Latency     2.79ms  750.94us  42.69ms   96.96%
+    Req/Sec     4.35k   666.95    32.27k    97.96%
+  1038445 requests in 30.10s, 129.73MB read
+Requests/sec:  34497.68
 Transfer/sec:      4.31MB
 ```
 
@@ -62,9 +62,9 @@ Transfer/sec:      4.31MB
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     2.64ms  684.89us  42.46ms   95.68%
-    Req/Sec     4.59k   420.33     9.18k    94.22%
-  1099166 requests in 30.10s, 137.32MB read
-Requests/sec:  36513.48
-Transfer/sec:      4.56MB
+    Latency     2.54ms  665.16us  40.59ms   95.42%
+    Req/Sec     4.77k   770.79    37.54k    98.63%
+  1140525 requests in 30.10s, 142.49MB read
+Requests/sec:  37892.38
+Transfer/sec:      4.73MB
 ```
