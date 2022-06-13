@@ -42,7 +42,7 @@ import { getListFromObject } from "./utils";
  * }
  * ```
  *
- * @param {string[]} [names] One or more headers to import.
+ * @param {string[]} [names] One or more headers to import. If the list is empty, all parameters are taken.
  * @param {ParameterDataTransformer} [transformer] The custom transformer function to use.
  *
  * @returns {ParameterDecorator} The new decorator function.
