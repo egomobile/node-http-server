@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 // This file is part of the @egomobile/http-server distribution.
 // Copyright (c) Next.e.GO Mobile SE, Aachen, Germany (https://e-go-mobile.com/)
 //
@@ -42,7 +44,6 @@ describe("Parameter feature tests (controllers)", () => {
     });
 
     it("should return 200 when do a GET request, submitting header, for existing TestParameterController with expected result", async () => {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         const egoTest = true;
 
         const url = "/test_parameter/bar";
@@ -79,6 +80,37 @@ describe("Parameter feature tests (controllers)", () => {
         const server = createServerAndInitControllers();
 
         const response = await request(server).get(url)
+            .send()
+            .parse(binaryParser)
+            .expect(200);
+
+        const data = response.body;
+        expect(Buffer.isBuffer(data)).toBe(true);
+
+        const str = data.toString("utf8");
+
+        expect(typeof str).toBe("string");
+        expect(str.length).toBe(expectedResult.length);
+        expect(str).toBe(expectedResult);
+    });
+
+    it("should return 200 when do a GET request, submitting multi headers, for existing TestParameterController with expected result", async () => {
+        const xEgo1 = "Marcel Kloubert";
+        const xEgo2 = 23979;
+        const xEgo3 = true;
+
+        const url = "/test_parameter/buzz";
+
+        let expectedResult = `${xEgo1} (${typeof xEgo1})\n`;
+        expectedResult += `${xEgo2} (${typeof xEgo2})\n`;
+        expectedResult += `${xEgo3} (${typeof xEgo3})\n`;
+
+        const server = createServerAndInitControllers();
+
+        const response = await request(server).get(url)
+            .set("x-ego-1", String(xEgo1))
+            .set("X-Ego-2", String(xEgo2))
+            .set("X-EGO-3", String(xEgo3))
             .send()
             .parse(binaryParser)
             .expect(200);

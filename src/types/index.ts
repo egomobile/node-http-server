@@ -1011,6 +1011,10 @@ export interface IHttpStringBodyParserOptions extends IHttpBodyParserOptions {
  */
 export interface IParameterDataTransformerContext {
     /**
+     * The key inside the source.
+     */
+    key?: Optional<string | symbol>;
+    /**
      * The request context.
      */
     request: IHttpRequest;
@@ -1037,6 +1041,21 @@ export interface IParameterOptionsWithHeaderSource extends IParameterOptionsWith
      * The name of the source.
      */
     source: "header";
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as from one or more HTTP request header.
+ */
+export interface IParameterOptionsWithHeadersSource extends IParameterOptionsWithTransformableDataSource {
+    /**
+     * One or more header names.
+     */
+    names: string[];
+    /**
+     * The name of the source.
+     */
+    source: "headers";
 }
 
 /**
@@ -1139,6 +1158,7 @@ export type ParameterArgument2 = ParameterDataTransformerTo;
  */
 export type ParameterOptions =
     IParameterOptionsWithHeaderSource |
+    IParameterOptionsWithHeadersSource |
     IParameterOptionsWithQuerySource |
     IParameterOptionsWithRequestSource |
     IParameterOptionsWithResponseSource |
