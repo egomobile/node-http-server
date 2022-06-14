@@ -42,7 +42,7 @@ import { getListFromObject, getMethodOrThrow } from "./utils";
  *   @BodyParseErrorHandler()  // mark that method as default
  *                             // parse error handler inside that controller
  *   async handleBodyParseError(error: ParseError, request: IHttpRequest, response: IHttpResponse) {
- *     const errorMessage = Buffer.from('VALIDATION ERROR: ' + error.message, 'utf8')
+ *     const errorMessage = Buffer.from('VALIDATION ERROR: ' + error.innerError?.message, 'utf8')
  *
  *     response.writeHead(400, {
  *       'Content-Length': String(errorMessage.length)
