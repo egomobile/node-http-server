@@ -9,7 +9,7 @@
 - (bug-)fixes
 - code cleanups and improvements
 
-## 0.35.1
+## 0.35.2
 
 - implement decorators to import values into a request handler argument / parameter:
   - `@Parameter()`: Generic way to import a value
