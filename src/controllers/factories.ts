@@ -18,12 +18,12 @@ import { isSchema } from "joi";
 import minimatch from "minimatch";
 import { OpenAPIV3 } from "openapi-types";
 import path from "path";
-import { CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from "../constants";
-import { buffer, defaultValidationFailedHandler, json, query, validate } from "../middlewares";
+import { CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PARSE_ERROR_HANDLER, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from "../constants";
+import { buffer, defaultParseErrorHandler, defaultValidationFailedHandler, json, query, validate } from "../middlewares";
 import { setupSwaggerUIForServerControllers } from "../swagger";
 import { toSwaggerPath } from "../swagger/utils";
 import { AuthorizeArgumentValue, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpResponse, IHttpServer, ImportValues, IParameterOptionsWithHeadersSource, IParameterOptionsWithQueriesSource, IParameterOptionsWithUrlsSource, ParameterDataTransformer, ParameterDataTransformTo, ParameterOptions, ResponseSerializer, ValidationFailedHandler } from "../types";
-import type { GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable, PrepareControllerMethodAction } from "../types/internal";
+import type { GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable, PrepareControllerMethodAction } from "../types/internal";
 import { asAsync, canHttpMethodHandleBodies, createObjectNameListResolver, getAllClassProps, getFunctionParamNames, isClass, isNil, limitToBytes, sortObjectByKeys, urlSearchParamsToObject, walkDirSync } from "../utils";
 import { params } from "../validators/params";
 import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath } from "./utils";
@@ -281,6 +281,12 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
         }
     }
 
+    if (!isNil(decoratorOptions?.onParsingFailed)) {
+        if (typeof decoratorOptions?.onParsingFailed !== "function") {
+            throw new TypeError("decoratorOptions.onParsingFailed must be of type function");
+        }
+    }
+
     if (!isNil(decoratorOptions?.schema)) {
         if (!isSchema(decoratorOptions?.schema)) {
             throw new TypeError("decoratorOptions.schema must be a Joi object");
@@ -372,18 +378,27 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                         const validationErrorHandler =
                             createWrappedValidationErrorHandler(
                                 decoratorOptions?.onValidationFailed ||
-                                (controller as any)[VALIDATION_ERROR_HANDLER]
+                                (controller as any)[VALIDATION_ERROR_HANDLER] ||
+                                globalOptions?.onSchemaValidationFailed
                             ) || defaultValidationFailedHandler;
+
+                        const parseErrorHandler = (
+                            decoratorOptions?.onParsingFailed ||
+                            (controller as any)[PARSE_ERROR_HANDLER] ||
+                            globalOptions?.onParsingFailed
+                        ) || defaultParseErrorHandler;
 
                         const createDataParser: () => HttpMiddleware = isNil(decoratorOptions?.format) ?
                             () => {
                                 return json({
-                                    "limit": decoratorOptions?.limit
+                                    "limit": decoratorOptions?.limit,
+                                    "onParsingFailed": parseErrorHandler
                                 });
                             } :
                             () => {
                                 return createBodyParserMiddlewareByFormat(decoratorOptions?.format || HttpInputDataFormat.JSON, {
-                                    "limit": decoratorOptions?.limit
+                                    "limit": decoratorOptions?.limit,
+                                    "onParsingFailed": parseErrorHandler
                                 });
                             };
 
@@ -864,7 +879,14 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                         });
                     }, true);
 
-                    // schema validators
+                    // parse error handlers
+                    getListFromObject<InitControllerParseErrorHandlerAction>(propValue, SETUP_PARSE_ERROR_HANDLER).forEach((action) => {
+                        action({
+                            controller
+                        });
+                    }, true);
+
+                    // schema validator error handlers
                     getListFromObject<InitControllerValidationErrorHandlerAction>(propValue, SETUP_VALIDATION_ERROR_HANDLER).forEach((action) => {
                         action({
                             controller

@@ -39,7 +39,7 @@ describe("controllers", () => {
         expect(str).toBe(expectedResult);
     });
 
-    it.each(["/test_path_params/foo%20baz", "/test_path_params/foo%20baz/bar"])("should return 200 when do a GET request for existing TestController which uses parameters", async (p) => {
+    it.each(["/test_path_params/foo%20baz", "/test_path_params/foo%20baz/bar"])("should return 200 when do a GET request for existing TestParameterController which uses parameters", async (p) => {
         const expectedResult = "test:" + p + ":foo baz";
 
         const server = createServerAndInitControllers();
@@ -59,7 +59,7 @@ describe("controllers", () => {
         expect(str).toBe(expectedResult);
     });
 
-    it.each(["/test_path_params_via_dirs/foo%20baz", "/test_path_params_via_dirs/foo%20baz/bar"])("should return 200 when do a GET request for existing TestController which uses parameters via directories", async (p) => {
+    it.each(["/test_path_params_via_dirs/foo%20baz", "/test_path_params_via_dirs/foo%20baz/bar"])("should return 200 when do a GET request for existing TestUrlParamsViaDirsController which uses parameters via directories", async (p) => {
         const expectedResult = "test2:" + p + ":foo baz";
 
         const server = createServerAndInitControllers();
@@ -79,7 +79,7 @@ describe("controllers", () => {
         expect(str).toBe(expectedResult);
     });
 
-    it.each(["/test_error_handler"])("should return 400 when do a GET request for existing Test3Controller with custom error handler", async (p) => {
+    it.each(["/test_error_handler"])("should return 400 when do a GET request for existing TestErrorHandlerController with custom error handler", async (p) => {
         const expectedResult = "ERROR: " + p + " Something went wrong!";
 
         const server = createServerAndInitControllers();
@@ -99,7 +99,27 @@ describe("controllers", () => {
         expect(str).toBe(expectedResult);
     });
 
-    it.each(["/test_serializer"])("should return 200 when do a GET request for existing Test4Controller with custom serializer", async (p) => {
+    it.each(["/test_parse_error_handler"])("should return 406 when do a POST request for existing TestParseErrorHandlerController with custom parse error handler", async (p) => {
+        const expectedResult = "ERROR: " + p + " Unexpected end of JSON input";
+
+        const server = createServerAndInitControllers();
+
+        const response = await request(server).post(p)
+            .send("{ \"a :, 12")
+            .parse(binaryParser)
+            .expect(406);
+
+        const data = response.body;
+        expect(Buffer.isBuffer(data)).toBe(true);
+
+        const str = data.toString("utf8");
+
+        expect(typeof str).toBe("string");
+        expect(str.length).toBe(expectedResult.length);
+        expect(str).toBe(expectedResult);
+    });
+
+    it.each(["/test_serializer"])("should return 200 when do a GET request for existing TestSerializerController with custom serializer", async (p) => {
         const expectedObject = {
             "success": true,
             "data": "foo"
@@ -119,7 +139,7 @@ describe("controllers", () => {
         expect(data).toMatchObject(expectedObject);
     });
 
-    it.each(invalidInputData)("should return 400 when do a POST request on /test_schema_validation route for existing Test5Controller with invalid input data", async (data) => {
+    it.each(invalidInputData)("should return 400 when do a POST request on /test_schema_validation route for existing TestSchemaValidationController with invalid input data", async (data) => {
         const server = createServerAndInitControllers();
 
         await request(server).post("/test_schema_validation")
@@ -127,7 +147,7 @@ describe("controllers", () => {
             .expect(400);
     });
 
-    it.each(invalidInputData)("should return 409 when do a POST request on /test_schema_validation route for existing Test5Controller with invalid input data", async (data) => {
+    it.each(invalidInputData)("should return 409 when do a POST request on /test_schema_validation route for existing TestSchemaValidationController with invalid input data", async (data) => {
         const server = createServerAndInitControllers();
 
         await request(server).post("/test_schema_validation/foo")
@@ -161,7 +181,7 @@ describe("controllers", () => {
     }, {
         "path": "foo2",
         "expectedValue": "foo2 === 3"
-    }])("should return 200 when do a GET request for existing Test6Controller with global middlewares", async (item) => {
+    }])("should return 200 when do a GET request for existing TestMiddlewaresController with global middlewares", async (item) => {
         const server = createServerAndInitControllers();
 
         const response = await request(server).get("/test_middlewares/" + item.path)
@@ -179,7 +199,7 @@ describe("controllers", () => {
         expect(str).toBe(item.expectedValue);
     });
 
-    it("should return 200 when do a GET request for existing Test7Controller with import values", async () => {
+    it("should return 200 when do a GET request for existing TestImportsController with import values", async () => {
         const expectedValue = "FOO:(bar string) BAZ:(42 number)";
 
         const server = createServerAndInitControllers();

@@ -323,6 +323,10 @@ export interface IControllerRouteWithBodyOptions extends IControllerRouteOptions
      */
     schema?: Nilable<AnySchema>;
     /**
+     * Custom parse error handler.
+     */
+    onParsingFailed?: Nilable<ParseErrorHandler>;
+    /**
      * Custom schema validation error handler.
      */
     onValidationFailed?: Nilable<ValidationFailedHandler>;
@@ -380,6 +384,14 @@ export interface IControllersOptions {
      * Default value, that indicates, that query parameters should NOT be parsed.
      */
     noQueryParams?: Nilable<boolean>;
+    /**
+     * Default parse error handler.
+     */
+    onParsingFailed?: Nilable<ParseErrorHandler>;
+    /**
+     * Default schema validation error handler.
+     */
+    onSchemaValidationFailed?: Nilable<ValidationFailedHandler>;
     /**
      * The custom file patterns.
      *
@@ -451,6 +463,10 @@ export interface IHttpBodyParserOptions {
      * A custom handler, to tell the client, that the body is too big.
      */
     onLimitReached?: Nilable<HttpRequestHandler>;
+    /**
+     * A custom handler, to tell the client, that the body could not be parsed.
+     */
+    onParsingFailed?: Nilable<ParseErrorHandler>;
 }
 
 /**

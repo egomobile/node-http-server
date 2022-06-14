@@ -73,6 +73,10 @@ export interface IInitControllerMethodSwaggerActionContext {
     controller: IHttpController<IHttpServer>;
 }
 
+export interface IInitControllerParseErrorHandlerActionContext {
+    controller: IHttpController<IHttpServer>;
+}
+
 export interface IInitControllerValidationErrorHandlerActionContext {
     controller: IHttpController<IHttpServer>;
 }
@@ -94,6 +98,8 @@ export type InitControllerImportAction = (context: IInitControllerImportActionCo
 export type InitControllerSerializerAction = (context: IInitControllerSerializerActionContext) => void;
 
 export type InitControllerMethodSwaggerAction = (context: IInitControllerMethodSwaggerActionContext) => void;
+
+export type InitControllerParseErrorHandlerAction = (context: IInitControllerParseErrorHandlerActionContext) => void;
 
 export type InitControllerValidationErrorHandlerAction = (context: IInitControllerValidationErrorHandlerActionContext) => void;
 
