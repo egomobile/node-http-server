@@ -16,8 +16,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { IS_CONTROLLER_CLASS } from '../constants';
-import { isClass } from '../utils';
+import { IS_CONTROLLER_CLASS } from "../constants";
+import { isClass } from "../utils";
 
 /**
  * Marks a class as controller.
@@ -42,7 +42,7 @@ import { isClass } from '../utils';
 export function Controller(): ClassDecorator {
     return function (classFunction: Function) {
         if (!isClass(classFunction)) {
-            throw new TypeError('classFunction must be of type class');
+            throw new TypeError("classFunction must be of type class");
         }
 
         (classFunction.prototype as any)[IS_CONTROLLER_CLASS] = true;

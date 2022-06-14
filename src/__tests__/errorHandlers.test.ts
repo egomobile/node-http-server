@@ -1,25 +1,27 @@
-import { binaryParser, createServer } from './utils';
-import request from 'supertest';
-import { HttpRequestPath, IHttpRequest, IHttpResponse } from '../types';
+import { binaryParser, createServer } from "./utils";
+import request from "supertest";
+import { HttpRequestPath, IHttpRequest, IHttpResponse } from "../types";
 
 const routePaths: HttpRequestPath[] = [
-    '/',
-    (request) => request.url === '/',
+    "/",
+    (request) => {
+        return request.url === "/";
+    },
     /^(\/)$/i
 ];
 
-describe('error handlers', () => {
-    ['delete', 'get', 'options', 'patch', 'put', 'post', 'trace'].forEach(method => {
+describe("error handlers", () => {
+    ["delete", "get", "options", "patch", "put", "post", "trace"].forEach(method => {
         const methodName = method.toUpperCase();
 
         it.each(routePaths)(`should return 500, when do a ${methodName} request with a default error handler`, async (path) => {
             const server = createServer();
 
             (server as any)[method](path, async (request: IHttpRequest, response: IHttpResponse) => {
-                throw new Error('Something, went wrong!');
+                throw new Error("Something, went wrong!");
             });
 
-            const response = await (request(server) as any)[method]('/')
+            const response = await (request(server) as any)[method]("/")
                 .send()
                 .parse(binaryParser)
                 .expect(500);
@@ -33,11 +35,11 @@ describe('error handlers', () => {
             const server = createServer();
 
             (server as any)[method](path, async (request: IHttpRequest, response: IHttpResponse) => {
-                throw new Error('Something, went wrong!');
+                throw new Error("Something, went wrong!");
             });
 
             server.setErrorHandler(async (error, request, response) => {
-                const errorMessage = Buffer.from('SERVER ERROR: ' + String(error));
+                const errorMessage = Buffer.from("SERVER ERROR: " + String(error));
 
                 if (!response.headersSent) {
                     response.writeHead(400);
@@ -47,7 +49,7 @@ describe('error handlers', () => {
                 response.end();
             });
 
-            const response = await (request(server) as any)[method]('/')
+            const response = await (request(server) as any)[method]("/")
                 .send()
                 .parse(binaryParser)
                 .expect(400);
@@ -56,9 +58,9 @@ describe('error handlers', () => {
             expect(Buffer.isBuffer(data)).toBe(true);
             expect(data.length).toBe(43);
 
-            const str: string = data.toString('utf8');
-            expect(typeof str).toBe('string');
-            expect(str).toBe('SERVER ERROR: Error: Something, went wrong!');
+            const str: string = data.toString("utf8");
+            expect(typeof str).toBe("string");
+            expect(str).toBe("SERVER ERROR: Error: Something, went wrong!");
         });
     });
 });

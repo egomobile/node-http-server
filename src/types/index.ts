@@ -13,12 +13,12 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { IncomingMessage, ServerResponse } from 'http';
-import type { AnySchema, ValidationError as JoiValidationError } from 'joi';
-import type { OpenAPIV3 } from 'openapi-types';
-import type { URLSearchParams } from 'url';
-import type { ParseError } from '../errors/parse';
-import type { Nilable, ObjectKey, Optional } from './internal';
+import type { IncomingMessage, ServerResponse } from "http";
+import type { AnySchema, ValidationError as JoiValidationError } from "joi";
+import type { OpenAPIV3 } from "openapi-types";
+import type { URLSearchParams } from "url";
+import type { ParseError } from "../errors/parse";
+import type { Nilable, ObjectKey, Optional, PartialBy } from "./internal";
 
 /**
  * An 'authorize' argument value.
@@ -106,7 +106,7 @@ export type ControllerRoutePath = string;
 /**
  * Base document of an 'IControllersSwaggerOptions' object.
  */
-export type ControllersSwaggerBaseDocument = Pick<Pick<OpenAPIV3.Document, Exclude<keyof OpenAPIV3.Document, 'paths'>>, Exclude<keyof Pick<OpenAPIV3.Document, Exclude<keyof OpenAPIV3.Document, 'paths'>>, 'openapi'>>;
+export type ControllersSwaggerBaseDocument = Pick<Pick<OpenAPIV3.Document, Exclude<keyof OpenAPIV3.Document, "paths">>, Exclude<keyof Pick<OpenAPIV3.Document, Exclude<keyof OpenAPIV3.Document, "paths">>, "openapi">>;
 
 /**
  * Possible values for Swagger options for controllers.
@@ -153,7 +153,7 @@ export enum HttpInputDataFormat {
 /**
  * A possible value for a HTTP method.
  */
-export type HttpMethod = 'connect' | 'delete' | 'get' | 'head' | 'options' | 'patch' | 'post' | 'put' | 'trace';
+export type HttpMethod = "connect" | "delete" | "get" | "head" | "options" | "patch" | "post" | "put" | "trace";
 
 /**
  * A middleware.
@@ -182,9 +182,9 @@ export type HttpOptionsOrMiddlewares = IHttpRequestHandlerOptions | HttpMiddlewa
  *
  * @param {IncomingMessage} request The request context.
  *
- * @returns {boolean} Path does match or not.
+ * @returns {boolean|PromiseLike<boolean>} A value, which indicates, that path does match or not.
  */
-export type HttpPathValidator = (request: IncomingMessage) => boolean;
+export type HttpPathValidator = (request: IncomingMessage) => boolean | PromiseLike<boolean>;
 
 /**
  * A request handler.
@@ -1007,6 +1007,134 @@ export interface IHttpStringBodyParserOptions extends IHttpBodyParserOptions {
 }
 
 /**
+ * Context for an execution of a `ParameterDataTransformer` function.
+ */
+export interface IParameterDataTransformerContext {
+    /**
+     * The key inside the source.
+     */
+    key?: Optional<string | symbol>;
+    /**
+     * The request context.
+     */
+    request: IHttpRequest;
+    /**
+     * The response context.
+     */
+    response: IHttpResponse;
+    /**
+     * The source value.
+     */
+    source: any;
+}
+
+export interface IParameterOptions<TSource extends ParameterSource> {
+    /**
+     * The name of the source.
+     */
+    source: Nilable<TSource>;
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as the current value of `body` property of request context.
+ */
+export interface IParameterOptionsWithBodySource extends IParameterOptions<"body">, IParameterOptionsWithTransformableDataSource {
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as from HTTP request header.
+ */
+export interface IParameterOptionsWithHeaderSource extends IParameterOptions<"header">, IParameterOptionsWithTransformableDataSource {
+    /**
+     * The custom header name.
+     */
+    name?: Nilable<string>;
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as from one or more HTTP request header.
+ */
+export interface IParameterOptionsWithHeadersSource extends IParameterOptions<"headers">, IParameterOptionsWithTransformableDataSource {
+    /**
+     * One or more header names. If not defined, all headers are taken.
+     */
+    names?: Nilable<string[]>;
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as from query search parameter.
+ */
+export interface IParameterOptionsWithQuerySource extends IParameterOptions<"query">, IParameterOptionsWithTransformableDataSource {
+    /**
+     * The custom name of the query parameter.
+     */
+    name?: Nilable<string>;
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as from one or more query parameter.
+ */
+export interface IParameterOptionsWithQueriesSource extends IParameterOptions<"queries">, IParameterOptionsWithTransformableDataSource {
+    /**
+     * One or more query parameter names. If not defined, all parameters are taken.
+     */
+    names?: Nilable<string[]>;
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as the current request context.
+ */
+export interface IParameterOptionsWithRequestSource extends IParameterOptions<"request"> {
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as the current response context.
+ */
+export interface IParameterOptionsWithResponseSource extends IParameterOptions<"response"> {
+}
+
+/**
+ * Base type for options for `Parameter` decorator, which allows to
+ * transform and validate its input data.
+ */
+export interface IParameterOptionsWithTransformableDataSource {
+    /**
+     * A custom function, which transforms input data
+     * to a new format / type.
+     */
+    transformTo?: Nilable<ParameterDataTransformTo>;
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter from URL parameter.
+ */
+export interface IParameterOptionsWithUrlSource extends PartialBy<IParameterOptions<"url">, "source">, IParameterOptionsWithTransformableDataSource {
+    /**
+     * The custom name of the url parameter.
+     */
+    name?: Nilable<string>;
+}
+
+/**
+ * Options for `Parameter` decorator, which defines the source of
+ * the paremeter as from one or more url parameter.
+ */
+export interface IParameterOptionsWithUrlsSource extends IParameterOptions<"urls">, IParameterOptionsWithTransformableDataSource {
+    /**
+     * One or more url parameter names. If not defined, all parameters are taken.
+     */
+    names?: Nilable<string[]>;
+}
+
+/**
  * Context for a 'SetupAuthorizeMiddlewareHandler' function.
  */
 export interface ISetupAuthorizeMiddlewareHandlerContext {
@@ -1026,6 +1154,65 @@ export interface ISetupAuthorizeMiddlewareHandlerContext {
  * @param {Optional<any>} [error] The error, if occurred.
  */
 export type NextFunction = (error?: Optional<any>) => void;
+
+/**
+ * A possible value for a first argument for `Parameter` decorator.
+ */
+export type ParameterArgument1 = ParameterSource | ParameterDataTransformer | ParameterOptions;
+
+/**
+ * A possible value for a second argument for `Parameter` decorator.
+ */
+export type ParameterArgument2 = ParameterDataTransformer | string;
+
+/**
+ * A possible value for a third argument for `Parameter` decorator.
+ */
+export type ParameterArgument3 = ParameterDataTransformTo;
+
+/**
+ * A function, which transforms an input parameter value
+ * into a new one.
+ *
+ * @param {IParameterDataTransformerContext} context The context.
+ *
+ * @returns {any|PromiseLike<any>} The new value or the promise with it.
+ */
+export type ParameterDataTransformer = (context: IParameterDataTransformerContext) => any | PromiseLike<any>;
+
+/**
+ * Possible option values for `Parameter` decorator.
+ */
+export type ParameterOptions =
+    IParameterOptionsWithBodySource |
+    IParameterOptionsWithHeaderSource |
+    IParameterOptionsWithHeadersSource |
+    IParameterOptionsWithQueriesSource |
+    IParameterOptionsWithQuerySource |
+    IParameterOptionsWithRequestSource |
+    IParameterOptionsWithResponseSource |
+    IParameterOptionsWithUrlSource |
+    IParameterOptionsWithUrlsSource;
+
+/**
+ * A possible value for `transformTo` property of an
+ * `IParameterOptionsWithTransformableDataSource` object.
+ */
+export type ParameterDataTransformTo = "bool" | "buffer" | "float" | "int" | "string" | ParameterDataTransformer;
+
+/**
+ * A possible value for a parameter source.
+ */
+export type ParameterSource =
+    "body" |
+    "header" |
+    "headers" |
+    "queries" |
+    "query" |
+    "request" |
+    "response" |
+    "url" |
+    "urls";
 
 /**
  * A handler, that is executed, if data could not be parsed.

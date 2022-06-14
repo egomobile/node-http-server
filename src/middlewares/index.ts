@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpRequestHandler, ParseErrorHandler, ValidationFailedHandler } from '../types';
+import type { HttpRequestHandler, ParseErrorHandler, ValidationFailedHandler } from "../types";
 
 /**
  * Default limit of a body parser: 128 MB
@@ -29,7 +29,7 @@ export const defaultBodyLimit = 134217728;
 export const defaultLimitReachedHandler: HttpRequestHandler = async (request, response) => {
     if (!response.headersSent) {
         response.writeHead(413, {
-            'Content-Length': '0'
+            "Content-Length": "0"
         });
     }
 };
@@ -44,7 +44,7 @@ export const defaultLimitReachedHandler: HttpRequestHandler = async (request, re
 export const defaultParseErrorHandler: ParseErrorHandler = async (error, request, response) => {
     if (!response.headersSent) {
         response.writeHead(400, {
-            'Content-Length': '0'
+            "Content-Length": "0"
         });
     }
 };
@@ -59,7 +59,7 @@ export const defaultParseErrorHandler: ParseErrorHandler = async (error, request
 export const defaultQueryValidationFailedHandler: ValidationFailedHandler = async (error, request, response) => {
     if (!response.headersSent) {
         response.writeHead(400, {
-            'Content-Length': '0'
+            "Content-Length": "0"
         });
     }
 };
@@ -74,21 +74,21 @@ export const defaultQueryValidationFailedHandler: ValidationFailedHandler = asyn
 export const defaultValidationFailedHandler: ValidationFailedHandler = async (error, request, response) => {
     if (!response.headersSent) {
         response.writeHead(400, {
-            'Content-Length': '0'
+            "Content-Length": "0"
         });
     }
 };
 
-export * from './apiKey';
-export * from './auth';
-export * from './basicAuth';
-export * from './buffer';
-export * from './cookies';
-export * from './json';
-export * from './lang';
-export * from './query';
-export * from './text';
-export * from './validate';
-export * from './validateQuery';
-export * from './yaml';
+export * from "./apiKey";
+export * from "./auth";
+export * from "./basicAuth";
+export * from "./buffer";
+export * from "./cookies";
+export * from "./json";
+export * from "./lang";
+export * from "./query";
+export * from "./text";
+export * from "./validate";
+export * from "./validateQuery";
+export * from "./yaml";
 

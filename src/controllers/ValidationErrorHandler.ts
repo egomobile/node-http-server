@@ -16,9 +16,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { SETUP_VALIDATION_ERROR_HANDLER, VALIDATION_ERROR_HANDLER } from '../constants';
-import type { InitControllerValidationErrorHandlerAction } from '../types/internal';
-import { getListFromObject, getMethodOrThrow } from './utils';
+import { SETUP_VALIDATION_ERROR_HANDLER, VALIDATION_ERROR_HANDLER } from "../constants";
+import type { InitControllerValidationErrorHandlerAction } from "../types/internal";
+import { getListFromObject, getMethodOrThrow } from "./utils";
 
 /**
  * Add a method of a controller as an error handler.

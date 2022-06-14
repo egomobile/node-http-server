@@ -13,9 +13,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse } from '../types';
-import type { Nilable } from '../types/internal';
-import { asAsync, isNil } from '../utils';
+import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse } from "../types";
+import type { Nilable } from "../types/internal";
+import { asAsync, isNil } from "../utils";
 
 /**
  * A function, that validates an API key.
@@ -49,7 +49,7 @@ interface ICreateMiddlewareOptions {
 /**
  * The default name of the HTTP header for an API key.
  */
-export const defaultApiKeyHeader = 'x-api-key';
+export const defaultApiKeyHeader = "x-api-key";
 
 /**
  * The default handler, that is invoked, when an API key validation failed.
@@ -60,7 +60,7 @@ export const defaultApiKeyHeader = 'x-api-key';
 export const defaultApiKeyValidationFailedHandler: HttpRequestHandler = async (request, response) => {
     if (!response.headersSent) {
         response.writeHead(401, {
-            'Content-Length': '0'
+            "Content-Length": "0"
         });
     }
 };
@@ -132,33 +132,36 @@ export function apiKey(
     let onValidationFailed: Nilable<HttpRequestHandler>;
     let validator: ApiKeyValidator;
 
-    if (typeof arg1 === 'object') {
+    if (typeof arg1 === "object") {
         // args[0] => IApiKeyOptions
 
         validator = arg1.validator as ApiKeyValidator;
         onValidationFailed = arg1.onValidationFailed;
-    } else if (typeof arg1 === 'string') {
+    }
+    else if (typeof arg1 === "string") {
         // args[0] => string
         // args[1] => string | HttpRequestHandler;
         // args[2] => HttpRequestHandler
 
         let header: Nilable<string>;
 
-        if (typeof arg2 === 'function') {
+        if (typeof arg2 === "function") {
             onValidationFailed = arg2;
-        } else {
+        }
+        else {
             header = arg2;
             onValidationFailed = arg3;
         }
 
         if (!isNil(header)) {
-            if (typeof header !== 'string') {
-                throw new TypeError('header must be of type string');
+            if (typeof header !== "string") {
+                throw new TypeError("header must be of type string");
             }
         }
 
         validator = createApiKeyValidator((header || defaultApiKeyHeader).toLowerCase().trim(), arg1);
-    } else {
+    }
+    else {
         // args[0] => ApiKeyValidator
         // args[1] => HttpRequestHandler
 
@@ -166,19 +169,19 @@ export function apiKey(
         onValidationFailed = arg2 as HttpRequestHandler;
     }
 
-    if (typeof validator !== 'function') {
-        throw new TypeError('validator must be of type function');
+    if (typeof validator !== "function") {
+        throw new TypeError("validator must be of type function");
     }
 
     if (!isNil(onValidationFailed)) {
-        if (typeof onValidationFailed !== 'function') {
-            throw new TypeError('onValidationFailed must be of type function');
+        if (typeof onValidationFailed !== "function") {
+            throw new TypeError("onValidationFailed must be of type function");
         }
     }
 
     return createMiddleware({
-        onValidationFailed: asAsync(onValidationFailed || defaultApiKeyValidationFailedHandler),
-        validator: asAsync(validator)
+        "onValidationFailed": asAsync(onValidationFailed || defaultApiKeyValidationFailedHandler),
+        "validator": asAsync(validator)
     });
 }
 
@@ -187,11 +190,13 @@ function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOp
         let isValid = false;
         try {
             isValid = await validator(request, response);
-        } catch { }
+        }
+        catch { }
 
         if (isValid) {
             next();
-        } else {
+        }
+        else {
             await onValidationFailed(request, response);
 
             response.end();
@@ -200,5 +205,7 @@ function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOp
 }
 
 function createApiKeyValidator(header: string, key: string): ApiKeyValidator {
-    return async (request) => request.headers[header] === key;
+    return async (request) => {
+        return request.headers[header] === key;
+    };
 }

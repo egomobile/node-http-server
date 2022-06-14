@@ -13,12 +13,12 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { IncomingMessage } from 'http';
-import type { HttpPathValidator } from '../types';
-import type { Nullable } from '../types/internal';
-import { getUrlWithoutQuery } from '../utils';
+import type { IncomingMessage } from "http";
+import type { HttpPathValidator } from "../types";
+import type { Nullable } from "../types/internal";
+import { getUrlWithoutQuery } from "../utils";
 
-interface RegexParamResult {
+interface IRegexParamResult {
     keys: string[];
     pattern: RegExp;
 }
@@ -50,15 +50,15 @@ interface RegexParamResult {
  * @returns {HttpPathValidator} The new path validator.
  */
 export function params(path: string): HttpPathValidator {
-    if (typeof path !== 'string') {
-        throw new TypeError('path must be of type string');
+    if (typeof path !== "string") {
+        throw new TypeError("path must be of type string");
     }
 
-    const result: RegexParamResult = parse(path);
+    const result: IRegexParamResult = parse(path);
 
     return (req: IncomingMessage) => {
         try {
-            const url = getUrlWithoutQuery(req.url) || '';
+            const url = getUrlWithoutQuery(req.url) || "";
 
             const params = exec(url, result);
             if (params) {
@@ -66,13 +66,14 @@ export function params(path: string): HttpPathValidator {
 
                 return true;
             }
-        } catch { }
+        }
+        catch { }
 
         return false;
     };
 }
 
-function exec(path: string, result: RegexParamResult): Nullable<Record<string, string>> {
+function exec(path: string, result: IRegexParamResult): Nullable<Record<string, string>> {
     const matches = result.pattern.exec(path);
     if (!matches) {
         return null;
@@ -100,31 +101,33 @@ function exec(path: string, result: RegexParamResult): Nullable<Record<string, s
  *
  * @license MIT
  */
-function parse(str: string): RegexParamResult {
-    let c, o, tmp, ext, keys = [], pattern = '', arr = str.split('/');
+function parse(str: string): IRegexParamResult {
+    let c, o, tmp, ext, keys = [], pattern = "", arr = str.split("/");
     // eslint-disable-next-line no-unused-expressions
     arr[0] || arr.shift();
 
     while (tmp = arr.shift()) {
         c = tmp[0];
-        if (c === '*') {
-            keys.push('wild');
-            pattern += '/(.*)';
-        } else if (c === ':') {
-            o = tmp.indexOf('?', 1);
-            ext = tmp.indexOf('.', 1);
+        if (c === "*") {
+            keys.push("wild");
+            pattern += "/(.*)";
+        }
+        else if (c === ":") {
+            o = tmp.indexOf("?", 1);
+            ext = tmp.indexOf(".", 1);
             keys.push(tmp.substring(1, !!~o ? o : !!~ext ? ext : tmp.length));
-            pattern += !!~o && !~ext ? '(?:/([^/]+?))?' : '/([^/]+?)';
+            pattern += !!~o && !~ext ? "(?:/([^/]+?))?" : "/([^/]+?)";
             if (!!~ext) {
-                pattern += (!!~o ? '?' : '') + '\\' + tmp.substring(ext);
+                pattern += (!!~o ? "?" : "") + "\\" + tmp.substring(ext);
             }
-        } else {
-            pattern += '/' + tmp;
+        }
+        else {
+            pattern += "/" + tmp;
         }
     }
 
     return {
         keys,
-        pattern: new RegExp('^' + pattern + '\/?$', 'i')
+        "pattern": new RegExp("^" + pattern + "\/?$", "i")
     };
 }

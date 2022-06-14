@@ -17,12 +17,12 @@
 
 /// <reference path="../index.d.ts" />
 
-import { createServer as createHttpServer, IncomingMessage, Server, ServerResponse } from 'http';
-import joi from 'joi';
-import { setupHttpServerControllerMethod } from './controllers/factories';
-import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction } from './types';
-import type { GroupedHttpRequestHandlers, Nilable, Optional } from './types/internal';
-import { asAsync, getUrlWithoutQuery, isNil } from './utils';
+import { createServer as createHttpServer, IncomingMessage, Server, ServerResponse } from "http";
+import joi from "joi";
+import { setupHttpServerControllerMethod } from "./controllers/factories";
+import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction } from "./types";
+import type { GroupedHttpRequestHandlers, IRequestHandlerContext, Nilable, Optional } from "./types/internal";
+import { asAsync, getUrlWithoutQuery, isNil } from "./utils";
 
 /**
  * The default HTTP error handler.
@@ -36,7 +36,7 @@ export const defaultHttpErrorHandler: HttpErrorHandler = async (error, request, 
 
     if (!response.headersSent) {
         response.writeHead(500, {
-            'Content-Length': '0'
+            "Content-Length": "0"
         });
     }
 
@@ -52,14 +52,14 @@ export const defaultHttpErrorHandler: HttpErrorHandler = async (error, request, 
 export const defaultHttpNotFoundHandler: HttpNotFoundHandler = async (request, response) => {
     if (!response.headersSent) {
         response.writeHead(404, {
-            'Content-Length': '0'
+            "Content-Length": "0"
         });
     }
 
     response.end();
 };
 
-const supportedHttpMethods = ['CONNECT', 'DELETE', 'GET', 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT', 'TRACE'];
+const supportedHttpMethods = ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE"];
 
 /**
  * Creates a new instance of a HTTP server.
@@ -87,7 +87,9 @@ export const createServer = (): IHttpServer => {
     let instance: Optional<Server>;
     let notFoundHandler: HttpNotFoundHandler = defaultHttpNotFoundHandler;
 
-    const getErrorHandler = () => errorHandler;
+    const getErrorHandler = () => {
+        return errorHandler;
+    };
 
     const groupedHandlers: GroupedHttpRequestHandlers = {};
     let compiledHandlers: GroupedHttpRequestHandlers = groupedHandlers;
@@ -101,17 +103,32 @@ export const createServer = (): IHttpServer => {
 
     const server: IHttpServer = (async (request: IncomingMessage, response: ServerResponse) => {
         try {
-            const context = compiledHandlers[request.method!]?.find(ctx => ctx.isPathValid(request));
+            let context: Optional<IRequestHandlerContext>;
 
-            if (context?.handler) {
+            const methodContextes = compiledHandlers[request.method!];
+            const methodContextCount = methodContextes?.length ?? 0;
+
+            for (let i = 0; i < methodContextCount; i++) {
+                const ctx = methodContextes[i];
+
+                // eslint-disable-next-line @typescript-eslint/await-thenable
+                if (await ctx.isPathValid(request)) {
+                    context = ctx;
+                    break;
+                }
+            }
+
+            if (context) {
                 await context.handler(request as IHttpRequest, response as IHttpResponse);
 
                 context.end(response);
-            } else {
+            }
+            else {
                 notFoundHandler(request, response)
                     .catch(logError);
             }
-        } catch (error) {
+        }
+        catch (error) {
             errorHandler(error, request, response)
                 .catch(logError);
         }
@@ -129,12 +146,12 @@ export const createServer = (): IHttpServer => {
             const path: HttpRequestPath = args[0];
             if (
                 !(
-                    typeof path === 'string' ||
+                    typeof path === "string" ||
                     path instanceof RegExp ||
-                    typeof path === 'function'
+                    typeof path === "function"
                 )
             ) {
-                throw new TypeError('path must be of type string, function or RegExp');
+                throw new TypeError("path must be of type string, function or RegExp");
             }
 
             let optionsOrMiddlewares: Nilable<HttpOptionsOrMiddlewares>;
@@ -142,15 +159,16 @@ export const createServer = (): IHttpServer => {
             if (args.length < 3) {
                 // args[1]: HttpRequestHandler
                 handler = args[1];
-            } else {
+            }
+            else {
                 // args[1]: HttpOptionsOrMiddlewares
                 // args[2]: HttpRequestHandler
                 optionsOrMiddlewares = args[1];
                 handler = args[2];
             }
 
-            if (typeof handler !== 'function') {
-                throw new TypeError('handler must be a function');
+            if (typeof handler !== "function") {
+                throw new TypeError("handler must be a function");
             }
 
             // keep sure to have an async function here
@@ -161,29 +179,36 @@ export const createServer = (): IHttpServer => {
                 if (Array.isArray(optionsOrMiddlewares)) {
                     // list of middlewares
                     options = {
-                        use: optionsOrMiddlewares
+                        "use": optionsOrMiddlewares
                     };
-                } else if (typeof optionsOrMiddlewares === 'function') {
+                }
+                else if (typeof optionsOrMiddlewares === "function") {
                     // single middleware
                     options = {
-                        use: [optionsOrMiddlewares]
+                        "use": [optionsOrMiddlewares]
                     };
-                } else {
+                }
+                else {
                     // options object
                     options = optionsOrMiddlewares;
                 }
-            } else {
+            }
+            else {
                 options = {};
             }
 
-            if (typeof options !== 'object') {
-                throw new TypeError('optionsOrMiddlewares must be an object or array');
+            if (typeof options !== "object") {
+                throw new TypeError("optionsOrMiddlewares must be an object or array");
             }
 
-            const middlewares = options.use?.filter(mw => !!mw);
+            const middlewares = options.use?.filter(mw => {
+                return !!mw;
+            });
             if (middlewares?.length) {
-                if (!middlewares.every(mw => typeof mw === 'function')) {
-                    throw new TypeError('optionsOrMiddlewares.use must be an array of functions');
+                if (!middlewares.every(mw => {
+                    return typeof mw === "function";
+                })) {
+                    throw new TypeError("optionsOrMiddlewares.use must be an array of functions");
                 }
             }
 
@@ -194,25 +219,29 @@ export const createServer = (): IHttpServer => {
 
             // eslint-disable-next-line @typescript-eslint/naming-convention
             const autoEnd = isNil(options.autoEnd) ? true : options.autoEnd;
-            if (typeof autoEnd !== 'boolean') {
-                throw new TypeError('optionsOrMiddlewares.autoEnd must be boolean');
+            if (typeof autoEnd !== "boolean") {
+                throw new TypeError("optionsOrMiddlewares.autoEnd must be boolean");
             }
 
             // path validator
             let isPathValid: HttpPathValidator;
-            if (typeof path === 'function') {
+            if (typeof path === "function") {
                 isPathValid = path;
-            } else if (path instanceof RegExp) {
+            }
+            else if (path instanceof RegExp) {
                 isPathValid = isPathValidByRegex(path);
-            } else {
+            }
+            else {
                 isPathValid = isPathValidByString(path);
             }
 
             groupedHandlers[method].push({
-                end: autoEnd ? endRequest : doNotEndRequest,
+                "end": autoEnd ? endRequest : doNotEndRequest,
                 handler,
-                isPathValid,
-                middlewares: middlewares?.map(mw => asAsync<HttpMiddleware>(mw))
+                "isPathValid": asAsync<HttpPathValidator>(isPathValid),
+                "middlewares": middlewares?.map(mw => {
+                    return asAsync<HttpMiddleware>(mw);
+                })
             });
             recompileHandlers();
 
@@ -228,8 +257,8 @@ export const createServer = (): IHttpServer => {
     };
 
     server.setErrorHandler = (handler) => {
-        if (typeof handler !== 'function') {
-            throw new TypeError('handler must be a function');
+        if (typeof handler !== "function") {
+            throw new TypeError("handler must be a function");
         }
 
         // keep sure to have an async function here
@@ -239,8 +268,8 @@ export const createServer = (): IHttpServer => {
     };
 
     server.setNotFoundHandler = (handler) => {
-        if (typeof handler !== 'function') {
-            throw new TypeError('handler must be a function');
+        if (typeof handler !== "function") {
+            throw new TypeError("handler must be a function");
         }
 
         // keep sure to have an async function here
@@ -250,13 +279,19 @@ export const createServer = (): IHttpServer => {
     };
 
     server.use = (...middlewares: HttpMiddleware[]) => {
-        const moreMiddlewares = middlewares.filter(mw => !!mw);
-        if (!moreMiddlewares.every(mw => typeof mw === 'function')) {
-            throw new TypeError('middlewares must be a list of functions');
+        const moreMiddlewares = middlewares.filter(mw => {
+            return !!mw;
+        });
+        if (!moreMiddlewares.every(mw => {
+            return typeof mw === "function";
+        })) {
+            throw new TypeError("middlewares must be a list of functions");
         }
 
         // keep sure to have an async functions here
-        globalMiddlewares.push(...moreMiddlewares.map(mw => asAsync<HttpMiddleware>(mw)));
+        globalMiddlewares.push(...moreMiddlewares.map(mw => {
+            return asAsync<HttpMiddleware>(mw);
+        }));
 
         recompileHandlers();
 
@@ -264,38 +299,40 @@ export const createServer = (): IHttpServer => {
     };
 
     server.listen = (port?) => {
-        if (typeof port === 'string') {
+        if (typeof port === "string") {
             port = port.trim();
 
             if (port?.length) {
                 port = parseInt(port);
-            } else {
+            }
+            else {
                 port = undefined;
             }
         }
 
         if (isNil(port)) {
-            if (process.env.NODE_ENV?.toLowerCase().trim() === 'development') {
+            if (process.env.NODE_ENV?.toLowerCase().trim() === "development") {
                 port = 8080;
-            } else {
+            }
+            else {
                 port = 80;
             }
         }
 
-        if (typeof port !== 'number' || isNaN(port) || port < 0 || port > 65535) {
-            throw new TypeError('port must be a valid number between 0 and 65535');
+        if (typeof port !== "number" || isNaN(port) || port < 0 || port > 65535) {
+            throw new TypeError("port must be a valid number between 0 and 65535");
         }
 
         return new Promise<void>((resolve, reject) => {
             const newInstance = createHttpServer(server);
 
-            newInstance.once('error', err => {
+            newInstance.once("error", ex => {
                 resetInstance();
 
-                reject(err);
+                reject(ex);
             });
 
-            newInstance.listen(port as number, '0.0.0.0', () => {
+            newInstance.listen(port as number, "0.0.0.0", () => {
                 (server as any).port = port;
 
                 resolve(undefined);
@@ -305,30 +342,37 @@ export const createServer = (): IHttpServer => {
         });
     };
 
-    server.close = () => new Promise((resolve, reject) => {
-        instance!.close(err => {
-            if (err) {
-                reject(err);
-            } else {
-                resetInstance();
+    server.close = () => {
+        return new Promise((resolve, reject) => {
+            instance!.close((ex) => {
+                if (ex) {
+                    reject(ex);
+                }
+                else {
+                    resetInstance();
 
-                resolve(undefined);
-            }
+                    resolve(undefined);
+                }
+            });
         });
-    });
+    };
 
     (server as any).isEgoHttpServer = true;
 
     // server.errorHandler
-    Object.defineProperty(server, 'errorHandler', {
-        enumerable: true,
-        get: () => errorHandler
+    Object.defineProperty(server, "errorHandler", {
+        "enumerable": true,
+        "get": () => {
+            return errorHandler;
+        }
     });
 
     // server.notFoundHandler
-    Object.defineProperty(server, 'notFoundHandler', {
-        enumerable: true,
-        get: () => notFoundHandler
+    Object.defineProperty(server, "notFoundHandler", {
+        "enumerable": true,
+        "get": () => {
+            return notFoundHandler;
+        }
     });
 
     setupHttpServerControllerMethod(server);
@@ -352,18 +396,20 @@ function compileAllWithMiddlewares(
     const compiledHandlers: GroupedHttpRequestHandlers = {};
 
     for (const method in groupedHandlers) {
-        compiledHandlers[method] = groupedHandlers[method].map(ctx => ({
-            end: ctx.end,
-            handler: mergeHandler(
-                ctx.handler,
-                [
-                    ...globalMiddlewares,  // global middles
-                    ...(ctx.middlewares?.length ? ctx.middlewares : [])  // route specific middlewares
-                ],
-                getErrorHandler
-            ),
-            isPathValid: ctx.isPathValid
-        }));
+        compiledHandlers[method] = groupedHandlers[method].map(ctx => {
+            return {
+                "end": ctx.end,
+                "handler": mergeHandler(
+                    ctx.handler,
+                    [
+                        ...globalMiddlewares,  // global middles
+                        ...(ctx.middlewares?.length ? ctx.middlewares : [])  // route specific middlewares
+                    ],
+                    getErrorHandler
+                ),
+                "isPathValid": ctx.isPathValid
+            };
+        });
     }
 
     return compiledHandlers;
@@ -375,16 +421,20 @@ function endRequest(response: ServerResponse) {
     response.end();
 }
 
-function isPathValidByRegex(path: RegExp) {
-    return (req: IncomingMessage) => path.test(getUrlWithoutQuery(req.url)!);
+function isPathValidByRegex(path: RegExp): HttpPathValidator {
+    return async (req: IncomingMessage) => {
+        return path.test(getUrlWithoutQuery(req.url)!);
+    };
 }
 
-function isPathValidByString(path: string) {
-    return (req: IncomingMessage) => getUrlWithoutQuery(req.url) === path;
+function isPathValidByString(path: string): HttpPathValidator {
+    return async (req: IncomingMessage) => {
+        return getUrlWithoutQuery(req.url) === path;
+    };
 }
 
 function logError(error: any) {
-    console.error('[ERROR]', 'HTTP Server:', error);
+    console.error("[ERROR]", "HTTP Server:", error);
 }
 
 function mergeHandler(
@@ -398,9 +448,11 @@ function mergeHandler(
 
     return function (request, response) {
         return new Promise<any>((resolve, reject) => {
-            const handleError = (error: any) => getErrorHandler()(
-                error, request, response
-            );
+            const handleError = (error: any) => {
+                return getErrorHandler()(
+                    error, request, response
+                );
+            };
 
             let i = -1;
 
@@ -413,17 +465,20 @@ function mergeHandler(
                             mw(request, response, next)
                                 .catch(handleError)
                                 .catch(reject);
-                        } else {
+                        }
+                        else {
                             handler(request, response)
                                 .then(resolve)
                                 .catch(handleError)
                                 .catch(reject);
                         }
-                    } else {
+                    }
+                    else {
                         handleError(error)
                             .catch(reject);
                     }
-                } catch (ex) {
+                }
+                catch (ex) {
                     handleError(ex)
                         .catch(reject);
                 }
@@ -449,15 +504,15 @@ export {
     ObjectSchema, PartialSchemaMap, Schema, SchemaFunction, SchemaInternals, SchemaLike,
     SchemaLikeWithoutArray,
     SchemaMap, StrictSchemaMap, StringSchema, SymbolSchema, ValidationError as JoiValidationError
-} from 'joi';
+} from "joi";
 export {
     OpenAPIV3
-} from 'openapi-types';
-export * from './controllers';
-export * from './errors';
-export * from './middlewares';
-export * from './types';
-export * from './validators';
+} from "openapi-types";
+export * from "./controllers";
+export * from "./errors";
+export * from "./middlewares";
+export * from "./types";
+export * from "./validators";
 
 export const schema = joi;
 

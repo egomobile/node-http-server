@@ -13,28 +13,30 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { normalizeRouterPath } from '../controllers/utils';
-import type { HttpPathValidator } from '../types';
-import type { Nilable } from '../types/internal';
-import { isNil } from '../utils';
+import { normalizeRouterPath } from "../controllers/utils";
+import type { HttpPathValidator } from "../types";
+import type { Nilable } from "../types/internal";
+import { isNil } from "../utils";
 
 export function createSwaggerPathValidator(basePath: Nilable<string>): HttpPathValidator {
     basePath = getSwaggerDocsBasePath(basePath);
-    const basePathWithSuffix = basePath + (basePath.endsWith('/') ? '' : '/');
+    const basePathWithSuffix = basePath + (basePath.endsWith("/") ? "" : "/");
 
-    return (request) => request.url === basePath ||
+    return (request) => {
+        return request.url === basePath ||
         !!request.url?.startsWith(basePathWithSuffix);
+    };
 }
 
 export function getSwaggerDocsBasePath(basePath: Nilable<string>): string {
     if (isNil(basePath)) {
-        basePath = '';
+        basePath = "";
     }
 
     basePath = basePath.trim();
 
-    if (basePath === '') {
-        return '/swagger';
+    if (basePath === "") {
+        return "/swagger";
     }
 
     return normalizeRouterPath(basePath);
@@ -43,8 +45,10 @@ export function getSwaggerDocsBasePath(basePath: Nilable<string>): string {
 export function toSwaggerPath(routePath: string): string {
     return normalizeRouterPath(
         normalizeRouterPath(routePath)
-            .split('/')
-            .map(x => x.trimStart().startsWith(':') ? `{${x.substring(1)}}` : x)
-            .join('/')
+            .split("/")
+            .map(x => {
+                return x.trimStart().startsWith(":") ? `{${x.substring(1)}}` : x;
+            })
+            .join("/")
     );
 }

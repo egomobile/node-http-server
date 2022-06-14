@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { IHttpController, IHttpControllerOptions, IHttpServer } from '../types';
+import type { IHttpController, IHttpControllerOptions, IHttpServer } from "../types";
 
 /**
  * A basic controller.
@@ -46,21 +46,28 @@ export abstract class ControllerBase<TApp extends any = IHttpServer> implements 
     public readonly __path: string;
 }
 
-export * from './Authorize';
-export * from './CONNECT';
-export * from './Controller';
-export * from './DELETE';
-export * from './DocumentationUpdater';
-export * from './ErrorHandler';
-export * from './GET';
-export * from './HEAD';
-export * from './Import';
-export * from './OPTIONS';
-export * from './PATCH';
-export * from './POST';
-export * from './PUT';
-export * from './Serializer';
-export * from './TRACE';
-export * from './Use';
-export * from './ValidationErrorHandler';
+export * from "./Authorize";
+export * from "./Body";
+export * from "./CONNECT";
+export * from "./Controller";
+export * from "./DELETE";
+export * from "./DocumentationUpdater";
+export * from "./ErrorHandler";
+export * from "./GET";
+export * from "./HEAD";
+export * from "./Headers";
+export * from "./Import";
+export * from "./OPTIONS";
+export * from "./Parameter";
+export * from "./PATCH";
+export * from "./POST";
+export * from "./PUT";
+export * from "./Query";
+export * from "./Request";
+export * from "./Response";
+export * from "./Serializer";
+export * from "./TRACE";
+export * from "./Url";
+export * from "./Use";
+export * from "./ValidationErrorHandler";
 

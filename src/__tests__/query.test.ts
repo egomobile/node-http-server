@@ -13,27 +13,27 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import request from 'supertest';
-import { query } from '../middlewares';
-import { IHttpRequest, IHttpResponse } from '../types';
-import { binaryParser, createServer } from './utils';
+import request from "supertest";
+import { query } from "../middlewares";
+import { IHttpRequest, IHttpResponse } from "../types";
+import { binaryParser, createServer } from "./utils";
 
-describe('Simple request with url query parameters', () => {
-    ['get', 'delete', 'options', 'patch', 'put', 'post', 'trace'].forEach(method => {
+describe("Simple request with url query parameters", () => {
+    ["get", "delete", "options", "patch", "put", "post", "trace"].forEach(method => {
         const methodName = method.toUpperCase();
 
         it(`should return 200 when do a ${methodName} request with a 'bar' query parameter in URL`, async () => {
-            const expectedResult = 'object:bar=baz zab;baz=null';
+            const expectedResult = "object:bar=baz zab;baz=null";
 
             const server = createServer();
 
-            (server as any)[method]('/foo', [query()], async (req: IHttpRequest, resp: IHttpResponse) => {
+            (server as any)[method]("/foo", [query()], async (req: IHttpRequest, resp: IHttpResponse) => {
                 resp.write(
-                    `${typeof req.query}:bar=${req.query!.get('bar')};baz=${req.query!.get('baz')}`
+                    `${typeof req.query}:bar=${req.query!.get("bar")};baz=${req.query!.get("baz")}`
                 );
             });
 
-            const response = await (request(server) as any)[method]('/foo?bar=baz%20zab')
+            const response = await (request(server) as any)[method]("/foo?bar=baz%20zab")
                 .send()
                 .parse(binaryParser)
                 .expect(200);
@@ -41,9 +41,9 @@ describe('Simple request with url query parameters', () => {
             const data = response.body;
             expect(Buffer.isBuffer(data)).toBe(true);
 
-            const str = data.toString('utf8');
+            const str = data.toString("utf8");
 
-            expect(typeof str).toBe('string');
+            expect(typeof str).toBe("string");
             expect(str.length).toBe(expectedResult.length);
             expect(str).toBe(expectedResult);
         });

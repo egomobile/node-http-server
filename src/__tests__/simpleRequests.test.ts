@@ -13,29 +13,31 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import request from 'supertest';
-import { HttpRequestPath, IHttpRequest, IHttpResponse } from '../types';
-import { binaryParser, createServer } from './utils';
+import request from "supertest";
+import { HttpRequestPath, IHttpRequest, IHttpResponse } from "../types";
+import { binaryParser, createServer } from "./utils";
 
 const routePaths: HttpRequestPath[] = [
-    '/',
-    (request) => request.url === '/',
+    "/",
+    (request) => {
+        return request.url === "/";
+    },
     /^(\/)$/i
 ];
 
-describe('Simple requests with common HTTP methods', () => {
-    ['delete', 'get', 'options', 'patch', 'put', 'post', 'trace'].forEach(method => {
+describe("Simple requests with common HTTP methods", () => {
+    ["delete", "get", "options", "patch", "put", "post", "trace"].forEach(method => {
         const methodName = method.toUpperCase();
 
         it.each(routePaths)(`should return 200 when do a ${methodName} request and send data`, async (path) => {
             const server = createServer();
-            const resultText = 'MK+TM';
+            const resultText = "MK+TM";
 
             (server as any)[method](path, async (req: IHttpRequest, resp: IHttpResponse) => {
                 resp.write(resultText);
             });
 
-            const response = await (request(server) as any)[method]('/')
+            const response = await (request(server) as any)[method]("/")
                 .send()
                 .parse(binaryParser)
                 .expect(200);
@@ -43,9 +45,9 @@ describe('Simple requests with common HTTP methods', () => {
             const data = response.body;
             expect(Buffer.isBuffer(data)).toBe(true);
 
-            const str = data.toString('utf8');
+            const str = data.toString("utf8");
 
-            expect(typeof str).toBe('string');
+            expect(typeof str).toBe("string");
             expect(str.length).toBe(resultText.length);
             expect(str).toBe(resultText);
         });
@@ -57,7 +59,7 @@ describe('Simple requests with common HTTP methods', () => {
                 resp.writeHead(204);
             });
 
-            const response = await (request(server) as any)[method]('/')
+            const response = await (request(server) as any)[method]("/")
                 .send()
                 .parse(binaryParser)
                 .expect(204);
@@ -75,7 +77,7 @@ describe('Simple requests with common HTTP methods', () => {
                 resp.writeHead(204);
             });
 
-            const response = await (request(server) as any)[method]('/foo')
+            const response = await (request(server) as any)[method]("/foo")
                 .send()
                 .parse(binaryParser)
                 .expect(404);
@@ -89,7 +91,7 @@ describe('Simple requests with common HTTP methods', () => {
         it(`should return 404 when do a ${methodName} request and no route is defined`, async () => {
             const server = createServer();
 
-            const response = await (request(server) as any)[method]('/')
+            const response = await (request(server) as any)[method]("/")
                 .send()
                 .parse(binaryParser)
                 .expect(404);

@@ -1,12 +1,12 @@
-import { AuthorizeValidationFailedHandler, Controller, IHttpRequest, IHttpResponse } from '../../../..';
-import { Authorize, ControllerBase, GET } from '../../../../controllers';
+import { AuthorizeValidationFailedHandler, Controller, IHttpRequest, IHttpResponse } from "../../../..";
+import { Authorize, ControllerBase, GET } from "../../../../controllers";
 
 const onValidationFailed: AuthorizeValidationFailedHandler = async (reason, request, response) => {
-    const errorMessage = Buffer.from(String(reason), 'utf-8');
+    const errorMessage = Buffer.from(String(reason), "utf-8");
 
     if (!response.headersSent) {
         response.writeHead(404, {
-            'Content-Length': String(errorMessage.length)
+            "Content-Length": String(errorMessage.length)
         });
     }
 
@@ -14,20 +14,20 @@ const onValidationFailed: AuthorizeValidationFailedHandler = async (reason, requ
 };
 
 @Controller()
-@Authorize('hasRole("user")', onValidationFailed)
+@Authorize("hasRole(\"user\")", onValidationFailed)
 export default class TestAuthorizeFilterExpressionWithCustomErrorsController extends ControllerBase {
     @GET()
     async user(request: IHttpRequest, response: IHttpResponse) {
-        response.write('User');
+        response.write("User");
     }
 
     @GET({
-        authorize: {
+        "authorize": {
             onValidationFailed,
-            validator: 'hasRole("admin")'
+            "validator": "hasRole(\"admin\")"
         }
     })
     async admin(request: IHttpRequest, response: IHttpResponse) {
-        response.write('Admin');
+        response.write("Admin");
     }
 }

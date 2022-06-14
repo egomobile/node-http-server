@@ -16,9 +16,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { DOCUMENTATION_UPDATER, SETUP_DOCUMENTATION_UPDATER } from '../constants';
-import type { InitDocumentationUpdaterAction } from '../types/internal';
-import { getListFromObject, getMethodOrThrow } from './utils';
+import { DOCUMENTATION_UPDATER, SETUP_DOCUMENTATION_UPDATER } from "../constants";
+import type { InitDocumentationUpdaterAction } from "../types/internal";
+import { getListFromObject, getMethodOrThrow } from "./utils";
 
 /**
  * Add a method of a controller as a response serializer.

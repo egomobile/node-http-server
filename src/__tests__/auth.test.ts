@@ -1,46 +1,48 @@
-import request from 'supertest';
-import { auth, AuthValidationFailedHandler } from '../middlewares';
-import { HttpRequestPath, IHttpRequest, IHttpResponse } from '../types';
-import { createServer } from './utils';
+import request from "supertest";
+import { auth, AuthValidationFailedHandler } from "../middlewares";
+import { HttpRequestPath, IHttpRequest, IHttpResponse } from "../types";
+import { createServer } from "./utils";
 
 const routePaths: HttpRequestPath[] = [
-    '/',
-    (request) => request.url === '/',
+    "/",
+    (request) => {
+        return request.url === "/";
+    },
     /^(\/)$/i
 ];
 
-const invalidApiKeyMessage = 'Invalid auth header!';
-const bearer = 'myBearerValue';
+const invalidApiKeyMessage = "Invalid auth header!";
+const bearer = "myBearerValue";
 
 const onValidationFailed: AuthValidationFailedHandler = async (request, response) => {
-    const errorMessage = Buffer.from(invalidApiKeyMessage, 'utf8');
+    const errorMessage = Buffer.from(invalidApiKeyMessage, "utf8");
 
     if (!response.headersSent) {
         response.writeHead(403, {
-            'Content-Length': String(errorMessage.length)
+            "Content-Length": String(errorMessage.length)
         });
     }
 
     response.write(errorMessage);
 };
 
-describe('apiKey() middleware', () => {
-    ['get', 'delete', 'options', 'patch', 'put', 'post', 'trace'].forEach(method => {
+describe("auth() middleware", () => {
+    ["get", "delete", "options", "patch", "put", "post", "trace"].forEach(method => {
         const methodName = method.toUpperCase();
 
         it.each(routePaths)(`should return 204 when send a valid value via Authorization header on a ${methodName} request`, async (path) => {
             const server = createServer();
 
             (server as any)[method](path, [
-                auth('Bearer', bearer)
+                auth("Bearer", bearer)
             ], async (request: IHttpRequest, response: IHttpResponse) => {
                 response.writeHead(204, {
-                    'Content-Type': '0'
+                    "Content-Type": "0"
                 });
             });
 
-            await (request(server) as any)[method]('/')
-                .set('Authorization', 'Bearer ' + bearer)
+            await (request(server) as any)[method]("/")
+                .set("Authorization", "Bearer " + bearer)
                 .send()
                 .expect(204);
         });
@@ -49,15 +51,15 @@ describe('apiKey() middleware', () => {
             const server = createServer();
 
             (server as any)[method](path, [
-                auth('Bearer', bearer)
+                auth("Bearer", bearer)
             ], async (request: IHttpRequest, response: IHttpResponse) => {
                 response.writeHead(204, {
-                    'Content-Type': '0'
+                    "Content-Type": "0"
                 });
             });
 
-            await (request(server) as any)[method]('/')
-                .set('Authorization', 'Bearer ' + bearer + 'FOO')
+            await (request(server) as any)[method]("/")
+                .set("Authorization", "Bearer " + bearer + "FOO")
                 .send()
                 .expect(401);
         });
@@ -66,15 +68,15 @@ describe('apiKey() middleware', () => {
             const server = createServer();
 
             (server as any)[method](path, [
-                auth('Bearer', bearer, onValidationFailed)
+                auth("Bearer", bearer, onValidationFailed)
             ], async (request: IHttpRequest, response: IHttpResponse) => {
                 response.writeHead(204, {
-                    'Content-Type': '0'
+                    "Content-Type": "0"
                 });
             });
 
-            await (request(server) as any)[method]('/')
-                .set('Authorization', 'Bearer ' + bearer + 'FOO')
+            await (request(server) as any)[method]("/")
+                .set("Authorization", "Bearer " + bearer + "FOO")
                 .send()
                 .expect(403);
         });

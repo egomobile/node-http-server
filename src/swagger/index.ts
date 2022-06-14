@@ -13,15 +13,15 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import fs from 'fs';
-import yaml from 'js-yaml';
-import type { OpenAPIV3 } from 'openapi-types';
-import path from 'path';
-import { knownFileMimes } from '../constants';
-import { normalizeRouterPath } from '../controllers/utils';
-import type { IControllersSwaggerOptions, IHttpServer } from '../types';
-import indexHtml from './resources/index_html';
-import { createSwaggerPathValidator, getSwaggerDocsBasePath } from './utils';
+import fs from "fs";
+import yaml from "js-yaml";
+import type { OpenAPIV3 } from "openapi-types";
+import path from "path";
+import { knownFileMimes } from "../constants";
+import { normalizeRouterPath } from "../controllers/utils";
+import type { IControllersSwaggerOptions, IHttpServer } from "../types";
+import swaggerInitializerJs from "./resources/swagger-initializer_js";
+import { createSwaggerPathValidator, getSwaggerDocsBasePath } from "./utils";
 
 export interface ISetupSwaggerUIForServerControllersOptions {
     document: OpenAPIV3.Document;
@@ -29,9 +29,10 @@ export interface ISetupSwaggerUIForServerControllersOptions {
     server: IHttpServer;
 }
 
-const pathToSwaggerUi: string = require('swagger-ui-dist').absolutePath();
+const pathToSwaggerUi: string = require("swagger-ui-dist").absolutePath();
 
-const indexHtmlFilePath = path.join(pathToSwaggerUi, 'index.html');
+const indexHtmlFilePath = path.join(pathToSwaggerUi, "index.html");
+const swaggerInitializerJSFilePath = path.join(pathToSwaggerUi, "swagger-initializer.js");
 
 const { readFile, stat } = fs.promises;
 
@@ -41,23 +42,23 @@ export function setupSwaggerUIForServerControllers({
     options
 }: ISetupSwaggerUIForServerControllersOptions) {
     const basePath = getSwaggerDocsBasePath(options.basePath);
-    const basePathWithSuffix = basePath + (basePath.endsWith('/') ? '' : '/');
+    const basePathWithSuffix = basePath + (basePath.endsWith("/") ? "" : "/");
 
-    const documentJson = Buffer.from(JSON.stringify(document), 'utf8');
-    const documentYAML = Buffer.from(yaml.dump(document), 'utf8');
+    const documentJson = Buffer.from(JSON.stringify(document), "utf8");
+    const documentYAML = Buffer.from(yaml.dump(document), "utf8");
 
     document = JSON.parse(
-        documentJson.toString('utf8')
+        documentJson.toString("utf8")
     );
 
-    const indexHtmlContent = Buffer.from(indexHtml(), 'utf8');
+    const swaggerInitializerJSContent = Buffer.from(swaggerInitializerJs(), "utf8");
 
     server.get(createSwaggerPathValidator(options.basePath), async (request, response) => {
         try {
             if (request.url === basePath) {
                 response.writeHead(301, {
-                    'Content-Length': '0',
-                    Location: basePathWithSuffix
+                    "Content-Length": "0",
+                    "Location": basePathWithSuffix
                 });
 
                 return;
@@ -67,11 +68,11 @@ export function setupSwaggerUIForServerControllers({
             let relativePath = normalizeRouterPath(path.relative(basePath, fileOrDir));
 
             // return as JSON
-            if (['/json', '/json/'].includes(relativePath)) {
+            if (["/json", "/json/"].includes(relativePath)) {
                 response.writeHead(200, {
-                    'Content-Disposition': 'attachment; filename="api-openapi3.json',
-                    'Content-Type': 'application/json; charset=UTF-8',
-                    'Content-Length': String(documentJson.length)
+                    "Content-Disposition": "attachment; filename=\"api-openapi3.json",
+                    "Content-Type": "application/json; charset=UTF-8",
+                    "Content-Length": String(documentJson.length)
                 });
                 response.write(documentJson);
 
@@ -79,11 +80,11 @@ export function setupSwaggerUIForServerControllers({
             }
 
             // return as YAML
-            if (['/yaml', '/yaml/'].includes(relativePath)) {
+            if (["/yaml", "/yaml/"].includes(relativePath)) {
                 response.writeHead(200, {
-                    'Content-Disposition': 'attachment; filename="api-openapi3.yaml',
-                    'Content-Type': 'application/x-yaml; charset=UTF-8',
-                    'Content-Length': String(documentYAML.length)
+                    "Content-Disposition": "attachment; filename=\"api-openapi3.yaml",
+                    "Content-Type": "application/x-yaml; charset=UTF-8",
+                    "Content-Length": String(documentYAML.length)
                 });
                 response.write(documentYAML);
 
@@ -106,29 +107,30 @@ export function setupSwaggerUIForServerControllers({
                         if (fs.existsSync(fullPath)) {
                             existingFile = fullPath;
                         }
-                    } else {
+                    }
+                    else {
                         existingFile = fullPath;
                     }
                 }
 
-                if (fullPath === indexHtmlFilePath) {  // index.html
+                if (fullPath === swaggerInitializerJSFilePath) { // swagger-initializer.js
                     response.writeHead(200, {
-                        'Content-Type': 'text/html; charset=UTF-8',
-                        'Content-Length': String(indexHtmlContent.length)
+                        "Content-Type": "text/javascript; charset=UTF-8",
+                        "Content-Length": String(swaggerInitializerJSContent.length)
                     });
-                    response.write(indexHtmlContent);
+                    response.write(swaggerInitializerJSContent);
 
                     return;
                 }
 
                 if (existingFile) {  // does file exist?
                     const contentType = knownFileMimes[path.extname(existingFile)]
-                        || 'application/octet-stream';
+                        || "application/octet-stream";
                     const content = await readFile(existingFile);
 
                     response.writeHead(200, {
-                        'Content-Type': contentType,
-                        'Content-Length': String(content.length)
+                        "Content-Type": contentType,
+                        "Content-Length": String(content.length)
                     });
                     response.write(content);
 
@@ -138,16 +140,17 @@ export function setupSwaggerUIForServerControllers({
 
             if (!response.headersSent) {
                 response.writeHead(404, {
-                    'Content-Length': '0'
+                    "Content-Length": "0"
                 });
             }
-        } catch (ex) {
-            const errorMessage = Buffer.from(String(ex), 'utf8');
+        }
+        catch (ex) {
+            const errorMessage = Buffer.from(String(ex), "utf8");
 
             if (!response.headersSent) {
                 response.writeHead(500, {
-                    'Content-Length': String(errorMessage.length),
-                    'Content-Type': 'text/plain; charset=UTF-8'
+                    "Content-Length": String(errorMessage.length),
+                    "Content-Type": "text/plain; charset=UTF-8"
                 });
             }
 

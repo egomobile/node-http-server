@@ -1,5 +1,5 @@
-import { Controller, IHttpResponse, NextFunction, Use } from '../../..';
-import { ControllerBase, GET } from '../../../controllers';
+import { Controller, IHttpResponse, NextFunction, Use } from "../../..";
+import { ControllerBase, GET } from "../../../controllers";
 
 @Controller()
 @Use(async (request: any, response: IHttpResponse, next: NextFunction) => {
@@ -8,11 +8,11 @@ import { ControllerBase, GET } from '../../../controllers';
 })
 export default class TestMiddlewaresController extends ControllerBase {
     @GET([async (request: any, response: any, next: NextFunction) => {
-        request.foo += '1';
+        request.foo += "1";
         next();
     }])
     async foo1(request: any, response: IHttpResponse) {
-        response.write('foo1 === ' + request.foo);
+        response.write("foo1 === " + request.foo);
     }
 
     @GET([async (request: any, response: any, next: NextFunction) => {
@@ -20,6 +20,6 @@ export default class TestMiddlewaresController extends ControllerBase {
         next();
     }])
     async foo2(request: any, response: IHttpResponse) {
-        response.write('foo2 === ' + request.foo);
+        response.write("foo2 === " + request.foo);
     }
 }

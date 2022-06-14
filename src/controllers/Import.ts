@@ -1,10 +1,10 @@
 /* eslint-disable unicorn/filename-case */
 /* eslint-disable @typescript-eslint/naming-convention */
 
-import { SETUP_IMPORTS } from '../constants';
-import type { InitControllerImportAction, Nilable, ObjectKey } from '../types/internal';
-import { isNil } from '../utils';
-import { getListFromObject } from './utils';
+import { SETUP_IMPORTS } from "../constants";
+import type { InitControllerImportAction, Nilable, ObjectKey } from "../types/internal";
+import { isNil } from "../utils";
+import { getListFromObject } from "./utils";
 
 /**
  * Imports a value into a property and sets up a getter for this.
@@ -53,8 +53,8 @@ import { getListFromObject } from './utils';
  */
 export function Import(key?: Nilable<ObjectKey>): PropertyDecorator {
     if (!isNil(key)) {
-        if (typeof key !== 'string' && typeof key !== 'symbol') {
-            throw new TypeError('key must be of type string or symbol');
+        if (typeof key !== "string" && typeof key !== "symbol") {
+            throw new TypeError("key must be of type string or symbol");
         }
     }
 
@@ -65,15 +65,15 @@ export function Import(key?: Nilable<ObjectKey>): PropertyDecorator {
             ({ controller, imports }) => {
                 const lazyValue = (imports as any)[valueKey];
 
-                if (typeof lazyValue === 'undefined') {
+                if (typeof lazyValue === "undefined") {
                     throw new TypeError(`Import value ${String(valueKey)} not found`);
                 }
 
                 // setup the property with a getter
                 Object.defineProperty(controller, propertyName, {
-                    enumerable: true,
-                    configurable: true,
-                    get: createGetter(lazyValue)
+                    "enumerable": true,
+                    "configurable": true,
+                    "get": createGetter(lazyValue)
                 });
             }
         );
@@ -81,9 +81,12 @@ export function Import(key?: Nilable<ObjectKey>): PropertyDecorator {
 }
 
 function createGetter(lazyValue: any): () => any {
-    if (typeof lazyValue === 'function') {
+    if (typeof lazyValue === "function") {
         return lazyValue;
     }
-
-    return () => lazyValue;
+    else {
+        return () => {
+            return lazyValue;
+        };
+    }
 }

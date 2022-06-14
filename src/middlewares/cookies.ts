@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { HttpMiddleware } from '../types';
+import type { HttpMiddleware } from "../types";
 
 /**
  * Creates a new middleware that parses submitted cookies
@@ -42,23 +42,28 @@ export function cookies(): HttpMiddleware {
     return async (request, response, next) => {
         request.cookies = {};
 
-        if (typeof request.headers['cookie'] === 'string') {
-            const cookieList = request.headers['cookie']
-                .split(';')
-                .map(c => c.trim())
-                .filter(c => c !== '');
+        if (typeof request.headers["cookie"] === "string") {
+            const cookieList = request.headers["cookie"]
+                .split(";")
+                .map(c => {
+                    return c.trim();
+                })
+                .filter(c => {
+                    return c !== "";
+                });
 
             for (const c of cookieList) {
                 let name: string;
                 let value: string;
 
-                const sep = c.indexOf('=');
+                const sep = c.indexOf("=");
                 if (sep > -1) {
                     name = c.substring(0, sep);
                     value = c.substring(sep + 1);
-                } else {
+                }
+                else {
                     name = c;
-                    value = '';
+                    value = "";
                 }
 
                 request.cookies[name.trim()] = value;

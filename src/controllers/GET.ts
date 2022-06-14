@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable unicorn/filename-case */
+/* eslint-disable @typescript-eslint/naming-convention */
 
 // This file is part of the @egomobile/http-server distribution.
 // Copyright (c) Next.e.GO Mobile SE, Aachen, Germany (https://e-go-mobile.com/)
@@ -16,9 +16,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRoutePath, HttpMiddleware, IControllerRouteOptions, IControllerRouteWithBodyOptions } from '../types';
-import type { Nilable } from '../types/internal';
-import { createHttpMethodDecorator } from './factories';
+import type { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRoutePath, HttpMiddleware, IControllerRouteOptions, IControllerRouteWithBodyOptions } from "../types";
+import type { Nilable } from "../types/internal";
+import { createHttpMethodDecorator } from "./factories";
 
 /**
  * Add a controller method to handle a GET request.
@@ -66,11 +66,11 @@ export function GET(use: HttpMiddleware[]): MethodDecorator;
 export function GET(path: ControllerRoutePath, use?: Nilable<HttpMiddleware[]>): MethodDecorator;
 export function GET(arg1?: Nilable<ControllerRouteArgument1>, arg2?: Nilable<ControllerRouteArgument2>): MethodDecorator {
     return createHttpMethodDecorator({
-        decoratorOptions: {
-            arg1: arg1 as Nilable<ControllerRouteArgument1<IControllerRouteWithBodyOptions>>,
-            arg2: arg2 as Nilable<ControllerRouteArgument2>,
-            arg3: undefined
+        "decoratorOptions": {
+            "arg1": arg1 as Nilable<ControllerRouteArgument1<IControllerRouteWithBodyOptions>>,
+            "arg2": arg2 as Nilable<ControllerRouteArgument2>,
+            "arg3": undefined
         },
-        name: 'get'
+        "name": "get"
     });
 }

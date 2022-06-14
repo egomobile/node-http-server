@@ -16,9 +16,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { CONTROLLER_MIDDLEWARES } from '../constants';
-import type { HttpMiddleware } from '../types';
-import { isClass } from '../utils';
+import { CONTROLLER_MIDDLEWARES } from "../constants";
+import type { HttpMiddleware } from "../types";
+import { isClass } from "../utils";
 
 /**
  * Sets up one or more middlewares for all methods of the underlying controller.
@@ -63,13 +63,15 @@ import { isClass } from '../utils';
  * @returns {ClassDecorator} The new decorator function.
  */
 export function Use(...middlewares: HttpMiddleware[]): ClassDecorator {
-    if (middlewares.some(mw => typeof mw !== 'function')) {
-        throw new TypeError('All items of middlewares must be of type function');
+    if (middlewares.some(mw => {
+        return typeof mw !== "function";
+    })) {
+        throw new TypeError("All items of middlewares must be of type function");
     }
 
     return function (classFunction: Function) {
         if (!isClass(classFunction)) {
-            throw new TypeError('classFunction must be of type class');
+            throw new TypeError("classFunction must be of type class");
         }
 
         const controllerClass: any = classFunction.prototype;

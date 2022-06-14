@@ -1,16 +1,18 @@
-import { binaryParser, createServer } from './utils';
-import request from 'supertest';
-import { HttpRequestPath, IHttpRequest, IHttpResponse } from '../types';
-import { json } from '../middlewares';
+import { binaryParser, createServer } from "./utils";
+import request from "supertest";
+import { HttpRequestPath, IHttpRequest, IHttpResponse } from "../types";
+import { json } from "../middlewares";
 
 const routePaths: HttpRequestPath[] = [
-    '/',
-    (request) => request.url === '/',
+    "/",
+    (request) => {
+        return request.url === "/";
+    },
     /^(\/)$/i
 ];
 
-describe('json() middleware', () => {
-    ['patch', 'put', 'post'].forEach(method => {
+describe("json() middleware", () => {
+    ["patch", "put", "post"].forEach(method => {
         const methodName = method.toUpperCase();
 
         it.each(routePaths)(`should return 200 when do a ${methodName} request with valid JSON data`, async (path) => {
@@ -25,11 +27,11 @@ describe('json() middleware', () => {
             });
 
             const objectToSend = {
-                mk: '23979',
-                tm: 5979
+                "mk": "23979",
+                "tm": 5979
             };
 
-            const response = await (request(server) as any)[method]('/')
+            const response = await (request(server) as any)[method]("/")
                 .send(objectToSend)
                 .parse(binaryParser)
                 .expect(200);
@@ -37,11 +39,11 @@ describe('json() middleware', () => {
             const data = response.body;
             expect(Buffer.isBuffer(data)).toBe(true);
 
-            const str = data.toString('utf8');
+            const str = data.toString("utf8");
 
             const obj = JSON.parse(str);
 
-            expect(typeof obj).toBe('object');
+            expect(typeof obj).toBe("object");
             expect(obj).toEqual(objectToSend);
         });
 
@@ -49,20 +51,20 @@ describe('json() middleware', () => {
             const server = createServer();
 
             const objectToSend = {
-                mk: '23979',
-                tm: 5979
+                "mk": "23979",
+                "tm": 5979
             };
             const objectAsString = JSON.stringify(objectToSend);
 
             (server as any)[method](path, [
-                json({ limit: objectAsString.length - 1 })
+                json({ "limit": objectAsString.length - 1 })
             ], async (request: IHttpRequest, response: IHttpResponse) => {
                 response.write(
                     JSON.stringify(request.body)
                 );
             });
 
-            const response = await (request(server) as any)[method]('/')
+            const response = await (request(server) as any)[method]("/")
                 .send(objectAsString)
                 .parse(binaryParser)
                 .expect(413);
@@ -83,8 +85,8 @@ describe('json() middleware', () => {
                 );
             });
 
-            const response = await (request(server) as any)[method]('/')
-                .send('{ x: \' }')
+            const response = await (request(server) as any)[method]("/")
+                .send("{ x: ' }")
                 .parse(binaryParser)
                 .expect(400);
 
@@ -98,8 +100,8 @@ describe('json() middleware', () => {
 
             (server as any)[method](path, [
                 json({
-                    onParsingFailed: async (error, request, response) => {
-                        const errorMessage = Buffer.from('PARSE ERROR: ' + String(error.innerError));
+                    "onParsingFailed": async (error, request, response) => {
+                        const errorMessage = Buffer.from("PARSE ERROR: " + String(error.innerError));
 
                         if (!response.headersSent) {
                             response.writeHead(402);
@@ -115,17 +117,17 @@ describe('json() middleware', () => {
                 );
             });
 
-            const response = await (request(server) as any)[method]('/')
-                .send('{ x: \' }')
+            const response = await (request(server) as any)[method]("/")
+                .send("{ x: ' }")
                 .parse(binaryParser)
                 .expect(402);
 
             const data = response.body;
             expect(Buffer.isBuffer(data)).toBe(true);
 
-            const str: string = data.toString('utf8');
-            expect(typeof str).toBe('string');
-            expect(str).toBe('PARSE ERROR: SyntaxError: Unexpected token x in JSON at position 2');
+            const str: string = data.toString("utf8");
+            expect(typeof str).toBe("string");
+            expect(str).toBe("PARSE ERROR: SyntaxError: Unexpected token x in JSON at position 2");
         });
     });
 });

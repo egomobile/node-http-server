@@ -1,18 +1,18 @@
-import { Controller, IHttpRequest, IHttpResponse } from '../../..';
-import { Authorize, ControllerBase, GET } from '../../../controllers';
+import { Controller, IHttpRequest, IHttpResponse } from "../../..";
+import { Authorize, ControllerBase, GET } from "../../../controllers";
 
 @Controller()
-@Authorize(['user'])
+@Authorize(["user"])
 export default class TestAuthorizeRoleArrayController extends ControllerBase {
     @GET()
     async user(request: IHttpRequest, response: IHttpResponse) {
-        response.write('User');
+        response.write("User");
     }
 
     @GET({
-        authorize: ['admin']
+        "authorize": ["admin"]
     })
     async admin(request: IHttpRequest, response: IHttpResponse) {
-        response.write('Admin');
+        response.write("Admin");
     }
 }
