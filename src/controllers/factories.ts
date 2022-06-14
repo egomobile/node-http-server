@@ -22,8 +22,8 @@ import { CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWA
 import { buffer, defaultParseErrorHandler, defaultValidationFailedHandler, json, query, validate } from "../middlewares";
 import { setupSwaggerUIForServerControllers } from "../swagger";
 import { toSwaggerPath } from "../swagger/utils";
-import { AuthorizeArgumentValue, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpResponse, IHttpServer, ImportValues, IParameterOptionsWithHeadersSource, IParameterOptionsWithQueriesSource, IParameterOptionsWithUrlsSource, ParameterDataTransformer, ParameterDataTransformTo, ParameterOptions, ResponseSerializer, ValidationFailedHandler } from "../types";
-import type { GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable, PrepareControllerMethodAction } from "../types/internal";
+import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpResponse, IHttpServer, ImportValues, IParameterOptionsWithHeadersSource, IParameterOptionsWithQueriesSource, IParameterOptionsWithUrlsSource, ParameterDataTransformer, ParameterDataTransformTo, ParameterOptions, ResponseSerializer, ValidationFailedHandler } from "../types";
+import type { Func, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable, PrepareControllerMethodAction } from "../types/internal";
 import { asAsync, canHttpMethodHandleBodies, createObjectNameListResolver, getAllClassProps, getFunctionParamNames, isClass, isNil, limitToBytes, sortObjectByKeys, urlSearchParamsToObject, walkDirSync } from "../utils";
 import { params } from "../validators/params";
 import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath } from "./utils";
@@ -50,13 +50,11 @@ export interface ICreateHttpMethodDecoratorOptions {
 }
 
 interface ICreateInitControllerMethodActionOptions {
-    authorizeOption: Nilable<AuthorizeArgumentValue>;
     controllerMethodName: string;
-    controllerRouterPath: Nilable<string>;
+    decoratorOptions: Nilable<IControllerRouteWithBodyOptions>;
     getErrorHandler: GetContollerValue<HttpErrorHandler>;
     httpMethod: HttpMethod;
     middlewares: HttpMiddleware[];
-    serializer: Nilable<ResponseSerializer>;
     updateMiddlewares: (options: IUpdateMiddlewaresOptions) => void;
 }
 
@@ -94,7 +92,7 @@ interface IUpdateMiddlewaresOptions {
 type ParameterValueUpdater = (context: IParameterValueUpdaterContext) => Promise<any>;
 
 function compileRouteHandler({ controller, method }: ICompileRouteHandlerOptions): HttpRequestHandler {
-    const baseMethod = method.bind(controller) as ((...args: any[]) => any);
+    const baseMethod = method.bind(controller) as Func;
 
     const parameters = getListFromObject<IControllerMethodParameter>(
         method,
@@ -315,7 +313,7 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
         if (!httpMethods.includes(options.name)) {
             httpMethods.push(options.name);
         }
-        httpMethods.sort();
+        httpMethods = [...httpMethods].sort();
 
         const middlewares: HttpMiddleware[] = [];
 
@@ -350,9 +348,8 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
 
         getListFromObject<InitControllerMethodAction>(method, INIT_CONTROLLER_METHOD_ACTIONS).push(
             createInitControllerMethodAction({
-                "authorizeOption": decoratorOptions?.authorize,
                 "controllerMethodName": String(methodName).trim(),
-                "controllerRouterPath": decoratorOptions?.path,
+                decoratorOptions,
                 "httpMethod": options.name,
                 middlewares,
                 "getErrorHandler": (controller, server) => {
@@ -360,7 +357,6 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                         (controller as any)[ERROR_HANDLER] ||
                         server.errorHandler;
                 },
-                "serializer": decoratorOptions?.serializer,
                 "updateMiddlewares": ({ controller, globalOptions, middlewares }) => {
                     // use query() middleware?
                     let shouldAddQueryMiddleware = true;
@@ -432,16 +428,18 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
 }
 
 function createInitControllerMethodAction({
-    authorizeOption,
     controllerMethodName,
-    controllerRouterPath,
+    decoratorOptions,
     getErrorHandler,
     httpMethod,
     middlewares,
-    serializer,
     updateMiddlewares
 }: ICreateInitControllerMethodActionOptions): InitControllerMethodAction {
-    return ({ controller, controllerClass, relativeFilePath, method, server, globalOptions }) => {
+    const authorizeOptions = decoratorOptions?.authorize;
+    const controllerRouterPath = decoratorOptions?.path;
+    const serializer = decoratorOptions?.serializer;
+
+    return ({ controller, controllerClass, relativeFilePath, method, server, globalOptions, resolveInfo }) => {
         const dir = path.dirname(relativeFilePath);
         const fileName = path.basename(relativeFilePath, path.extname(relativeFilePath));
 
@@ -504,11 +502,11 @@ function createInitControllerMethodAction({
         // initialize 'authorizers'
         {
             let authorizeInitializers: InitControllerAuthorizeAction[];
-            if (authorizeOption) {
+            if (authorizeOptions) {
                 // method specific one
 
                 authorizeInitializers = [
-                    createInitControllerAuthorizeAction({ "arg": authorizeOption })
+                    createInitControllerAuthorizeAction({ "arg": authorizeOptions })
                 ];
             }
             else {
@@ -528,12 +526,25 @@ function createInitControllerMethodAction({
             });
         }
 
-        server[httpMethod](routerPath, middlewares, createControllerMethodRequestHandler({
+        const requestHandler = createControllerMethodRequestHandler({
             "getErrorHandler": () => {
                 return getErrorHandler(controller, server);
             },
             handler
-        }));
+        });
+
+        server[httpMethod](routerPath, middlewares, requestHandler);
+
+        resolveInfo({
+            "function": method as Func,
+            "handler": requestHandler,
+            "method": httpMethod,
+            middlewares,
+            "name": controllerMethodName,
+            "options": decoratorOptions ?? undefined,
+            "path": routerPath,
+            "serializer": routeSerializer ?? undefined
+        });
     };
 }
 
@@ -846,6 +857,8 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                     // cleanups
                     delete (propValue as any)[CONTROLLER_METHOD_PARAMETERS];
 
+                    const methods: IControllerMethodInfo[] = [];
+
                     // (pre) controller methods
                     getListFromObject<PrepareControllerMethodAction>(propValue, PREPARE_CONTROLLER_METHOD_ACTIONS).forEach(action => {
                         action({
@@ -868,7 +881,10 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                             "method": propValue,
                             "relativeFilePath": cls.file.relativePath,
                             server,
-                            "globalOptions": options
+                            "globalOptions": options,
+                            "resolveInfo": (info) => {
+                                methods.push(info);
+                            }
                         });
                     }, true);
 
@@ -914,12 +930,33 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                             controller
                         });
                     }, true);
+
+                    // tell, that controller method has been initialized
+                    options!.onControllerMethodInitialized?.({
+                        "app": server,
+                        controller,
+                        "controllerClass": cls["class"],
+                        "fullPath": cls.file.fullPath,
+                        "function": propValue as Func,
+                        "methods": methods,
+                        "name": prop,
+                        "relativePath": cls.file.relativePath
+                    });
                 }
             });
 
             newControllersContext.controllers.push({
                 controller,
                 "controllerClass": cls
+            });
+
+            // tell, that controller has been initialized
+            options!.onControllerInitialized?.({
+                "app": server,
+                controller,
+                "controllerClass": cls["class"],
+                "fullPath": cls.file.fullPath,
+                "relativePath": cls.file.relativePath
             });
         });
 
@@ -931,6 +968,12 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
             });
 
             newControllersContext.swagger = swaggerDoc;
+
+            // tell, that Swagger documentation has been initialized
+            options!.onSwaggerInitialized?.({
+                "app": server,
+                "documentation": swaggerDoc
+            });
         }
 
         getListFromObject<IControllerContext>(server, CONTROLLERS_CONTEXES).push(

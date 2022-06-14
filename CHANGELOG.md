@@ -5,7 +5,9 @@
 - implement `@BodyParseErrorHandler()` decorator to handle parse errors in combination with [schema validation, configured by decorators](https://github.com/egomobile/node-http-server/wiki/Controllers#validate-input)
 - add `onParsingFailed` prop to [IControllerRouteWithBodyOptions](https://egomobile.github.io/node-http-server/interfaces/IControllerRouteWithBodyOptions.html) and [IHttpBodyParserOptions](https://egomobile.github.io/node-http-server/interfaces/IHttpBodyParserOptions.html) interfaces
 - add `onParsingFailed` and `onSchemaValidationFailed` prop to [IControllersOptions](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html)
-- fix typos
+- also add `onControllerInitialized`, `onControllerMethodInitialized` and `onSwaggerInitialized` to [IControllersOptions](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html), which can help debugging
+- (bug-)fixes
+- code cleanups and improvements
 
 ## 0.35.0
 

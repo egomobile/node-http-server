@@ -18,7 +18,7 @@ import type { AnySchema, ValidationError as JoiValidationError } from "joi";
 import type { OpenAPIV3 } from "openapi-types";
 import type { URLSearchParams } from "url";
 import type { ParseError } from "../errors/parse";
-import type { Nilable, ObjectKey, Optional, PartialBy } from "./internal";
+import type { Constructor, Func, Nilable, ObjectKey, Optional, PartialBy } from "./internal";
 
 /**
  * An 'authorize' argument value.
@@ -77,6 +77,22 @@ export type AuthorizeValidator = (context: IAuthorizeValidatorContext) => any;
  *  A validator for 'authorize' actions.
  */
 export type AuthorizeValidatorValue = AuthorizeValidator | string;
+
+/**
+ * A function, that is invoked after a controller has been
+ * created, initialized and added to the context.
+ *
+ * @param {IControllerInitializedEventArguments} args The arguments.
+ */
+export type ControllerInitializedEventHandler = (args: IControllerInitializedEventArguments) => any;
+
+/**
+ * A function, that is invoked after a controller method has been
+ * created, initialized and added to the context.
+ *
+ * @param {IControllerMethodInitializedEventArguments} args The arguments.
+ */
+export type ControllerMethodInitializedEventHandler = (args: IControllerMethodInitializedEventArguments) => any;
 
 /**
  * A possible value for a first argument of a HTTP method / controller route decorator
@@ -268,6 +284,108 @@ export interface IAuthorizeValidatorContext {
 }
 
 /**
+ * Options for the first argument of a `ControllerInitializedEventHandler`.
+ */
+export interface IControllerInitializedEventArguments {
+    /**
+     * The underlying server instance.
+     */
+    app: IHttpServer;
+    /**
+     * The underlying controller instance.
+     */
+    controller: any;
+    /**
+     * The class of instance in `controller`.
+     */
+    controllerClass: Constructor<any>;
+    /**
+     * The full path of the underlying file.
+     */
+    fullPath: string;
+    /**
+     * The relative path of the underlying file.
+     */
+    relativePath: string;
+}
+
+/**
+ * Information about a loaded controller method.
+ */
+export interface IControllerMethodInfo {
+    /**
+     * The underlying base function instance.
+     */
+    function: Func;
+    /**
+     * The underlying handler function for the server, which is used at the end.
+     */
+    handler: Func;
+    /**
+     * The underlying http method.
+     */
+    method: HttpMethod;
+    /**
+     * The middlewares.
+     */
+    middlewares: HttpMiddleware[];
+    /**
+     * The name of the method.
+     */
+    name: string;
+    /**
+     * The underlying options.
+     */
+    options: Optional<IControllerRouteOptions | IControllerRouteWithBodyOptions>;
+    /**
+     * The route path.
+     */
+    path: HttpRequestPath;
+    /**
+     * The serializer, if defined.
+     */
+    serializer: Optional<ResponseSerializer>;
+}
+
+/**
+ * Options for the first argument of a `ControllerMethodInitializedEventHandler`.
+ */
+export interface IControllerMethodInitializedEventArguments {
+    /**
+     * The underlying server instance.
+     */
+    app: IHttpServer;
+    /**
+     * The underlying controller instance.
+     */
+    controller: any;
+    /**
+     * The class of instance in `controller`.
+     */
+    controllerClass: Constructor<any>;
+    /**
+     * The full path of the underlying file.
+     */
+    fullPath: string;
+    /**
+     * The underlying method instance.
+     */
+    function: Func;
+    /**
+     * The information about the HTTP methods, which are registrated for this method.
+     */
+    methods: IControllerMethodInfo[];
+    /**
+     * The name of the property inside the class, where `method`is used.
+     */
+    name: string;
+    /**
+     * The relative path of the underlying file.
+     */
+    relativePath: string;
+}
+
+/**
  * Options for a controller route without a body.
  */
 export interface IControllerRouteOptions {
@@ -385,6 +503,16 @@ export interface IControllersOptions {
      */
     noQueryParams?: Nilable<boolean>;
     /**
+     * An optional function, that is invoked after a controller
+     * has been created, initialized and added to the context.
+     */
+    onControllerInitialized?: Nilable<ControllerInitializedEventHandler>;
+    /**
+     * An optional function, that is invoked after a controller method
+     * has been created, initialized and added to the context.
+     */
+    onControllerMethodInitialized?: Nilable<ControllerMethodInitializedEventHandler>;
+    /**
      * Default parse error handler.
      */
     onParsingFailed?: Nilable<ParseErrorHandler>;
@@ -392,6 +520,11 @@ export interface IControllersOptions {
      * Default schema validation error handler.
      */
     onSchemaValidationFailed?: Nilable<ValidationFailedHandler>;
+    /**
+     * An optional function, that is invoked after a Swagger documentation
+     * has been loaded, initialized and added to the context.
+     */
+    onSwaggerInitialized?: Nilable<SwaggerInitializedEventHandler>;
     /**
      * The custom file patterns.
      *
@@ -1165,6 +1298,20 @@ export interface ISetupAuthorizeMiddlewareHandlerContext {
 }
 
 /**
+ * Arguments for a `SwaggerInitializedEventHandler` instance.
+ */
+export interface ISwaggerInitializedEventArguments {
+    /**
+     * The underlying server instance.
+     */
+    app: IHttpServer;
+    /**
+     * The underlying documentation.
+     */
+    documentation: OpenAPIV3.Document;
+}
+
+/**
  * A next function.
  *
  * @param {Optional<any>} [error] The error, if occurred.
@@ -1256,6 +1403,13 @@ export type ResponseSerializer<TResult extends any = any> =
  * @param {ISetupAuthorizeMiddlewareHandlerContext} context The context.
  */
 export type SetupAuthorizeMiddlewareHandler = (context: ISetupAuthorizeMiddlewareHandlerContext) => any;
+
+/**
+ * Is invoked after a Swagger documentation has been loaded, initialized and added to the context.
+ *
+ * @param {ISwaggerInitializedEventArguments} args The arguments.
+ */
+export type SwaggerInitializedEventHandler = (args: ISwaggerInitializedEventArguments) => any;
 
 /**
  * A handler, that is executed, if data is invalid.
