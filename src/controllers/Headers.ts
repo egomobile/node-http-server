@@ -54,14 +54,16 @@ export function Headers(transformer: ParameterDataTransformer, ...names: string[
 export function Headers(...names: string[]): ParameterDecorator;
 export function Headers(transformerOrName: ParameterDataTransformer | string, ...moreNames: string[]): ParameterDecorator {
     const names: string[] = [];
-
     let transformer: Nilable<ParameterDataTransformer>;
-    if (typeof transformerOrName === "function") {
-        transformer = transformerOrName;
-        names.push(...moreNames);
-    }
-    else {
-        names.push(transformerOrName, ...moreNames);
+
+    if (arguments.length > 0) {
+        if (typeof transformerOrName === "function") {
+            transformer = transformerOrName;
+            names.push(...moreNames);
+        }
+        else {
+            names.push(transformerOrName, ...moreNames);
+        }
     }
 
     if (names.some((n) => {
