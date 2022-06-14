@@ -9,7 +9,7 @@
 - (bug-)fixes
 - code cleanups and improvements
 
-## 0.35.0
+## 0.35.1
 
 - implement decorators to import values into a request handler argument / parameter:
   - `@Parameter()`: Generic way to import a value
@@ -23,6 +23,7 @@
 - fix typings
 - apply new [eslint-config-ego](https://github.com/egomobile/eslint-config-ego) settings
 - module requires at least [Node 14+](https://nodejs.org/gl/blog/release/v14.0.0/) now
+- (bug-)fixes
 - `npm update`s
 
 ## 0.34.0
