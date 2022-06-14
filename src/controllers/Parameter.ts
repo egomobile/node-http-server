@@ -57,20 +57,22 @@ export function Parameter(
                 "source": arg1 as ParameterSource
             } as any;
 
-            if (typeof arg2 === "string") {
-                // arg2 => name
-                // arg3 => transformer
+            if (!isNil(arg2)) {
+                if (typeof arg2 === "string") {
+                    // arg2 => name
+                    // arg3 => transformer
 
-                (options as any).name = arg2;
-                (options as any).transformTo = arg3;
-            }
-            else if (typeof arg2 === "function") {
-                // arg2 => transformer
+                    (options as any).name = arg2;
+                    (options as any).transformTo = arg3;
+                }
+                else if (typeof arg2 === "function") {
+                    // arg2 => transformer
 
-                (options as any).transformTo = arg2;
-            }
-            else {
-                throw new TypeError("arg2 must be of type string or function if arg1 is string");
+                    (options as any).transformTo = arg2;
+                }
+                else {
+                    throw new TypeError("arg2 must be of type string or function if arg1 is string");
+                }
             }
         }
         else if (typeof arg1 === "function") {
