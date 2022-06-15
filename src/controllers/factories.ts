@@ -872,6 +872,13 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                         });
                     }, true);
 
+                    // response serializer
+                    getListFromObject<InitControllerSerializerAction>(propValue, SETUP_RESPONSE_SERIALIZER).forEach((action) => {
+                        action({
+                            controller
+                        });
+                    }, true);
+
                     // controller methods
                     getListFromObject<InitControllerMethodAction>(propValue, INIT_CONTROLLER_METHOD_ACTIONS).forEach(action => {
                         action({
@@ -904,13 +911,6 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
 
                     // schema validator error handlers
                     getListFromObject<InitControllerValidationErrorHandlerAction>(propValue, SETUP_VALIDATION_ERROR_HANDLER).forEach((action) => {
-                        action({
-                            controller
-                        });
-                    }, true);
-
-                    // response serializer
-                    getListFromObject<InitControllerSerializerAction>(propValue, SETUP_RESPONSE_SERIALIZER).forEach((action) => {
                         action({
                             controller
                         });
