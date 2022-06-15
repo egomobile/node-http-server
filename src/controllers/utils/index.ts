@@ -18,7 +18,10 @@ import { buffer, IBufferOptions, IJsonOptions, json } from "../../middlewares";
 import { HttpInputDataFormat, HttpMiddleware, IHttpBodyParserOptions } from "../../types";
 import type { Nilable } from "../../types/internal";
 
-export function createBodyParserMiddlewareByFormat(format: HttpInputDataFormat, options?: Nilable<IHttpBodyParserOptions>): HttpMiddleware {
+export function createBodyParserMiddlewareByFormat(
+    format: HttpInputDataFormat,
+    options?: Nilable<IHttpBodyParserOptions>
+): HttpMiddleware {
     switch (format) {
         case HttpInputDataFormat.JSON:
             return json(options as IJsonOptions);

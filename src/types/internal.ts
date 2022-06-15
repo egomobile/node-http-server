@@ -1,8 +1,10 @@
 import type { ServerResponse } from "http";
 import type { OpenAPIV3 } from "openapi-types";
-import type { HttpMiddleware, HttpPathValidator, HttpRequestHandler, IControllersOptions, IHttpController, IHttpServer, ImportValues, ParameterOptions } from ".";
+import type { HttpMiddleware, HttpPathValidator, HttpRequestHandler, IControllerMethodInfo, IControllersOptions, IHttpController, IHttpServer, ImportValues, ParameterOptions } from ".";
 
 export type Constructor<T extends any = any> = (new (...args: any[]) => T);
+
+export type Func = (...args: any[]) => any;
 
 export type GetterFunc<TValue extends any = any> = () => TValue;
 
@@ -49,6 +51,7 @@ export interface IInitControllerMethodActionContext {
     globalOptions: Nilable<IControllersOptions>;
     method: Function;
     relativeFilePath: string;
+    resolveInfo: ResolveControllerMethodInfo;
     server: IHttpServer;
 }
 
@@ -70,6 +73,10 @@ export interface IInitControllerSerializerActionContext {
 
 export interface IInitControllerMethodSwaggerActionContext {
     apiDocument: OpenAPIV3.Document;
+    controller: IHttpController<IHttpServer>;
+}
+
+export interface IInitControllerParseErrorHandlerActionContext {
     controller: IHttpController<IHttpServer>;
 }
 
@@ -95,6 +102,8 @@ export type InitControllerSerializerAction = (context: IInitControllerSerializer
 
 export type InitControllerMethodSwaggerAction = (context: IInitControllerMethodSwaggerActionContext) => void;
 
+export type InitControllerParseErrorHandlerAction = (context: IInitControllerParseErrorHandlerActionContext) => void;
+
 export type InitControllerValidationErrorHandlerAction = (context: IInitControllerValidationErrorHandlerActionContext) => void;
 
 export type InitDocumentationUpdaterAction = (context: IInitDocumentationUpdaterContext) => void;
@@ -107,6 +116,13 @@ export interface IPrepareControllerMethodActionContext {
     method: Function;
     relativeFilePath: string;
     server: IHttpServer;
+}
+
+export interface IRequestHandlerContext {
+    end: (response: ServerResponse) => void;
+    handler: HttpRequestHandler;
+    isPathValid: HttpPathValidator;
+    middlewares?: Nilable<HttpMiddleware[]>;
 }
 
 export interface ISwaggerMethodInfo {
@@ -129,9 +145,4 @@ export type Optional<T extends any = any> = T | undefined;
 // s. https://stackoverflow.com/questions/43159887/make-a-single-property-optional-in-typescript
 export type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>;
 
-export interface IRequestHandlerContext {
-    end: (response: ServerResponse) => void;
-    handler: HttpRequestHandler;
-    isPathValid: HttpPathValidator;
-    middlewares?: Nilable<HttpMiddleware[]>;
-}
+export type ResolveControllerMethodInfo = (info: IControllerMethodInfo) => any;
