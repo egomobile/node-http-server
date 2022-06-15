@@ -6,7 +6,7 @@
 
 > Very fast alternative HTTP server to [Express](http://expressjs.com/), with
 > simple routing and middleware support and which is compatible with
-> [Node.js 12](https://nodejs.org/en/blog/release/v12.0.0/) or later.
+> [Node.js 14](https://nodejs.org/en/blog/release/v14.0.0/) or later.
 
 <a name="toc"></a>
 

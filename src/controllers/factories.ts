@@ -158,7 +158,7 @@ function createControllerMethodRequestHandler({ getErrorHandler, handler }: ICre
 
     return async (request, response) => {
         try {
-            await handler(request, response);
+            return await handler(request, response);
         }
         catch (error) {
             await getErrorHandler()(error, request, response);
