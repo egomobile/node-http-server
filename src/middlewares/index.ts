@@ -13,12 +13,27 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpRequestHandler, ParseErrorHandler, ValidationFailedHandler } from "../types";
+import type { HttpRequestHandler, JsonSchemaValidationFailedHandler, ParseErrorHandler, ValidationFailedHandler } from "../types";
 
 /**
  * Default limit of a body parser: 128 MB
  */
 export const defaultBodyLimit = 134217728;
+
+/**
+ * The default 'parse error' handler.
+ *
+ * @param {IJsonSchemaError[]} errors The error.
+ * @param {IncomingMessage} request The request context.
+ * @param {ServerResponse} response The response context.
+ */
+export const defaultJsonValidationFailedHandler: JsonSchemaValidationFailedHandler = async (errors, request, response) => {
+    if (!response.headersSent) {
+        response.writeHead(400, {
+            "Content-Length": "0"
+        });
+    }
+};
 
 /**
  * The default 'body limit reached' handler.
@@ -50,7 +65,7 @@ export const defaultParseErrorHandler: ParseErrorHandler = async (error, request
 };
 
 /**
- * The default 'parse error' handler.
+ * The default 'query validation error' handler.
  *
  * @param {ParseError} error The error.
  * @param {IncomingMessage} request The request context.
@@ -65,7 +80,7 @@ export const defaultQueryValidationFailedHandler: ValidationFailedHandler = asyn
 };
 
 /**
- * The default 'parse error' handler.
+ * The default 'schema validation error' handler.
  *
  * @param {ParseError} error The error.
  * @param {IncomingMessage} request The request context.
@@ -90,5 +105,6 @@ export * from "./query";
 export * from "./text";
 export * from "./validate";
 export * from "./validateQuery";
+export * from "./validateWithSwagger";
 export * from "./yaml";
 

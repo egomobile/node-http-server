@@ -1142,16 +1142,6 @@ export interface IHttpServer {
 }
 
 /**
- * A list of import values.
- */
-export type ImportValues = Record<ObjectKey, LazyImportValue>;
-
-/**
- * A (lazy) value.
- */
-export type LazyImportValue<T extends any = any> = T | (() => T);
-
-/**
  * Options for a body parser function, that works with string data.
  */
 export interface IHttpStringBodyParserOptions extends IHttpBodyParserOptions {
@@ -1159,6 +1149,33 @@ export interface IHttpStringBodyParserOptions extends IHttpBodyParserOptions {
      * The custom string encoding to use. Default: utf8
      */
     encoding?: Nilable<BufferEncoding>;
+}
+
+/**
+ * A list of import values.
+ */
+export type ImportValues = Record<ObjectKey, LazyImportValue>;
+
+/**
+ * A error item for a `JsonSchemaValidationFailedHandler` handler.
+ */
+export interface IJsonSchemaError {
+    /**
+     * The error code.
+     */
+    errorCode: string;
+    /**
+     * The location.
+     */
+    location: string;
+    /**
+     * The message.
+     */
+    message: string;
+    /**
+     * The path.
+     */
+    path: string;
 }
 
 /**
@@ -1316,6 +1333,20 @@ export interface ISwaggerInitializedEventArguments {
      */
     documentation: OpenAPIV3.Document;
 }
+
+/**
+ * A handler, which is invoked, when a JSON schema validation fails.
+ *
+ * @param {IJsonSchemaError[]} errors The list of errors.
+ * @param {IHttpRequest} request The request context.
+ * @param {IHttpResponse} response The response context.
+ */
+export type JsonSchemaValidationFailedHandler = (errors: IJsonSchemaError[], request: IHttpRequest, response: IHttpResponse) => any;
+
+/**
+ * A (lazy) value.
+ */
+export type LazyImportValue<T extends any = any> = T | (() => T);
 
 /**
  * A next function.
