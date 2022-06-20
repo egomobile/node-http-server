@@ -5,6 +5,7 @@
 - Swagger documents are validated with [openapi-schema-validator module](https://www.npmjs.com/package/openapi-schema-validator) by default now ... this behavior can be changed, updating [validate property](https://egomobile.github.io/node-http-server/interfaces/IControllersSwaggerOptions.html#document)
 - implement `validateWithSwagger()` middleware and its representations inside the controller framework, like [@GET()](https://egomobile.github.io/node-http-server/modules.html#GET) or [@POST()](https://egomobile.github.io/node-http-server/modules.html#POST) decorators
 - code cleanups and improvements
+- (bug-)fixes
 
 ## 0.36.1
 
