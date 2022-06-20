@@ -279,7 +279,7 @@ The module makes use of:
 - [regexparam](https://github.com/lukeed/regexparam) by
   [Luke Edwards](https://github.com/lukeed)
 - [Swagger UI](https://github.com/swagger-api/swagger-ui) and
-  [openapi-types](https://github.com/kogosoftwarellc/open-api)
+  [@open-api](https://github.com/kogosoftwarellc/open-api)
 
 <a name="documentation"></a>
 

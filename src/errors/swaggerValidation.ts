@@ -13,19 +13,20 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { GetStatusCodeFromError } from "../types";
-
 /**
- * The default handler, that returns the HTTP status code by error object.
- *
- * @returns {number} 500
+ * Describes an Swagger validation error.
  */
-export const defaultGetStatusCodeFromError: GetStatusCodeFromError = () => {
-    return 500;
-};
-
-export * from "./authorize";
-export * from "./entityTooLarge";
-export * from "./parse";
-export * from "./swaggerValidation";
-
+export class SwaggerValidationError extends Error {
+    /**
+     * Initializes a new instance of that class.
+     *
+     * @param {string} [message] The custom message.
+     * @param {any} [innerError] The inner error.
+     */
+    public constructor(
+        message?: string,
+        public readonly innerError?: any
+    ) {
+        super(message);
+    }
+}

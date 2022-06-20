@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.37.0
+
+- Swagger documents are validated with [openapi-schema-validator module](https://www.npmjs.com/package/openapi-schema-validator) by default now ... this behavior can be changed, updating [validate property](https://egomobile.github.io/node-http-server/interfaces/IControllersSwaggerOptions.html#document)
+
 ## 0.36.1
 
 - implement `@BodyParseErrorHandler()` decorator to handle parse errors in combination with [schema validation, configured by decorators](https://github.com/egomobile/node-http-server/wiki/Controllers#validate-input)

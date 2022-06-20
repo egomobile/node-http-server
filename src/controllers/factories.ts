@@ -16,9 +16,11 @@
 import fs from "fs";
 import { isSchema } from "joi";
 import minimatch from "minimatch";
+import OpenAPISchemaValidator from "openapi-schema-validator";
 import { OpenAPIV3 } from "openapi-types";
 import path from "path";
 import { CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PARSE_ERROR_HANDLER, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from "../constants";
+import { SwaggerValidationError } from "../errors";
 import { buffer, defaultParseErrorHandler, defaultValidationFailedHandler, json, query, validate } from "../middlewares";
 import { setupSwaggerUIForServerControllers } from "../swagger";
 import { toSwaggerPath } from "../swagger/utils";
@@ -961,6 +963,25 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
         });
 
         if (swagger) {
+            const shouldValidate = isNil(swagger.validate) ? true : !!swagger.validate;
+
+            if (shouldValidate) {
+                const validationResult = new OpenAPISchemaValidator({
+                    "version": 3
+                }).validate(swaggerDoc);
+
+                if (validationResult.errors?.length) {
+                    const message = validationResult.errors.map((error) => {
+                        return `[${error.instancePath}] '${error.message}'`;
+                    }).join("\n");
+
+                    throw new SwaggerValidationError(
+                        message,
+                        validationResult.errors
+                    );
+                }
+            }
+
             setupSwaggerUIForServerControllers({
                 server,
                 "document": swaggerDoc,

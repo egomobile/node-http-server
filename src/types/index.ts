@@ -553,6 +553,12 @@ export interface IControllersSwaggerOptions {
      * The base document.
      */
     document: ControllersSwaggerBaseDocument;
+    /**
+     * Validate output document or not.
+     *
+     * @default true
+     */
+    validate?: Nilable<boolean>;
 }
 
 /**
