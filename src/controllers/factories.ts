@@ -19,16 +19,15 @@ import minimatch from "minimatch";
 import OpenAPISchemaValidator from "openapi-schema-validator";
 import { OpenAPIV3 } from "openapi-types";
 import path from "path";
-import { CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, DOCUMENTATION_UPDATER, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PARSE_ERROR_HANDLER, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, SWAGGER_METHOD_INFO, VALIDATION_ERROR_HANDLER } from "../constants";
+import { CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER } from "../constants";
 import { SwaggerValidationError } from "../errors";
-import { buffer, defaultParseErrorHandler, defaultValidationFailedHandler, json, query, validate } from "../middlewares";
+import { buffer, query } from "../middlewares";
 import { setupSwaggerUIForServerControllers } from "../swagger";
-import { toSwaggerPath } from "../swagger/utils";
-import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, DocumentationUpdaterHandler, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpRequest, IHttpResponse, IHttpServer, ImportValues, IParameterOptionsWithHeadersSource, IParameterOptionsWithQueriesSource, IParameterOptionsWithUrlsSource, ParameterDataTransformer, ParameterDataTransformTo, ParameterOptions, ResponseSerializer, ValidationFailedHandler } from "../types";
-import type { Func, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, ISwaggerMethodInfo, Nilable, PrepareControllerMethodAction } from "../types/internal";
-import { asAsync, canHttpMethodHandleBodies, createObjectNameListResolver, getAllClassProps, getFunctionParamNames, isClass, isNil, limitToBytes, sortObjectByKeys, urlSearchParamsToObject, walkDirSync } from "../utils";
+import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ParameterOptions, ResponseSerializer } from "../types";
+import type { Func, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, Nilable, PrepareControllerMethodAction } from "../types/internal";
+import { asAsync, canHttpMethodHandleBodies, getAllClassProps, getFunctionParamNames, isClass, isNil, limitToBytes, walkDirSync } from "../utils";
 import { params } from "../validators/params";
-import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath } from "./utils";
+import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath, setupMiddlewaresByJoiSchema, setupMiddlewaresBySwaggerDocumentation, setupSwaggerDocumentation, toParameterValueUpdaters } from "./utils";
 
 type GetContollerValue<TValue extends any = any> = (controller: IHttpController, server: IHttpServer) => TValue;
 
@@ -60,12 +59,6 @@ interface ICreateInitControllerMethodActionOptions {
     updateMiddlewares: (options: IUpdateMiddlewaresOptions) => void;
 }
 
-interface ICreateInitControllerMethodSwaggerActionOptions {
-    doc: OpenAPIV3.OperationObject;
-    method: Function;
-    methodName: string | symbol;
-}
-
 export interface ICreateParameterDecoratorOptions {
     options: ParameterOptions;
 }
@@ -75,23 +68,11 @@ interface ICreateRequestHandlerWithSerializerOptions {
     serializer: ResponseSerializer;
 }
 
-interface IParameterValueUpdaterContext {
-    args: any[];
-    request: IHttpRequest;
-    response: IHttpResponse;
-}
-
-interface IToParameterDataTransformerWithValidatorOptions {
-    transformTo: Nilable<ParameterDataTransformTo>;
-}
-
 interface IUpdateMiddlewaresOptions {
     controller: IHttpController<IHttpServer>;
     globalOptions: Nilable<IControllersOptions>;
     middlewares: HttpMiddleware[];
 }
-
-type ParameterValueUpdater = (context: IParameterValueUpdaterContext) => Promise<any>;
 
 function compileRouteHandler({ controller, method }: ICompileRouteHandlerOptions): HttpRequestHandler {
     const baseMethod = method.bind(controller) as Func;
@@ -305,6 +286,12 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
         }
     }
 
+    if (!isNil(decoratorOptions?.onValidationWithDocumentationFailed)) {
+        if (typeof decoratorOptions?.onValidationWithDocumentationFailed !== "function") {
+            throw new TypeError("decoratorOptions.onValidationWithDocumentationFailed must be of type function");
+        }
+    }
+
     return function (target, methodName, descriptor) {
         const method = getMethodOrThrow(descriptor);
 
@@ -369,44 +356,22 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                         shouldAddQueryMiddleware = !decoratorOptions?.noQueryParams;
                     }
 
-                    // schema?
-                    if (decoratorOptions?.schema) {
-                        throwIfOptionsIncompatibleWithHTTPMethod();
+                    // Joi schema?
+                    setupMiddlewaresByJoiSchema({
+                        controller,
+                        decoratorOptions,
+                        globalOptions,
+                        middlewares,
+                        throwIfOptionsIncompatibleWithHTTPMethod
+                    });
 
-                        const validationErrorHandler =
-                            createWrappedValidationErrorHandler(
-                                decoratorOptions?.onValidationFailed ||
-                                (controller as any)[VALIDATION_ERROR_HANDLER] ||
-                                globalOptions?.onSchemaValidationFailed
-                            ) || defaultValidationFailedHandler;
-
-                        const parseErrorHandler = (
-                            decoratorOptions?.onParsingFailed ||
-                            (controller as any)[PARSE_ERROR_HANDLER] ||
-                            globalOptions?.onParsingFailed
-                        ) || defaultParseErrorHandler;
-
-                        const createDataParser: () => HttpMiddleware = isNil(decoratorOptions?.format) ?
-                            () => {
-                                return json({
-                                    "limit": decoratorOptions?.limit,
-                                    "onParsingFailed": parseErrorHandler
-                                });
-                            } :
-                            () => {
-                                return createBodyParserMiddlewareByFormat(decoratorOptions?.format || HttpInputDataFormat.JSON, {
-                                    "limit": decoratorOptions?.limit,
-                                    "onParsingFailed": parseErrorHandler
-                                });
-                            };
-
-                        middlewares.push(
-                            createDataParser(),
-                            validate(decoratorOptions.schema, {
-                                "onValidationFailed": validationErrorHandler
-                            })
-                        );
-                    }
+                    // Swagger documentation
+                    setupMiddlewaresBySwaggerDocumentation({
+                        decoratorOptions,
+                        globalOptions,
+                        middlewares,
+                        throwIfOptionsIncompatibleWithHTTPMethod
+                    });
 
                     if (shouldAddQueryMiddleware) {
                         middlewares.unshift(query());  // add query parser to beginning
@@ -415,17 +380,11 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
             })
         );
 
-        if (decoratorOptions?.documentation) {
-            getListFromObject<InitControllerMethodSwaggerAction>(method, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS).push(
-                createInitControllerMethodSwaggerAction({
-                    "doc": JSON.parse(
-                        JSON.stringify(decoratorOptions.documentation)
-                    ),
-                    method,
-                    methodName
-                })
-            );
-        }
+        setupSwaggerDocumentation({
+            decoratorOptions,
+            method,
+            methodName
+        });
     };
 }
 
@@ -550,57 +509,6 @@ function createInitControllerMethodAction({
     };
 }
 
-function createInitControllerMethodSwaggerAction({ doc, method, methodName }: ICreateInitControllerMethodSwaggerActionOptions): InitControllerMethodSwaggerAction {
-    return ({ apiDocument, controller }) => {
-        const info: ISwaggerMethodInfo = {
-            doc,
-            method
-        };
-
-        (method as any)[SWAGGER_METHOD_INFO] = info;
-
-        const routerPaths: Nilable<string[]> = (method as any)[ROUTER_PATHS];
-        if (routerPaths?.length) {
-            const httpMethods: Nilable<HttpMethod[]> = (method as any)[HTTP_METHODS];
-
-            let paths = apiDocument.paths!;
-
-            if (httpMethods?.length) {
-                routerPaths.forEach(routerPath => {
-                    const swaggerPath = toSwaggerPath(routerPath);
-
-                    httpMethods!.forEach(httpMethod => {
-                        let pathObj: any = paths[swaggerPath];
-                        if (!pathObj) {
-                            pathObj = {};
-                        }
-
-                        let methodObj: any = pathObj[httpMethod];
-                        if (methodObj) {
-                            throw new Error(`Cannot reset documentation for route ${routerPath} (${httpMethod.toUpperCase()})`);
-                        }
-
-                        const docUpdater: Nilable<DocumentationUpdaterHandler> = (controller as any)[DOCUMENTATION_UPDATER];
-                        if (docUpdater) {
-                            docUpdater({
-                                "documentation": doc,
-                                "method": httpMethod.toUpperCase() as Uppercase<HttpMethod>,
-                                "path": routerPath
-                            });
-                        }
-
-                        pathObj[httpMethod] = doc;
-
-                        paths[swaggerPath] = sortObjectByKeys(pathObj);
-                    });
-                });
-            }
-
-            apiDocument.paths = sortObjectByKeys(paths);
-        }
-    };
-}
-
 export function createParameterDecorator({
     options
 }: ICreateParameterDecoratorOptions): ParameterDecorator {
@@ -637,20 +545,6 @@ function createRequestHandlerWithSerializer({ handler, serializer }: ICreateRequ
             await handler(request, response),
             request, response
         );
-    };
-}
-
-function createWrappedValidationErrorHandler(handler: Nilable<ValidationFailedHandler>): Nilable<ValidationFailedHandler> {
-    if (isNil(handler)) {
-        return handler;
-    }
-
-    handler = asAsync<ValidationFailedHandler>(handler);
-
-    return async (error, request, response) => {
-        await handler!(error, request, response);
-
-        response.end();
     };
 }
 
@@ -714,17 +608,32 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
             }
         }
 
-        const swaggerDoc: OpenAPIV3.Document = {
-            ...(swagger?.document ? swagger.document : {
-                "info": {
-                    "title": "OpenAPI documentation with @egomobile/http-server by e.GO Mobile",
-                    "version": "0.0.1"
-                }
-            }),
+        const onControllerInitialized = options.onControllerInitialized;
+        if (!isNil(onControllerInitialized)) {
+            if (typeof onControllerInitialized !== "function") {
+                throw new TypeError("options.onControllerInitialized must be of type function");
+            }
+        }
 
-            "openapi": "3.0.3",
-            "paths": {}
-        };
+        const onControllerMethodInitialized = options.onControllerMethodInitialized;
+        if (!isNil(onControllerMethodInitialized)) {
+            if (typeof onControllerMethodInitialized !== "function") {
+                throw new TypeError("options.onControllerMethodInitialized must be of type function");
+            }
+        }
+
+        const onSwaggerInitialized = options.onSwaggerInitialized;
+        if (!isNil(onSwaggerInitialized)) {
+            if (typeof onSwaggerInitialized !== "function") {
+                throw new TypeError("options.onSwaggerInitialized must be of type function");
+            }
+        }
+
+        if (!isNil(options.onValidationWithDocumentationFailed)) {
+            if (typeof options.onValidationWithDocumentationFailed !== "function") {
+                throw new TypeError("options.onValidationWithDocumentationFailed must be of type function");
+            }
+        }
 
         let rootDir: string;
         if (isNil(options.rootDir)) {
@@ -769,6 +678,18 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
         })) {
             throw new TypeError("All elements of options.patterns must be of type string");
         }
+
+        const swaggerDoc: OpenAPIV3.Document = {
+            ...(swagger?.document ? swagger.document : {
+                "info": {
+                    "title": "OpenAPI documentation with @egomobile/http-server by e.GO Mobile",
+                    "version": "0.0.1"
+                }
+            }),
+
+            "openapi": "3.0.3",
+            "paths": {}
+        };
 
         const minimatchOpts: minimatch.IOptions = {
             "dot": false,
@@ -934,7 +855,7 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                     }, true);
 
                     // tell, that controller method has been initialized
-                    options!.onControllerMethodInitialized?.({
+                    onControllerMethodInitialized?.({
                         "app": server,
                         controller,
                         "controllerClass": cls["class"],
@@ -953,7 +874,7 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
             });
 
             // tell, that controller has been initialized
-            options!.onControllerInitialized?.({
+            onControllerInitialized?.({
                 "app": server,
                 controller,
                 "controllerClass": cls["class"],
@@ -991,7 +912,7 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
             newControllersContext.swagger = swaggerDoc;
 
             // tell, that Swagger documentation has been initialized
-            options!.onSwaggerInitialized?.({
+            onSwaggerInitialized?.({
                 "app": server,
                 "documentation": swaggerDoc
             });
@@ -1003,194 +924,4 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
 
         return server;
     };
-}
-
-function toParameterValueUpdaters(parameters: IControllerMethodParameter[]): ParameterValueUpdater[] {
-    const updaters: ParameterValueUpdater[] = [];
-
-    parameters.forEach((p) => {
-        const { index, name, options } = p;
-        const source = options.source?.toLowerCase().trim() ?? "";
-        const transformTo: Nilable<ParameterDataTransformTo> = (options as any).transformTo;
-
-        if (source === "body") {
-            const transformer = toParameterDataTransformerSafe({ transformTo });
-
-            updaters.push(async ({ args, request, response }) => {
-                args[index] = await transformer({
-                    request, response,
-                    "source": request.body
-                });
-            });
-        }
-        else if (source === "header") {
-            const headerName = name.toLowerCase().trim();
-
-            const transformer = toParameterDataTransformerSafe({ transformTo });
-
-            updaters.push(async ({ args, request, response }) => {
-                args[index] = await transformer({
-                    request, response,
-                    "source": request.headers[headerName]
-                });
-            });
-        }
-        else if (source === "headers") {
-            const headerNames: string[] = ((options as IParameterOptionsWithHeadersSource).names ?? [])
-                .map((name) => {
-                    return name.toLowerCase().trim();
-                });
-
-            const getNames = createObjectNameListResolver(headerNames);
-            const transformer = toParameterDataTransformerSafe({ transformTo });
-
-            updaters.push(async ({ args, request, response }) => {
-                const headers: any = {};
-                for (const key of getNames(request.headers)) {
-                    headers[key] = await transformer({
-                        key,
-                        request, response,
-                        "source": request.headers[key]
-                    });
-                }
-
-                args[index] = headers;
-            });
-        }
-        else if (source === "queries") {
-            const queryParamNames: string[] = [
-                ...((options as IParameterOptionsWithQueriesSource).names ?? [])
-            ];
-
-            const getNames = createObjectNameListResolver(queryParamNames);
-            const transformer = toParameterDataTransformerSafe({ transformTo });
-
-            updaters.push(async ({ args, request, response }) => {
-                const queryParams: any = urlSearchParamsToObject(request.query);
-
-                const query: any = {};
-                for (const key of getNames(queryParams)) {
-                    query[key] = await transformer({
-                        key,
-                        request, response,
-                        "source": queryParams![key]
-                    });
-                }
-
-                args[index] = query;
-            });
-        }
-        else if (source === "query") {
-            const transformer = toParameterDataTransformerSafe({ transformTo });
-
-            updaters.push(async ({ args, request, response }) => {
-                args[index] = await transformer({
-                    request, response,
-                    "source": request.query?.get(name)
-                });
-            });
-        }
-        else if (source === "request") {
-            updaters.push(async ({ args, request }) => {
-                args[index] = request;
-            });
-        }
-        else if (source === "response") {
-            updaters.push(async ({ args, response }) => {
-                args[index] = response;
-            });
-        }
-        else if (source === "urls") {
-            const urlParamNames: string[] = [
-                ...((options as IParameterOptionsWithUrlsSource).names ?? [])
-            ];
-
-            const getNames = createObjectNameListResolver(urlParamNames);
-            const transformer = toParameterDataTransformerSafe({ transformTo });
-
-            updaters.push(async ({ args, request, response }) => {
-                const params: any = {};
-                for (const key of getNames(request.params)) {
-                    params[key] = await transformer({
-                        key,
-                        request, response,
-                        "source": request.params![key]
-                    });
-                }
-
-                args[index] = params;
-            });
-        }
-        else if (["", "url"].includes(source)) {
-            const transformer = toParameterDataTransformerSafe({ transformTo });
-
-            updaters.push(async ({ args, request, response }) => {
-                args[index] = await transformer({
-                    request, response,
-                    "source": request.params?.[name]
-                });
-            });
-        }
-        else {
-            throw new TypeError(`Source of type ${source} is not supported`);
-        }
-    });
-
-    return updaters;
-}
-
-function toParameterDataTransformerSafe({
-    transformTo
-}: IToParameterDataTransformerWithValidatorOptions): ParameterDataTransformer {
-    let transformer: Nilable<ParameterDataTransformer>;
-
-    if (isNil(transformTo)) {
-        transformer = async ({ source }) => {
-            return source;
-        };
-    }
-    else {
-        if (transformTo === "bool") {
-            transformer = async ({ source }) => {
-                return Boolean(String(source ?? "").toLowerCase().trim());
-            };
-        }
-        else if (transformTo === "buffer") {
-            transformer = async ({ source }) => {
-                if (Buffer.isBuffer(source)) {
-                    return source;
-                }
-
-                if (isNil(source)) {
-                    return Buffer.alloc(0);
-                }
-
-                return Buffer.from(String(source ?? ""), "utf8");
-            };
-        }
-        else if (transformTo === "int") {
-            transformer = async ({ source }) => {
-                return parseInt(String(source ?? "").trim());
-            };
-        }
-        else if (transformTo === "float") {
-            transformer = async ({ source }) => {
-                return parseFloat(String(source ?? "").trim());
-            };
-        }
-        else if (transformTo === "string") {
-            transformer = async ({ source }) => {
-                return String(source ?? "");
-            };
-        }
-        else if (typeof transformTo === "function") {
-            transformer = transformTo;
-        }
-    }
-
-    if (typeof transformer !== "function") {
-        throw new TypeError("transformTo must be of type function or a valid constant");
-    }
-
-    return asAsync<ParameterDataTransformer>(transformer);
 }

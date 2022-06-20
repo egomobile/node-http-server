@@ -406,6 +406,10 @@ export interface IControllerRouteOptions {
      */
     onError?: Nilable<HttpErrorHandler>;
     /**
+     * The handler, that is executed, when object validation with Swagger documentation failed.
+     */
+    onValidationWithDocumentationFailed?: Nilable<JsonSchemaValidationFailedHandler>;
+    /**
      * The custom path.
      */
     path?: Nilable<ControllerRoutePath>;
@@ -417,6 +421,12 @@ export interface IControllerRouteOptions {
      * One or more middlewares for the route.
      */
     use?: Nilable<HttpMiddleware | HttpMiddleware[]>;
+    /**
+     * Validate request data with schema in `documentation` or not.
+     *
+     * @default false
+     */
+    validateWithDocumentation?: Nilable<boolean>;
 }
 
 /**
@@ -526,6 +536,10 @@ export interface IControllersOptions {
      */
     onSwaggerInitialized?: Nilable<SwaggerInitializedEventHandler>;
     /**
+     * The default handler, that is executed, when object validation with Swagger documentation failed.
+     */
+    onValidationWithDocumentationFailed?: Nilable<JsonSchemaValidationFailedHandler>;
+    /**
      * The custom file patterns.
      *
      * @see https://www.npmjs.com/package/minimatch
@@ -539,6 +553,13 @@ export interface IControllersOptions {
      * Options to setup Swagger UI.
      */
     swagger?: Nilable<ControllersSwaggerOptionsValue>;
+    /**
+     * Default, which indicates, to validate request data with schema in `documentation` prop
+     * of a request decorator like `@GET()` or `@POST()` or not.
+     *
+     * @default false
+     */
+    validateWithDocumentation?: Nilable<boolean>;
 }
 
 /**
