@@ -15,7 +15,7 @@
 
 import OpenAPIRequestValidator, { OpenAPIRequestValidatorArgs } from "openapi-request-validator";
 import type { OpenAPIV3 } from "openapi-types";
-import { defaultJsonValidationFailedHandler } from ".";
+import { defaultJsonSchemaValidationFailedHandler } from ".";
 import type { HttpMiddleware, JsonSchemaValidationFailedHandler } from "../types";
 import { Nilable } from "../types/internal";
 import { asAsync, urlSearchParamsToObject } from "../utils";
@@ -84,7 +84,7 @@ export function validateWithSwagger(options: IValidateWithSwaggerOptions): HttpM
         throw new TypeError("options must be of type object");
     }
 
-    const onValidationFailed = options.onValidationFailed || defaultJsonValidationFailedHandler;
+    const onValidationFailed = options.onValidationFailed || defaultJsonSchemaValidationFailedHandler;
     if (typeof onValidationFailed !== "function") {
         throw new TypeError("options.onValidationFailed must be of type function");
     }

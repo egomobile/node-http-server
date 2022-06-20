@@ -27,7 +27,7 @@ export const defaultBodyLimit = 134217728;
  * @param {IncomingMessage} request The request context.
  * @param {ServerResponse} response The response context.
  */
-export const defaultJsonValidationFailedHandler: JsonSchemaValidationFailedHandler = async (errors, request, response) => {
+export const defaultJsonSchemaValidationFailedHandler: JsonSchemaValidationFailedHandler = async (errors, request, response) => {
     if (!response.headersSent) {
         response.writeHead(400, {
             "Content-Length": "0"
