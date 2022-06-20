@@ -45,7 +45,7 @@ export interface IValidateWithSwaggerOptions {
  *
  * @example
  * ```
- * import createServer, { IHttpRequest, IHttpResponse, query, schema, validateWithSwagger } from '@egomobile/http-server'
+ * import createServer, { query, validateWithSwagger } from '@egomobile/http-server'
  * import type { OpenAPIV3.OperationObject } from 'openapi-types'
  *
  * const swaggerDocumentOfGetRequest: OpenAPIV3.OperationObject = {
