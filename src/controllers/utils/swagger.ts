@@ -95,7 +95,8 @@ function createInitControllerMethodSwaggerAction({ doc, method, methodName }: IC
 export function setupMiddlewaresBySwaggerDocumentation({
     decoratorOptions,
     globalOptions,
-    middlewares
+    middlewares,
+    throwIfOptionsIncompatibleWithHTTPMethod
 }: ISetupMiddlewaresBySwaggerDocumentationOptions) {
     const documentation = decoratorOptions?.documentation;
     if (!documentation) {
@@ -112,6 +113,10 @@ export function setupMiddlewaresBySwaggerDocumentation({
 
     if (!shouldValidateWithDocumentation) {
         return;
+    }
+
+    if ((documentation.requestBody as OpenAPIV3.RequestBodyObject)?.required) {
+        throwIfOptionsIncompatibleWithHTTPMethod();
     }
 
     const onValidationFailed = decoratorOptions.onValidationWithDocumentationFailed ||
