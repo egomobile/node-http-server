@@ -93,3 +93,7 @@ export function normalizeRouterPath(p: Nilable<string>): string {
 }
 
 export * from "./authorize";
+export * from "./parameters";
+export * from "./schema";
+export * from "./swagger";
+
