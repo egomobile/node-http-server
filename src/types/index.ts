@@ -902,6 +902,14 @@ export interface IHttpServer {
     head(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
 
     /**
+     * The underlying low-level server instance, which is only available
+     * if server is listening, otherwise it is `null`.
+     *
+     * Mostly this is a `Server` instance from `http` module.
+     */
+    readonly instance: any;
+
+    /**
      * Indicates if that instance is an e.GO HTTP server.
      *
      * @example

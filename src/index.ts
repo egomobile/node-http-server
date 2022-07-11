@@ -375,6 +375,14 @@ export const createServer = (): IHttpServer => {
         }
     });
 
+    // server.instance
+    Object.defineProperty(server, "instance", {
+        "enumerable": true,
+        "get": () => {
+            return instance ?? null;
+        }
+    });
+
     setupHttpServerControllerMethod(server);
 
     resetInstance();
