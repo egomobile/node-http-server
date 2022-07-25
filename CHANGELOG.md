@@ -1,5 +1,10 @@
 # Change Log (@egomobile/http-server)
 
+## 0.39.0
+
+- add `use` property to [IControllersSwaggerOptions interface](https://egomobile.github.io/node-http-server/interfaces/IControllersSwaggerOptions.html)
+- `npm update`s
+
 ## 0.38.0
 
 - add `instance` property to [IHttpServer interface](https://egomobile.github.io/node-http-server/interfaces/IHttpServer.html)

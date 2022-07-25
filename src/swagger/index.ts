@@ -53,7 +53,7 @@ export function setupSwaggerUIForServerControllers({
 
     const swaggerInitializerJSContent = Buffer.from(swaggerInitializerJs(), "utf8");
 
-    server.get(createSwaggerPathValidator(options.basePath), async (request, response) => {
+    server.get(createSwaggerPathValidator(options.basePath), options.use ?? [], async (request, response) => {
         try {
             if (request.url === basePath) {
                 response.writeHead(301, {
