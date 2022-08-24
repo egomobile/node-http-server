@@ -1,5 +1,11 @@
 # Change Log (@egomobile/http-server)
 
+## 0.40.0
+
+- add `doesValidate`, `doesValidateQuery`, `hasAuthorize` and `middlewares` properties to [IDocumentationUpdaterContext interface](https://egomobile.github.io/node-http-server/interfaces/IDocumentationUpdaterContext.html)
+- all build-in middlewares are now of new type `UniqueHttpMiddleware`, which is compatible to [HttpMiddleware](https://egomobile.github.io/node-http-server/types/HttpMiddleware.html)
+- `npm update`s
+
 ## 0.39.0
 
 - add `use` property to [IControllersSwaggerOptions interface](https://egomobile.github.io/node-http-server/interfaces/IControllersSwaggerOptions.html)

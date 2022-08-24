@@ -20,7 +20,7 @@
 import { createServer as createHttpServer, IncomingMessage, Server, ServerResponse } from "http";
 import joi from "joi";
 import { setupHttpServerControllerMethod } from "./controllers/factories";
-import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction } from "./types";
+import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction, UniqueHttpMiddleware } from "./types";
 import type { GroupedHttpRequestHandlers, IRequestHandlerContext, Nilable, Optional } from "./types/internal";
 import { asAsync, getUrlWithoutQuery, isNil } from "./utils";
 
@@ -389,6 +389,30 @@ export const createServer = (): IHttpServer => {
 
     return server;
 };
+
+/**
+ * Checks if a value is an `UniqueHttpMiddleware`.
+ *
+ * @param {any} val The value to check.
+ * @param {Nilable<symbol>} [id] If defined, also check `middleware` key for this value.
+ *
+ * @returns {boolean} Is of type `UniqueHttpMiddleware` or not.
+ */
+export function isUniqueHttpMiddleware(val: any, id?: Nilable<symbol>): val is UniqueHttpMiddleware {
+    if (isNil(id)) {
+        return typeof val === "function" &&
+            typeof val[middleware] === "symbol";
+    }
+    else {
+        return typeof val === "function" &&
+            val[middleware] === id;
+    }
+}
+
+/**
+ * A symbol for a key inside an object, which stores the ID of a middleware.
+ */
+export const middleware: unique symbol = Symbol("middleware");
 
 /**
  * @inheritdoc

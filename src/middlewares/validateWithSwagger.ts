@@ -16,9 +16,9 @@
 import OpenAPIRequestValidator, { OpenAPIRequestValidatorArgs } from "openapi-request-validator";
 import type { OpenAPIV3 } from "openapi-types";
 import { defaultJsonSchemaValidationFailedHandler } from ".";
-import type { HttpMiddleware, JsonSchemaValidationFailedHandler } from "../types";
+import type { JsonSchemaValidationFailedHandler, UniqueHttpMiddleware } from "../types";
 import { Nilable } from "../types/internal";
-import { asAsync, urlSearchParamsToObject } from "../utils";
+import { asAsync, toUniqueHttpMiddleware, urlSearchParamsToObject } from "../utils";
 
 interface ICreateMiddlewareOptions {
     documentation: OpenAPIV3.OperationObject;
@@ -38,6 +38,11 @@ export interface IValidateWithSwaggerOptions {
      */
     onValidationFailed?: Nilable<JsonSchemaValidationFailedHandler>;
 }
+
+/**
+ * Symbol defining the name of this middleware.
+ */
+export const validateWithSwaggerMiddleware: unique symbol = Symbol("validateWithSwagger");
 
 /**
  * Creates a new middleware, which checks the request data with
@@ -77,9 +82,9 @@ export interface IValidateWithSwaggerOptions {
  *
  * @param {IValidateWithSwaggerOptions} options The options.
  *
- * @returns {HttpMiddleware} The new middleware.
+ * @returns {UniqueHttpMiddleware} The new middleware.
  */
-export function validateWithSwagger(options: IValidateWithSwaggerOptions): HttpMiddleware {
+export function validateWithSwagger(options: IValidateWithSwaggerOptions): UniqueHttpMiddleware {
     if (typeof options !== "object") {
         throw new TypeError("options must be of type object");
     }
@@ -95,8 +100,8 @@ export function validateWithSwagger(options: IValidateWithSwaggerOptions): HttpM
     });
 }
 
-function createMiddleware({ documentation, onValidationFailed }: ICreateMiddlewareOptions): HttpMiddleware {
-    return async (request, response, next) => {
+function createMiddleware({ documentation, onValidationFailed }: ICreateMiddlewareOptions): UniqueHttpMiddleware {
+    return toUniqueHttpMiddleware(validateWithSwaggerMiddleware, async (request, response, next) => {
         const validatorArgs: OpenAPIRequestValidatorArgs = {
             "parameters": documentation.parameters ?? undefined,
             "requestBody": (documentation.requestBody as OpenAPIV3.RequestBodyObject) ?? undefined
@@ -119,5 +124,5 @@ function createMiddleware({ documentation, onValidationFailed }: ICreateMiddlewa
 
             response.end();
         }
-    };
+    });
 }

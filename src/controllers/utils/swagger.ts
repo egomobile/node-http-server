@@ -15,8 +15,9 @@
 
 import type { OpenAPIV3 } from "openapi-types";
 import { getListFromObject } from ".";
-import { DOCUMENTATION_UPDATER, HTTP_METHODS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, ROUTER_PATHS, SWAGGER_METHOD_INFO } from "../../constants";
-import { validateWithSwagger } from "../../middlewares";
+import { middleware } from "../..";
+import { DOCUMENTATION_UPDATER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, ROUTER_PATHS, SWAGGER_METHOD_INFO } from "../../constants";
+import { validateMiddleware, validateQueryMiddleware, validateWithSwagger } from "../../middlewares";
 import { toSwaggerPath } from "../../swagger/utils";
 import type { DocumentationUpdaterHandler, HttpMethod, HttpMiddleware, IControllerRouteWithBodyOptions, IControllersOptions } from "../../types";
 import { InitControllerMethodSwaggerAction, ISwaggerMethodInfo, Nilable } from "../../types/internal";
@@ -26,6 +27,7 @@ interface ICreateInitControllerMethodSwaggerActionOptions {
     doc: OpenAPIV3.OperationObject;
     method: Function;
     methodName: string | symbol;
+    middlewares: HttpMiddleware[];
 };
 
 export interface ISetupMiddlewaresBySwaggerDocumentationOptions {
@@ -39,10 +41,21 @@ export interface ISetupSwaggerDocumentationOptions {
     decoratorOptions: Nilable<IControllerRouteWithBodyOptions>;
     method: Function;
     methodName: string | symbol;
+    middlewares: HttpMiddleware[];
 }
 
-function createInitControllerMethodSwaggerAction({ doc, method, methodName }: ICreateInitControllerMethodSwaggerActionOptions): InitControllerMethodSwaggerAction {
-    return ({ apiDocument, controller }) => {
+function createInitControllerMethodSwaggerAction({ doc, method, middlewares }: ICreateInitControllerMethodSwaggerActionOptions): InitControllerMethodSwaggerAction {
+    return ({ apiDocument, controller, controllerClass }) => {
+        const hasAuthorize = (controllerClass as any)[INIT_CONTROLLER_AUTHORIZE]?.length > 0;
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const doesValidate = middlewares.some((mw) => {
+            return (mw as any)[middleware] === validateMiddleware;
+        });
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const doesValidateQuery = middlewares.some((mw) => {
+            return (mw as any)[middleware] === validateQueryMiddleware;
+        });
+
         const info: ISwaggerMethodInfo = {
             doc,
             method
@@ -76,7 +89,12 @@ function createInitControllerMethodSwaggerAction({ doc, method, methodName }: IC
                             docUpdater({
                                 "documentation": doc,
                                 "method": httpMethod.toUpperCase() as Uppercase<HttpMethod>,
-                                "path": routerPath
+                                "path": routerPath,
+
+                                doesValidate,
+                                doesValidateQuery,
+                                hasAuthorize,
+                                middlewares
                             });
                         }
 
@@ -132,7 +150,8 @@ export function setupMiddlewaresBySwaggerDocumentation({
 export function setupSwaggerDocumentation({
     decoratorOptions,
     method,
-    methodName
+    methodName,
+    middlewares
 }: ISetupSwaggerDocumentationOptions) {
     if (!decoratorOptions?.documentation) {
         return;
@@ -144,7 +163,8 @@ export function setupSwaggerDocumentation({
                 JSON.stringify(decoratorOptions.documentation)
             ),
             method,
-            methodName
+            methodName,
+            middlewares
         })
     );
 }

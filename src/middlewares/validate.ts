@@ -15,9 +15,9 @@
 
 import { AnySchema, isSchema } from "joi";
 import { defaultValidationFailedHandler } from ".";
-import type { HttpMiddleware, ValidationFailedHandler } from "../types";
+import type { UniqueHttpMiddleware, ValidationFailedHandler } from "../types";
 import type { Nilable } from "../types/internal";
-import { isNil } from "../utils";
+import { isNil, toUniqueHttpMiddleware } from "../utils";
 
 interface ICreateMiddlewareOptions {
     onValidationFailed: ValidationFailedHandler;
@@ -35,6 +35,11 @@ export interface IValidateOptions {
 }
 
 /**
+ * Symbol defining the name of this middleware.
+ */
+export const validateMiddleware: unique symbol = Symbol("validate");
+
+/**
  * Creates a middleware, that validates the data of the 'body' property
  * inside the 'request' object with the help of a joi schema.
  *
@@ -42,7 +47,7 @@ export interface IValidateOptions {
  * @param {Nilable<ValidationFailedHandler>} [onValidationFailed] The handler, that is executed, if data is invalid.
  * @param {Nilable<IValidateOptions>} [options] Custom options.
  *
- * @returns {HttpMiddleware} The new middleware.
+ * @returns {UniqueHttpMiddleware} The new middleware.
  *
  * @see https://www.npmjs.com/package/joi
  *
@@ -78,10 +83,10 @@ export interface IValidateOptions {
  * // ...
  * ```
  */
-export function validate(schema: AnySchema): HttpMiddleware;
-export function validate(schema: AnySchema, onValidationFailed: ValidationFailedHandler): HttpMiddleware;
-export function validate(schema: AnySchema, options: IValidateOptions): HttpMiddleware;
-export function validate(schema: AnySchema, optionsOrErrorHandler?: Nilable<IValidateOptions | ValidationFailedHandler>): HttpMiddleware {
+export function validate(schema: AnySchema): UniqueHttpMiddleware;
+export function validate(schema: AnySchema, onValidationFailed: ValidationFailedHandler): UniqueHttpMiddleware;
+export function validate(schema: AnySchema, options: IValidateOptions): UniqueHttpMiddleware;
+export function validate(schema: AnySchema, optionsOrErrorHandler?: Nilable<IValidateOptions | ValidationFailedHandler>): UniqueHttpMiddleware {
     if (!isSchema(schema)) {
         throw new TypeError("schema must be a Joi object");
     }
@@ -109,8 +114,8 @@ export function validate(schema: AnySchema, optionsOrErrorHandler?: Nilable<IVal
     });
 }
 
-function createMiddleware({ onValidationFailed, schema }: ICreateMiddlewareOptions): HttpMiddleware {
-    return async (request, response, next) => {
+function createMiddleware({ onValidationFailed, schema }: ICreateMiddlewareOptions): UniqueHttpMiddleware {
+    return toUniqueHttpMiddleware(validateMiddleware, async (request, response, next) => {
         const validationResult = schema.validate(request.body);
 
         if (validationResult.error) {
@@ -121,5 +126,5 @@ function createMiddleware({ onValidationFailed, schema }: ICreateMiddlewareOptio
         else {
             next();
         }
-    };
+    });
 }

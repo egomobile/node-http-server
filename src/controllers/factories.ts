@@ -383,7 +383,8 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
         setupSwaggerDocumentation({
             decoratorOptions,
             method,
-            methodName
+            methodName,
+            middlewares
         });
     };
 }
@@ -850,7 +851,8 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                     getListFromObject<InitControllerMethodSwaggerAction>(propValue, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS).forEach(action => {
                         action({
                             "apiDocument": swaggerDoc,
-                            controller
+                            controller,
+                            "controllerClass": cls["class"]
                         });
                     }, true);
 

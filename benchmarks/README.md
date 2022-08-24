@@ -15,7 +15,7 @@ Machine:
 - MacBook Pro (15-inch, 2018)
 - CPU: 2,9 GHz 6-Core Intel Core i9
 - Memory: 32 GB 2400 MHz DDR4
-- OS: MacOS 12.4
+- OS: MacOS 12.5.1
 
 #### [Express](https://expressjs.com/)
 
@@ -23,11 +23,11 @@ Machine:
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     7.06ms    1.48ms  51.25ms   89.48%
-    Req/Sec     1.71k   267.27    12.43k    97.58%
-  409336 requests in 30.11s, 60.12MB read
-Requests/sec:  13596.88
-Transfer/sec:      2.00MB
+    Latency     7.01ms    1.38ms  42.92ms   88.49%
+    Req/Sec     1.72k   156.54     1.95k    88.25%
+  411812 requests in 30.02s, 60.48MB read
+Requests/sec:  13719.21
+Transfer/sec:      2.01MB
 ```
 
 #### [fastify](https://github.com/fastify/fastify)
@@ -36,11 +36,11 @@ Transfer/sec:      2.00MB
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     6.68ms    1.60ms  50.43ms   85.55%
-    Req/Sec     1.81k   159.83     2.05k    95.00%
-  432715 requests in 30.02s, 71.39MB read
-Requests/sec:  14413.68
-Transfer/sec:      2.38MB
+    Latency     6.65ms    1.66ms  46.88ms   86.41%
+    Req/Sec     1.82k   173.47     2.06k    93.04%
+  435079 requests in 30.03s, 71.78MB read
+Requests/sec:  14489.87
+Transfer/sec:      2.39MB
 ```
 
 #### [Polka](https://github.com/lukeed/polka)
@@ -49,11 +49,11 @@ Transfer/sec:      2.38MB
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     2.75ms  716.62us  43.50ms   97.49%
-    Req/Sec     4.41k   334.19     4.92k    96.55%
-  1057578 requests in 30.10s, 132.12MB read
-Requests/sec:  35130.76
-Transfer/sec:      4.39MB
+    Latency     2.79ms  774.24us  45.41ms   97.47%
+    Req/Sec     4.35k   386.12     8.37k    95.34%
+  1041522 requests in 30.10s, 130.12MB read
+Requests/sec:  34597.34
+Transfer/sec:      4.32MB
 ```
 
 #### [@egomobile/http-server](https://github.com/egomobile/node-http-server)
@@ -62,9 +62,9 @@ Transfer/sec:      4.39MB
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     2.66ms  664.51us  39.81ms   96.93%
-    Req/Sec     4.56k   353.39     5.27k    94.97%
-  1093399 requests in 30.10s, 136.60MB read
-Requests/sec:  36319.57
-Transfer/sec:      4.54MB
+    Latency     2.70ms  691.12us  43.88ms   96.81%
+    Req/Sec     4.49k   406.99     8.74k    95.01%
+  1074771 requests in 30.10s, 134.27MB read
+Requests/sec:  35702.95
+Transfer/sec:      4.46MB
 ```

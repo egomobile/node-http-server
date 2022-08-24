@@ -13,7 +13,13 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware } from "../types";
+import type { UniqueHttpMiddleware } from "../types";
+import { toUniqueHttpMiddleware } from "../utils";
+
+/**
+ * Symbol defining the name of this middleware.
+ */
+export const cookiesMiddleware: unique symbol = Symbol("cookies");
 
 /**
  * Creates a new middleware that parses submitted cookies
@@ -36,10 +42,10 @@ import type { HttpMiddleware } from "../types";
  * await app.listen()
  * ```
  *
- * @returns {HttpMiddleware} The new middleware.
+ * @returns {UniqueHttpMiddleware} The new middleware.
  */
-export function cookies(): HttpMiddleware {
-    return async (request, response, next) => {
+export function cookies(): UniqueHttpMiddleware {
+    return toUniqueHttpMiddleware(cookiesMiddleware, async (request, response, next) => {
         request.cookies = {};
 
         if (typeof request.headers["cookie"] === "string") {
@@ -71,5 +77,5 @@ export function cookies(): HttpMiddleware {
         }
 
         next();
-    };
+    });
 }
