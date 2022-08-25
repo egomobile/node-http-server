@@ -14,9 +14,9 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { ParseError } from "../errors/parse";
-import type { HttpMiddleware, HttpRequestHandler, IHttpStringBodyParserOptions, ParseErrorHandler } from "../types";
+import type { HttpRequestHandler, IHttpStringBodyParserOptions, ParseErrorHandler, UniqueHttpMiddleware } from "../types";
 import type { Nilable, Nullable } from "../types/internal";
-import { canHttpMethodHandleBodies, getBufferEncoding, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from "../utils";
+import { canHttpMethodHandleBodies, getBufferEncoding, isNil, limitToBytes, readStreamWithLimit, toUniqueHttpMiddleware, withEntityTooLarge } from "../utils";
 
 interface ICreateMiddlewareOptions {
     encoding: BufferEncoding;
@@ -36,6 +36,11 @@ export interface IJsonOptions extends IHttpStringBodyParserOptions {
 }
 
 /**
+ * Symbol defining the name of this middleware.
+ */
+export const jsonMiddleware: unique symbol = Symbol("json");
+
+/**
  * Creates a middleware, that reads the whole input of the request stream,
  * parses it as JSON UTF-8 string and writes the object to 'body' property of the request
  * context.
@@ -45,7 +50,7 @@ export interface IJsonOptions extends IHttpStringBodyParserOptions {
  * @param {Nilable<ParseErrorHandler>} [onParsingFailed] The custom handler, that is invoked, when input is no valid JSON.
  * @param {Nilable<IJsonOptions>} [options] Custom options.
  *
- * @returns {HttpMiddleware} The new middleware.
+ * @returns {UniqueHttpMiddleware} The new middleware.
  *
  * @example
  * ```
@@ -82,10 +87,10 @@ export interface IJsonOptions extends IHttpStringBodyParserOptions {
  * })
  * ```
  */
-export function json(): HttpMiddleware;
-export function json(limit: number, onLimitReached?: Nilable<HttpRequestHandler>, onParsingFailed?: Nilable<ParseErrorHandler>): HttpMiddleware;
-export function json(options: Nilable<IJsonOptions>): HttpMiddleware;
-export function json(optionsOrLimit?: Nilable<number | IJsonOptions>, onLimitReached?: Nilable<HttpRequestHandler>, onParsingFailed?: Nilable<ParseErrorHandler>): HttpMiddleware {
+export function json(): UniqueHttpMiddleware;
+export function json(limit: number, onLimitReached?: Nilable<HttpRequestHandler>, onParsingFailed?: Nilable<ParseErrorHandler>): UniqueHttpMiddleware;
+export function json(options: Nilable<IJsonOptions>): UniqueHttpMiddleware;
+export function json(optionsOrLimit?: Nilable<number | IJsonOptions>, onLimitReached?: Nilable<HttpRequestHandler>, onParsingFailed?: Nilable<ParseErrorHandler>): UniqueHttpMiddleware {
     if (typeof optionsOrLimit === "number") {
         // [0] number
         // [1] HttpRequestHandler
@@ -135,8 +140,8 @@ export function json(optionsOrLimit?: Nilable<number | IJsonOptions>, onLimitRea
     });
 }
 
-function createMiddleware({ encoding, limit, onLimitReached, onParsingFailed }: ICreateMiddlewareOptions): HttpMiddleware {
-    return withEntityTooLarge(async (request, response, next) => {
+function createMiddleware({ encoding, limit, onLimitReached, onParsingFailed }: ICreateMiddlewareOptions): UniqueHttpMiddleware {
+    return toUniqueHttpMiddleware(jsonMiddleware, withEntityTooLarge(async (request, response, next) => {
         try {
             if (canHttpMethodHandleBodies(request.method)) {
                 request.body = JSON.parse(
@@ -159,5 +164,5 @@ function createMiddleware({ encoding, limit, onLimitReached, onParsingFailed }: 
                 throw error;
             }
         }
-    }, onLimitReached);
+    }, onLimitReached));
 }

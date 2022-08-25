@@ -17,6 +17,7 @@ import type { IncomingMessage, ServerResponse } from "http";
 import type { AnySchema, ValidationError as JoiValidationError } from "joi";
 import type { OpenAPIV3 } from "openapi-types";
 import type { URLSearchParams } from "url";
+import type { middleware } from "..";
 import type { ParseError } from "../errors/parse";
 import type { Constructor, Func, Nilable, ObjectKey, Optional, PartialBy } from "./internal";
 
@@ -595,9 +596,25 @@ export interface IDocumentationUpdaterContext {
      */
     documentation: OpenAPIV3.OperationObject;
     /**
+      * Indicates if endpoint does validate data with a schema or not.
+      */
+    doesValidate: boolean;
+    /**
+      * Indicates if endpoint does validate query data with a schema or not.
+      */
+    doesValidateQuery: boolean;
+    /**
+      * Indicates if underlying method is marked with 'Authorize()' decorator or not.
+      */
+    hasAuthorize: boolean;
+    /**
      * The HTTP method.
      */
     method: Uppercase<HttpMethod>;
+    /**
+      * The middlewares, which are defined for that route.
+      */
+    middlewares: HttpMiddleware[];
     /**
      * The path of the route.
      */
@@ -1480,6 +1497,16 @@ export type SetupAuthorizeMiddlewareHandler = (context: ISetupAuthorizeMiddlewar
  * @param {ISwaggerInitializedEventArguments} args The arguments.
  */
 export type SwaggerInitializedEventHandler = (args: ISwaggerInitializedEventArguments) => any;
+
+/**
+ * An unique middleware.
+ */
+export type UniqueHttpMiddleware = HttpMiddleware & {
+    /**
+     * The key, which indicates the (type) of middleware.
+     */
+    [middleware]: symbol;
+};
 
 /**
  * A handler, that is executed, if data is invalid.

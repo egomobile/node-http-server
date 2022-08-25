@@ -13,9 +13,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpRequestHandler, IHttpBodyParserOptions } from "../types";
+import type { HttpRequestHandler, IHttpBodyParserOptions, UniqueHttpMiddleware } from "../types";
 import type { Nilable, Nullable } from "../types/internal";
-import { canHttpMethodHandleBodies, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from "../utils";
+import { canHttpMethodHandleBodies, isNil, limitToBytes, readStreamWithLimit, toUniqueHttpMiddleware, withEntityTooLarge } from "../utils";
 
 /**
  * Options for 'buffer()' function.
@@ -29,6 +29,11 @@ interface ICreateMiddlewareOptions {
 }
 
 /**
+ * Symbol defining the name of this middleware.
+ */
+export const bufferMiddleware: unique symbol = Symbol("buffer");
+
+/**
  * Creates a middleware, that reads the whole input of the request stream
  * and writes data to 'body' property of the request
  * context as buffer.
@@ -37,7 +42,7 @@ interface ICreateMiddlewareOptions {
  * @param {Nilable<HttpRequestHandler>} [onLimitReached] The custom handler, that is invoked, when limit has been reached.
  * @param {Nilable<IBufferOptions>} [options] Custom options.
  *
- * @returns {HttpMiddleware} The new middleware.
+ * @returns {UniqueHttpMiddleware} The new middleware.
  *
  * @example
  * ```
@@ -74,10 +79,10 @@ interface ICreateMiddlewareOptions {
  * })
  * ```
  */
-export function buffer(): HttpMiddleware;
-export function buffer(limit: number, onLimitReached?: Nilable<HttpRequestHandler>): HttpMiddleware;
-export function buffer(options: Nilable<IBufferOptions>): HttpMiddleware;
-export function buffer(optionsOrLimit?: Nilable<IBufferOptions | number>, onLimitReached?: Nilable<HttpRequestHandler>): HttpMiddleware {
+export function buffer(): UniqueHttpMiddleware;
+export function buffer(limit: number, onLimitReached?: Nilable<HttpRequestHandler>): UniqueHttpMiddleware;
+export function buffer(options: Nilable<IBufferOptions>): UniqueHttpMiddleware;
+export function buffer(optionsOrLimit?: Nilable<IBufferOptions | number>, onLimitReached?: Nilable<HttpRequestHandler>): UniqueHttpMiddleware {
     if (typeof optionsOrLimit === "number") {
         optionsOrLimit = {
             "limit": limitToBytes(optionsOrLimit)
@@ -111,8 +116,8 @@ export function buffer(optionsOrLimit?: Nilable<IBufferOptions | number>, onLimi
     });
 }
 
-function createMiddleware({ limit, onLimitReached }: ICreateMiddlewareOptions) {
-    return withEntityTooLarge(async (request, response, next) => {
+function createMiddleware({ limit, onLimitReached }: ICreateMiddlewareOptions): UniqueHttpMiddleware {
+    return toUniqueHttpMiddleware(bufferMiddleware, withEntityTooLarge(async (request, response, next) => {
         if (canHttpMethodHandleBodies(request.method)) {
             request.body = await readStreamWithLimit(request, limit);
         }
@@ -121,5 +126,5 @@ function createMiddleware({ limit, onLimitReached }: ICreateMiddlewareOptions) {
         }
 
         next();
-    }, onLimitReached);
+    }, onLimitReached));
 }

@@ -13,9 +13,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, IHttpRequest, IHttpResponse } from "../types";
+import type { IHttpRequest, IHttpResponse, UniqueHttpMiddleware } from "../types";
 import type { Nilable, Nullable } from "../types/internal";
-import { asAsync, isNil } from "../utils";
+import { asAsync, isNil, toUniqueHttpMiddleware } from "../utils";
 
 /**
  * Usernames and passwords.
@@ -47,6 +47,11 @@ interface ICreateMiddlewareOptions {
     onValidationFailed: BasicAuthValidationFailedHandler;
     validator: BasicAuthValidator;
 }
+
+/**
+ * Symbol defining the name of this middleware.
+ */
+export const basicAuthMiddleware: unique symbol = Symbol("basicAuth");
 
 /**
  * Default handler, that is invoked, when a auth validation fails.
@@ -89,11 +94,13 @@ export const defaultBasicAuthFailedHandler: BasicAuthValidationFailedHandler = a
  * @param {Nilable<AuthValidationFailedHandler>} [onValidationFailed] The custom handler, that is invoked, if validation fails.
  * @param {BasicAuthValidator} validator The validator.
  * @param {BasicAuthCredentials} credentails Credentails.
+ *
+ * @returns {UniqueHttpMiddleware} The name middleware.
  */
-export function basicAuth(username: string, password: string, onValidationFailed?: Nilable<BasicAuthValidationFailedHandler>): HttpMiddleware;
-export function basicAuth(validator: BasicAuthValidator, onValidationFailed?: Nilable<BasicAuthValidationFailedHandler>): HttpMiddleware;
-export function basicAuth(credentails: BasicAuthCredentials, onValidationFailed?: Nilable<BasicAuthValidationFailedHandler>): HttpMiddleware;
-export function basicAuth(arg1: string | BasicAuthValidator | BasicAuthCredentials, arg2?: Nilable<string | BasicAuthValidationFailedHandler>, arg3?: Nilable<BasicAuthValidationFailedHandler>): HttpMiddleware {
+export function basicAuth(username: string, password: string, onValidationFailed?: Nilable<BasicAuthValidationFailedHandler>): UniqueHttpMiddleware;
+export function basicAuth(validator: BasicAuthValidator, onValidationFailed?: Nilable<BasicAuthValidationFailedHandler>): UniqueHttpMiddleware;
+export function basicAuth(credentails: BasicAuthCredentials, onValidationFailed?: Nilable<BasicAuthValidationFailedHandler>): UniqueHttpMiddleware;
+export function basicAuth(arg1: string | BasicAuthValidator | BasicAuthCredentials, arg2?: Nilable<string | BasicAuthValidationFailedHandler>, arg3?: Nilable<BasicAuthValidationFailedHandler>): UniqueHttpMiddleware {
     let validator: BasicAuthValidator;
     let onValidationFailed: Nilable<BasicAuthValidationFailedHandler>;
 
@@ -151,11 +158,11 @@ function createValidatorFromCredentials(credentials: BasicAuthCredentials): Basi
     };
 }
 
-function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOptions): HttpMiddleware {
+function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOptions): UniqueHttpMiddleware {
     validator = asAsync(validator);
     onValidationFailed = asAsync(onValidationFailed);
 
-    return async (request, response, next) => {
+    return toUniqueHttpMiddleware(basicAuthMiddleware, async (request, response, next) => {
         let isValid = false;
         let username: Nilable<string>;
 
@@ -210,5 +217,5 @@ function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOp
 
             response.end();
         }
-    };
+    });
 }

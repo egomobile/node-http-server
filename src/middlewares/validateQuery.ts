@@ -15,9 +15,9 @@
 
 import { AnySchema, isSchema } from "joi";
 import { defaultQueryValidationFailedHandler } from ".";
-import type { HttpMiddleware, ValidationFailedHandler } from "../types";
+import type { UniqueHttpMiddleware, ValidationFailedHandler } from "../types";
 import type { Nilable } from "../types/internal";
-import { isNil, urlSearchParamsToObject } from "../utils";
+import { isNil, toUniqueHttpMiddleware, urlSearchParamsToObject } from "../utils";
 
 interface ICreateMiddlewareOptions {
     onValidationFailed: ValidationFailedHandler;
@@ -35,6 +35,11 @@ export interface IValidateQueryOptions {
 }
 
 /**
+ * Symbol defining the name of this middleware.
+ */
+export const validateQueryMiddleware: unique symbol = Symbol("validateQuery");
+
+/**
  * Creates a middleware, that validates the data of the 'query' property
  * inside the 'request' object with the help of a joi schema.
  *
@@ -42,7 +47,7 @@ export interface IValidateQueryOptions {
  * @param {Nilable<ValidationFailedHandler>} [onValidationFailed] The handler, that is executed, if data is invalid.
  * @param {Nilable<IValidateOptions>} [options] Custom options.
  *
- * @returns {HttpMiddleware} The new middleware.
+ * @returns {UniqueHttpMiddleware} The new middleware.
  *
  * @see https://www.npmjs.com/package/joi
  *
@@ -71,10 +76,10 @@ export interface IValidateQueryOptions {
  * // ...
  * ```
  */
-export function validateQuery(schema: AnySchema): HttpMiddleware;
-export function validateQuery(schema: AnySchema, onValidationFailed: ValidationFailedHandler): HttpMiddleware;
-export function validateQuery(schema: AnySchema, options: IValidateQueryOptions): HttpMiddleware;
-export function validateQuery(schema: AnySchema, optionsOrErrorHandler?: Nilable<IValidateQueryOptions | ValidationFailedHandler>): HttpMiddleware {
+export function validateQuery(schema: AnySchema): UniqueHttpMiddleware;
+export function validateQuery(schema: AnySchema, onValidationFailed: ValidationFailedHandler): UniqueHttpMiddleware;
+export function validateQuery(schema: AnySchema, options: IValidateQueryOptions): UniqueHttpMiddleware;
+export function validateQuery(schema: AnySchema, optionsOrErrorHandler?: Nilable<IValidateQueryOptions | ValidationFailedHandler>): UniqueHttpMiddleware {
     if (!isSchema(schema)) {
         throw new TypeError("schema must be a Joi object");
     }
@@ -102,8 +107,8 @@ export function validateQuery(schema: AnySchema, optionsOrErrorHandler?: Nilable
     });
 }
 
-function createMiddleware({ onValidationFailed, schema }: ICreateMiddlewareOptions): HttpMiddleware {
-    return async (request, response, next) => {
+function createMiddleware({ onValidationFailed, schema }: ICreateMiddlewareOptions): UniqueHttpMiddleware {
+    return toUniqueHttpMiddleware(validateQueryMiddleware, async (request, response, next) => {
         const validationResult = schema.validate(
             urlSearchParamsToObject(request.query)
         );
@@ -116,5 +121,5 @@ function createMiddleware({ onValidationFailed, schema }: ICreateMiddlewareOptio
         else {
             next();
         }
-    };
+    });
 }

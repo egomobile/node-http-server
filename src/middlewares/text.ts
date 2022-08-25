@@ -13,9 +13,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpRequestHandler, IHttpStringBodyParserOptions } from "../types";
+import type { HttpRequestHandler, IHttpStringBodyParserOptions, UniqueHttpMiddleware } from "../types";
 import type { Nilable, Nullable } from "../types/internal";
-import { canHttpMethodHandleBodies, getBufferEncoding, isNil, limitToBytes, readStreamWithLimit, withEntityTooLarge } from "../utils";
+import { canHttpMethodHandleBodies, getBufferEncoding, isNil, limitToBytes, readStreamWithLimit, toUniqueHttpMiddleware, withEntityTooLarge } from "../utils";
 
 interface ICreateMiddlewareOptions {
     encoding: BufferEncoding;
@@ -30,6 +30,11 @@ export interface ITextOptions extends IHttpStringBodyParserOptions {
 }
 
 /**
+ * Symbol defining the name of this middleware.
+ */
+export const textMiddleware: unique symbol = Symbol("text");
+
+/**
  * Creates a middleware, that reads the whole input of the request stream,
  * converts it as string and writes the value to 'body' property of the request
  * context.
@@ -38,7 +43,7 @@ export interface ITextOptions extends IHttpStringBodyParserOptions {
  * @param {Nilable<HttpRequestHandler>} [onLimitReached] The custom handler, that is invoked, when limit has been reached.
  * @param {Nilable<ITextOptions>} [options] Custom options.
  *
- * @returns {HttpMiddleware} The new middleware.
+ * @returns {UniqueHttpMiddleware} The new middleware.
  *
  * @example
  * ```
@@ -76,10 +81,10 @@ export interface ITextOptions extends IHttpStringBodyParserOptions {
  * })
  * ```
  */
-export function text(): HttpMiddleware;
-export function text(limit: number, onLimitReached?: Nilable<HttpRequestHandler>): HttpMiddleware;
-export function text(options: Nilable<ITextOptions>): HttpMiddleware;
-export function text(optionsOrLimit?: Nilable<number | ITextOptions>, onLimitReached?: Nilable<HttpRequestHandler>): HttpMiddleware {
+export function text(): UniqueHttpMiddleware;
+export function text(limit: number, onLimitReached?: Nilable<HttpRequestHandler>): UniqueHttpMiddleware;
+export function text(options: Nilable<ITextOptions>): UniqueHttpMiddleware;
+export function text(optionsOrLimit?: Nilable<number | ITextOptions>, onLimitReached?: Nilable<HttpRequestHandler>): UniqueHttpMiddleware {
     if (typeof optionsOrLimit === "number") {
         // [0] number
         // [1] HttpRequestHandler
@@ -117,8 +122,8 @@ export function text(optionsOrLimit?: Nilable<number | ITextOptions>, onLimitRea
     });
 }
 
-function createMiddleware({ encoding, limit, onLimitReached }: ICreateMiddlewareOptions): HttpMiddleware {
-    return withEntityTooLarge(async (request, response, next) => {
+function createMiddleware({ encoding, limit, onLimitReached }: ICreateMiddlewareOptions): UniqueHttpMiddleware {
+    return toUniqueHttpMiddleware(textMiddleware, withEntityTooLarge(async (request, response, next) => {
         if (canHttpMethodHandleBodies(request.method)) {
             request.body = (await readStreamWithLimit(request, limit)).toString(encoding);
         }
@@ -127,5 +132,5 @@ function createMiddleware({ encoding, limit, onLimitReached }: ICreateMiddleware
         }
 
         next();
-    }, onLimitReached);
+    }, onLimitReached));
 }

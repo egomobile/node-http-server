@@ -13,8 +13,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware } from "../types";
+import type { UniqueHttpMiddleware } from "../types";
 import type { Nilable } from "../types/internal";
+import { toUniqueHttpMiddleware } from "../utils";
 
 interface ICreateMiddlewareOptions extends ICreateMiddlewareForDefaultOnlyOptions {
     additionalLanguages: string[];
@@ -25,6 +26,11 @@ interface ICreateMiddlewareForDefaultOnlyOptions {
 }
 
 /**
+ * Symbol defining the name of this middleware.
+ */
+export const langMiddleware: unique symbol = Symbol("lang");
+
+/**
  * Creates a middleware, that tries to get the current language from
  * 'Accept-Language' HTTP header and writes it to 'lang' property
  * of request context.
@@ -32,7 +38,7 @@ interface ICreateMiddlewareForDefaultOnlyOptions {
  * @param {string} defaultLanguage The default language.
  * @param {string[]} additionalLanguages The list of additional, supported languages.
  *
- * @returns {HttpMiddleware} The new middleware.
+ * @returns {UniqueHttpMiddleware} The new middleware.
  *
  * @example
  * ```
@@ -48,7 +54,7 @@ interface ICreateMiddlewareForDefaultOnlyOptions {
  * })
  * ```
  */
-export function lang(defaultLanguage: string, ...additionalLanguages: string[]): HttpMiddleware {
+export function lang(defaultLanguage: string, ...additionalLanguages: string[]): UniqueHttpMiddleware {
     if (typeof defaultLanguage !== "string") {
         throw new TypeError("defaultLanguage must be of type string");
     }
@@ -81,8 +87,8 @@ export function lang(defaultLanguage: string, ...additionalLanguages: string[]):
     }
 }
 
-function createMiddleware({ additionalLanguages, defaultLanguage }: ICreateMiddlewareOptions): HttpMiddleware {
-    return async (request, response, next) => {
+function createMiddleware({ additionalLanguages, defaultLanguage }: ICreateMiddlewareOptions): UniqueHttpMiddleware {
+    return toUniqueHttpMiddleware(langMiddleware, async (request, response, next) => {
         let lang: Nilable<string>;
 
         try {
@@ -130,13 +136,13 @@ function createMiddleware({ additionalLanguages, defaultLanguage }: ICreateMiddl
         request.lang = lang?.length ? lang : defaultLanguage;
 
         next();
-    };
+    });
 }
 
-function createMiddlewareForDefaultOnly({ defaultLanguage }: ICreateMiddlewareForDefaultOnlyOptions): HttpMiddleware {
-    return async (request, response, next) => {
+function createMiddlewareForDefaultOnly({ defaultLanguage }: ICreateMiddlewareForDefaultOnlyOptions): UniqueHttpMiddleware {
+    return toUniqueHttpMiddleware(langMiddleware, async (request, response, next) => {
         request.lang = defaultLanguage;
 
         next();
-    };
+    });
 }

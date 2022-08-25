@@ -16,9 +16,10 @@
 import fs from "fs";
 import path from "path";
 import type { URLSearchParams } from "url";
+import { middleware } from "..";
 import { httpMethodsWithBodies } from "../constants";
 import { EntityTooLargeError } from "../errors";
-import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction } from "../types";
+import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, UniqueHttpMiddleware } from "../types";
 import type { Constructor, Nilable, Nullable, ObjectNameListResolver, Optional } from "../types/internal";
 
 interface ICreateWithEntityTooLargeActionOptions {
@@ -290,6 +291,13 @@ export function sortObjectByKeys<T extends any = any>(obj: T): T {
     });
 
     return newObj;
+}
+
+export function toUniqueHttpMiddleware(id: symbol, mw: HttpMiddleware): UniqueHttpMiddleware {
+    const namedMiddleware = mw as UniqueHttpMiddleware;
+    (namedMiddleware as any)[middleware] = id;
+
+    return namedMiddleware;
 }
 
 export function urlSearchParamsToObject(params: Nilable<URLSearchParams>): Nilable<Record<string, string>> {

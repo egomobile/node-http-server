@@ -13,9 +13,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpRequestHandler, IHttpRequest } from "../types";
+import type { HttpRequestHandler, IHttpRequest, UniqueHttpMiddleware } from "../types";
 import type { Nilable, Optional } from "../types/internal";
-import { asAsync, isNil } from "../utils";
+import { asAsync, isNil, toUniqueHttpMiddleware } from "../utils";
 
 /**
  * Handler that is invoked, if validation of
@@ -98,6 +98,11 @@ interface ICreateMiddlewareOptions {
 }
 
 /**
+ * Symbol defining the name of this middleware.
+ */
+export const authMiddleware: unique symbol = Symbol("auth");
+
+/**
  * Default handler, that is invoked, when a auth validation fails.
  *
  * @param {IHttpRequest} request The request context.
@@ -136,11 +141,13 @@ export const defaultAuthFailedHandler: AuthValidationFailedHandler = async (requ
  * @param {string} scheme The scheme.
  * @param {string} value The value, next to scheme.
  * @param {Nilable<AuthValidationFailedHandler>} [onValidationFailed] The custom handler, that is invoked, if validation fails.
+ *
+ * @returns {UniqueHttpMiddleware} The new middleware.
  */
-export function auth(scheme: string, value: string, onValidationFailed?: Nilable<AuthValidationFailedHandler>): HttpMiddleware;
-export function auth(scheme: string, validator: AuthValidatorWithoutScheme, onValidationFailed?: Nilable<AuthValidationFailedHandler>): HttpMiddleware;
-export function auth(validators: IAuthValidators, onValidationFailed?: Nilable<AuthValidationFailedHandler>): HttpMiddleware;
-export function auth(arg1: string | IAuthValidators, arg2?: Nilable<string | AuthValidatorWithoutScheme | AuthValidationFailedHandler>, arg3?: Nilable<AuthValidationFailedHandler>): HttpMiddleware {
+export function auth(scheme: string, value: string, onValidationFailed?: Nilable<AuthValidationFailedHandler>): UniqueHttpMiddleware;
+export function auth(scheme: string, validator: AuthValidatorWithoutScheme, onValidationFailed?: Nilable<AuthValidationFailedHandler>): UniqueHttpMiddleware;
+export function auth(validators: IAuthValidators, onValidationFailed?: Nilable<AuthValidationFailedHandler>): UniqueHttpMiddleware;
+export function auth(arg1: string | IAuthValidators, arg2?: Nilable<string | AuthValidatorWithoutScheme | AuthValidationFailedHandler>, arg3?: Nilable<AuthValidationFailedHandler>): UniqueHttpMiddleware {
     let validator: AuthValidator;
     let onValidationFailed: Nilable<AuthValidationFailedHandler>;
 
@@ -194,11 +201,11 @@ export function auth(arg1: string | IAuthValidators, arg2?: Nilable<string | Aut
     });
 }
 
-function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOptions): HttpMiddleware {
+function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOptions): UniqueHttpMiddleware {
     validator = asAsync(validator);
     onValidationFailed = asAsync(onValidationFailed);
 
-    return async (request, response, next) => {
+    return toUniqueHttpMiddleware(authMiddleware, async (request, response, next) => {
         let isValid = false;
         try {
             const authorization = request.headers["authorization"];
@@ -229,7 +236,7 @@ function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOp
 
             response.end();
         }
-    };
+    });
 }
 
 function createValidatorFromObject(validatorsInput: Nilable<IAuthValidators>): AuthValidator {

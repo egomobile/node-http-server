@@ -74,6 +74,7 @@ export interface IInitControllerSerializerActionContext {
 export interface IInitControllerMethodSwaggerActionContext {
     apiDocument: OpenAPIV3.Document;
     controller: IHttpController<IHttpServer>;
+    controllerClass: Constructor<IHttpController>;
 }
 
 export interface IInitControllerParseErrorHandlerActionContext {

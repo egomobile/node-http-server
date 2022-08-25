@@ -14,7 +14,13 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { URLSearchParams } from "url";
-import type { HttpMiddleware } from "../types";
+import type { UniqueHttpMiddleware } from "../types";
+import { toUniqueHttpMiddleware } from "../utils";
+
+/**
+ * Symbol defining the name of this middleware.
+ */
+export const queryMiddleware: unique symbol = Symbol("query");
 
 /**
  * Creates a new middleware that extracts query parameters
@@ -36,10 +42,10 @@ import type { HttpMiddleware } from "../types";
  * await app.listen()
  * ```
  *
- * @returns {HttpMiddleware} The new middleware.
+ * @returns {UniqueHttpMiddleware} The new middleware.
  */
-export function query(): HttpMiddleware {
-    return async (request, response, next) => {
+export function query(): UniqueHttpMiddleware {
+    return toUniqueHttpMiddleware(queryMiddleware, async (request, response, next) => {
         try {
             if (request.url?.length) {
                 let qs = "";
@@ -61,5 +67,5 @@ export function query(): HttpMiddleware {
         }
 
         next();
-    };
+    });
 }

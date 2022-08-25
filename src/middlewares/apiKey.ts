@@ -13,9 +13,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse } from "../types";
+import type { HttpRequestHandler, IHttpRequest, IHttpResponse, UniqueHttpMiddleware } from "../types";
 import type { Nilable } from "../types/internal";
-import { asAsync, isNil } from "../utils";
+import { asAsync, isNil, toUniqueHttpMiddleware } from "../utils";
 
 /**
  * A function, that validates an API key.
@@ -47,6 +47,11 @@ interface ICreateMiddlewareOptions {
 }
 
 /**
+ * Symbol defining the name of this middleware.
+ */
+export const apiKeyMiddleware: unique symbol = Symbol("apiKey");
+
+/**
  * The default name of the HTTP header for an API key.
  */
 export const defaultApiKeyHeader = "x-api-key";
@@ -73,7 +78,7 @@ export const defaultApiKeyValidationFailedHandler: HttpRequestHandler = async (r
  * @param {ApiKeyValidator} validator The validator.
  * @param {Nilable<IApiKeyOptions>} [options] Custom options.
  *
- * @returns {HttpMiddleware} The new middleware.
+ * @returns {UniqueHttpMiddleware} The new middleware.
  *
  * @example
  * ```
@@ -118,17 +123,17 @@ export const defaultApiKeyValidationFailedHandler: HttpRequestHandler = async (r
  * })
  * ```
  */
-export function apiKey(options: IApiKeyOptions): HttpMiddleware;
-export function apiKey(validator: ApiKeyValidator, onValidationFailed?: HttpRequestHandler): HttpMiddleware;
-export function apiKey(key: string): HttpMiddleware;
-export function apiKey(key: string, header: string): HttpMiddleware;
-export function apiKey(key: string, header: string, onValidationFailed?: Nilable<HttpRequestHandler>): HttpMiddleware;
-export function apiKey(key: string, onValidationFailed: HttpRequestHandler): HttpMiddleware;
+export function apiKey(options: IApiKeyOptions): UniqueHttpMiddleware;
+export function apiKey(validator: ApiKeyValidator, onValidationFailed?: HttpRequestHandler): UniqueHttpMiddleware;
+export function apiKey(key: string): UniqueHttpMiddleware;
+export function apiKey(key: string, header: string): UniqueHttpMiddleware;
+export function apiKey(key: string, header: string, onValidationFailed?: Nilable<HttpRequestHandler>): UniqueHttpMiddleware;
+export function apiKey(key: string, onValidationFailed: HttpRequestHandler): UniqueHttpMiddleware;
 export function apiKey(
     arg1: IApiKeyOptions | ApiKeyValidator | string,  // options | validator | key
     arg2?: Nilable<string | HttpRequestHandler>,  // onValidationFailed | header
     arg3?: Nilable<HttpRequestHandler>  // onValidationFailed
-): HttpMiddleware {
+): UniqueHttpMiddleware {
     let onValidationFailed: Nilable<HttpRequestHandler>;
     let validator: ApiKeyValidator;
 
@@ -185,8 +190,8 @@ export function apiKey(
     });
 }
 
-function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOptions): HttpMiddleware {
-    return async (request, response, next) => {
+function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOptions): UniqueHttpMiddleware {
+    return toUniqueHttpMiddleware(apiKeyMiddleware, async (request, response, next) => {
         let isValid = false;
         try {
             isValid = await validator(request, response);
@@ -201,7 +206,7 @@ function createMiddleware({ onValidationFailed, validator }: ICreateMiddlewareOp
 
             response.end();
         }
-    };
+    });
 }
 
 function createApiKeyValidator(header: string, key: string): ApiKeyValidator {
