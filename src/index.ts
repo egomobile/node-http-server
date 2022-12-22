@@ -20,9 +20,38 @@
 import { createServer as createHttpServer, IncomingMessage, Server, ServerResponse } from "http";
 import joi from "joi";
 import { setupHttpServerControllerMethod } from "./controllers/factories";
-import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction, UniqueHttpMiddleware } from "./types";
+import { setupHttpServerTestMethod } from "./controllers/tests";
+import { setupEventMethods } from "./events";
+import type { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction, UniqueHttpMiddleware } from "./types";
 import type { GroupedHttpRequestHandlers, IRequestHandlerContext, Nilable, Optional } from "./types/internal";
-import { asAsync, getUrlWithoutQuery, isNil } from "./utils";
+import { asAsync, getUrlWithoutQuery, isNil, isTruthy } from "./utils";
+
+/**
+ * Options for `createServer()` function.
+ */
+export interface ICreateServerOptions {
+    /**
+     * Custom settings for (unit-)tests.
+     */
+    tests?: Nilable<{
+        /**
+         * A custom function, which should be executed AFTER ALL tests. This is executed once.
+         */
+        afterAll?: Nilable<AfterAllTestsFunc>;
+        /**
+         * A custom function, which should be executed AFTER EACH tests.
+         */
+        afterEach?: Nilable<AfterEachTestFunc>;
+        /**
+         * A custom function, which should be executed BEFORE ALL tests. This is executed once.
+         */
+        beforeAll?: Nilable<BeforeAllTestsFunc>;
+        /**
+         * A custom function, which should be executed BEFORE EACH tests.
+         */
+        beforeEach?: Nilable<BeforeEachTestFunc>;
+    }>;
+}
 
 /**
  * The default HTTP error handler.
@@ -64,6 +93,8 @@ const supportedHttpMethods = ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PA
 /**
  * Creates a new instance of a HTTP server.
  *
+ * @param {Nilable<ICreateServerOptions>} [serverOptions] Custom options.
+ *
  * @example
  * ```
  * import createServer, { json, IHttpRequest, IHttpResponse } from '@egomobile/http-server'
@@ -81,7 +112,20 @@ const supportedHttpMethods = ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PA
  *
  * @returns {IHttpServer} The new instance.
  */
-export const createServer = (): IHttpServer => {
+export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHttpServer {
+    if (!isNil(serverOptions?.tests?.afterAll) && typeof serverOptions?.tests?.afterAll !== "function") {
+        throw new TypeError("serverOptions.tests.afterAll must be of type function");
+    }
+    if (!isNil(serverOptions?.tests?.afterEach) && typeof serverOptions?.tests?.afterEach !== "function") {
+        throw new TypeError("serverOptions.tests.afterEach must be of type function");
+    }
+    if (!isNil(serverOptions?.tests?.beforeAll) && typeof serverOptions?.tests?.beforeAll !== "function") {
+        throw new TypeError("serverOptions.tests.beforeAll must be of type function");
+    }
+    if (!isNil(serverOptions?.tests?.beforeEach) && typeof serverOptions?.tests?.beforeEach !== "function") {
+        throw new TypeError("serverOptions.tests.beforeEach must be of type function");
+    }
+
     let errorHandler: HttpErrorHandler = defaultHttpErrorHandler;
     const globalMiddlewares: HttpMiddleware[] = [];
     let instance: Optional<Server>;
@@ -332,11 +376,24 @@ export const createServer = (): IHttpServer => {
                 reject(ex);
             });
 
-            newInstance.listen(port as number, "0.0.0.0", () => {
+            const finalize = () => {
                 (server as any).port = port;
 
                 resolve(undefined);
-            });
+            };
+
+            if (isTruthy(process.env.EGO_RUN_TESTS)) {
+                // run tests instead of creating a new instance
+
+                finalize();
+
+                server.test()
+                    .then(resolve)
+                    .catch(reject);
+            }
+            else {
+                newInstance.listen(port as number, "0.0.0.0", finalize);
+            }
 
             instance = newInstance;
         });
@@ -384,11 +441,16 @@ export const createServer = (): IHttpServer => {
     });
 
     setupHttpServerControllerMethod(server);
+    setupEventMethods(server);
+    setupHttpServerTestMethod({
+        "options": serverOptions,
+        server
+    });
 
     resetInstance();
 
     return server;
-};
+}
 
 /**
  * Checks if a value is an `UniqueHttpMiddleware`.

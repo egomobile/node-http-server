@@ -28,6 +28,7 @@ interface ICreateWithEntityTooLargeActionOptions {
 }
 
 const propSepChar = String.fromCharCode(0);
+const truthyValues = ["true", "1", "yes", "y"];
 
 export function asAsync<TFunc extends Function = Function>(func: Function): TFunc {
     if (func.constructor.name === "AsyncFunction") {
@@ -185,6 +186,12 @@ export function isClass<T extends any = any>(maybeClass: any): maybeClass is Con
 
 export function isNil(val: unknown): val is (undefined | null) {
     return typeof val === "undefined" || val === null;
+}
+
+export function isTruthy(val: unknown): boolean {
+    return truthyValues.includes(
+        String(val ?? "").toLowerCase().trim()
+    );
 }
 
 export function limitToBytes(limit?: Nilable<number>): Nilable<number> {

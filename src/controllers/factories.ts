@@ -19,12 +19,12 @@ import minimatch from "minimatch";
 import OpenAPISchemaValidator from "openapi-schema-validator";
 import { OpenAPIV3 } from "openapi-types";
 import path from "path";
-import { CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER } from "../constants";
+import { ADD_CONTROLLER_METHOD_TEST_ACTION, CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER } from "../constants";
 import { SwaggerValidationError } from "../errors";
 import { buffer, query } from "../middlewares";
 import { setupSwaggerUIForServerControllers } from "../swagger";
 import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ParameterOptions, ResponseSerializer } from "../types";
-import type { Func, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, Nilable, PrepareControllerMethodAction } from "../types/internal";
+import type { Func, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerMethodTestAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, IRouterPathItem, Nilable, PrepareControllerMethodAction } from "../types/internal";
 import { asAsync, canHttpMethodHandleBodies, getAllClassProps, getFunctionParamNames, isClass, isNil, limitToBytes, walkDirSync } from "../utils";
 import { params } from "../validators/params";
 import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath, setupMiddlewaresByJoiSchema, setupMiddlewaresBySwaggerDocumentation, setupSwaggerDocumentation, toParameterValueUpdaters } from "./utils";
@@ -422,12 +422,21 @@ function createInitControllerMethodAction({
         routerPath = normalizeRouterPath(routerPath);
         routerPath = routerPath.split("/@").join("/:");
 
-        let allRouterPaths: Nilable<string[]> = (method as any)[ROUTER_PATHS];
+        let allRouterPaths: Nilable<IRouterPathItem[]> = (method as any)[ROUTER_PATHS];
         if (!allRouterPaths) {
+            // not initialized yet
             (method as any)[ROUTER_PATHS] = allRouterPaths = [];
         }
-        if (!allRouterPaths.includes(routerPath)) {
-            allRouterPaths.push(routerPath);
+        if (!allRouterPaths.some((item) => {
+            return item.httpMethod === httpMethod &&
+                item.routerPath === routerPath;
+        })) {
+            // no duplicates
+
+            allRouterPaths.push({
+                httpMethod,
+                routerPath
+            });
         }
 
         if (routerPath.includes("/:")) {
@@ -700,6 +709,11 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
         // collect matching files
         const controllerFiles: IControllerFile[] = [];
         walkDirSync(rootDir, (file) => {
+            const basename = path.basename(file, path.extname(file));
+            if (basename.endsWith(".spec")) {
+                return;  // no test files
+            }
+
             const relativePath = normalizeRouterPath(
                 path.relative(rootDir, file)
             );
@@ -855,6 +869,14 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                             "controllerClass": cls["class"]
                         });
                     }, true);
+
+                    // tests
+                    getListFromObject<InitControllerMethodTestAction>(propValue, ADD_CONTROLLER_METHOD_TEST_ACTION).forEach((action) => {
+                        action({
+                            controller,
+                            server
+                        });
+                    });
 
                     // tell, that controller method has been initialized
                     onControllerMethodInitialized?.({

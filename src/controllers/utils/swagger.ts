@@ -20,7 +20,7 @@ import { DOCUMENTATION_UPDATER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CO
 import { validateMiddleware, validateQueryMiddleware, validateWithSwagger } from "../../middlewares";
 import { toSwaggerPath } from "../../swagger/utils";
 import type { DocumentationUpdaterHandler, HttpMethod, HttpMiddleware, IControllerRouteWithBodyOptions, IControllersOptions } from "../../types";
-import { InitControllerMethodSwaggerAction, ISwaggerMethodInfo, Nilable } from "../../types/internal";
+import type { InitControllerMethodSwaggerAction, IRouterPathItem, ISwaggerMethodInfo, Nilable } from "../../types/internal";
 import { isNil, sortObjectByKeys } from "../../utils";
 
 interface ICreateInitControllerMethodSwaggerActionOptions {
@@ -63,47 +63,45 @@ function createInitControllerMethodSwaggerAction({ doc, method, middlewares }: I
 
         (method as any)[SWAGGER_METHOD_INFO] = info;
 
-        const routerPaths: Nilable<string[]> = (method as any)[ROUTER_PATHS];
-        if (routerPaths?.length) {
+        const allRouterPaths: Nilable<IRouterPathItem[]> = (method as any)[ROUTER_PATHS];
+        if (allRouterPaths?.length) {
             const httpMethods: Nilable<HttpMethod[]> = (method as any)[HTTP_METHODS];
 
             let paths = apiDocument.paths!;
 
-            if (httpMethods?.length) {
-                routerPaths.forEach(routerPath => {
-                    const swaggerPath = toSwaggerPath(routerPath);
+            allRouterPaths.forEach(({ httpMethod, routerPath }) => {
+                const swaggerPath = toSwaggerPath(routerPath);
 
-                    httpMethods!.forEach(httpMethod => {
-                        let pathObj: any = paths[swaggerPath];
-                        if (!pathObj) {
-                            pathObj = {};
-                        }
+                httpMethods!.forEach(httpMethod => {
+                    let pathObj: any = paths[swaggerPath];
+                    if (!pathObj) {
+                        pathObj = {};
+                    }
 
-                        let methodObj: any = pathObj[httpMethod];
-                        if (methodObj) {
-                            throw new Error(`Cannot reset documentation for route ${routerPath} (${httpMethod.toUpperCase()})`);
-                        }
+                    let methodObj: any = pathObj[httpMethod];
+                    if (methodObj) {
+                        throw new Error(`Cannot reset documentation for route ${routerPath} (${httpMethod.toUpperCase()})`);
+                    }
 
-                        const docUpdater: Nilable<DocumentationUpdaterHandler> = (controller as any)[DOCUMENTATION_UPDATER];
-                        if (docUpdater) {
-                            docUpdater({
-                                "documentation": doc,
-                                "method": httpMethod.toUpperCase() as Uppercase<HttpMethod>,
-                                "path": routerPath,
+                    const docUpdater: Nilable<DocumentationUpdaterHandler> = (controller as any)[DOCUMENTATION_UPDATER];
+                    if (docUpdater) {
+                        docUpdater({
+                            "documentation": doc,
+                            "method": httpMethod.toUpperCase() as Uppercase<HttpMethod>,
+                            "path": routerPath,
 
-                                doesValidate,
-                                doesValidateQuery,
-                                hasAuthorize,
-                                middlewares
-                            });
-                        }
+                            doesValidate,
+                            doesValidateQuery,
+                            hasAuthorize,
+                            middlewares
+                        });
+                    }
 
-                        pathObj[httpMethod] = doc;
+                    pathObj[httpMethod] = doc;
 
-                        paths[swaggerPath] = sortObjectByKeys(pathObj);
-                    });
+                    paths[swaggerPath] = sortObjectByKeys(pathObj);
                 });
-            }
+            });
 
             apiDocument.paths = sortObjectByKeys(paths);
         }

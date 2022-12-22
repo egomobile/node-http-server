@@ -1,0 +1,149 @@
+// This file is part of the @egomobile/http-server distribution.
+// Copyright (c) Next.e.GO Mobile SE, Aachen, Germany (https://e-go-mobile.com/)
+//
+// @egomobile/http-server is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation, version 3.
+//
+// @egomobile/http-server is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+import type { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, ICreateServerOptions, IHttpServer, ITestEventHandlerContext } from "..";
+import { ROUTER_PATHS, TEST_DESCRIPTION, TEST_OPTIONS } from "../constants";
+import type { IRouterPathItem, ITestDescription, ITestOptions, Nilable } from "../types/internal";
+import { asAsync } from "../utils";
+import { getListFromObject } from "./utils";
+
+export interface ISetupHttpServerTestMethodOptions {
+    options: Nilable<ICreateServerOptions>;
+    server: IHttpServer;
+}
+
+interface ITestRunnerActionContext {
+    index: number;
+    totalCount: number;
+}
+
+interface ITestRunnerItem {
+    action: TestRunnerAction;
+}
+
+type TestRunnerAction = (rc: ITestRunnerActionContext) => Promise<void>;
+
+export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMethodOptions) {
+    const { server } = setupOptions;
+
+    const afterAll = asAsync<AfterAllTestsFunc>(
+        setupOptions.options?.tests?.afterAll || (async () => { })
+    );
+    const afterEach = asAsync<AfterEachTestFunc>(
+        setupOptions.options?.tests?.afterEach || (async () => { })
+    );
+    const beforeAll = asAsync<BeforeAllTestsFunc>(
+        setupOptions.options?.tests?.beforeAll || (async () => { })
+    );
+    const beforeEach = asAsync<BeforeEachTestFunc>(
+        setupOptions.options?.tests?.beforeEach || (async () => { })
+    );
+
+    server.test = async () => {
+        const allRunners: ITestRunnerItem[] = [];
+
+        const allTestOptions = getListFromObject<ITestOptions>(server, TEST_OPTIONS, true, true);
+
+        // we will organize all tests into
+        // flat and separate list of runners (`allRunners`), so we can better
+        // count and provide possibility to implement progress
+        allTestOptions.forEach((options) => {
+            const { controller, method, methodName, settings } = options;
+
+            const description: ITestDescription = (controller as any)[TEST_DESCRIPTION];
+            if (typeof description !== "object") {
+                return;  // tests not enabled
+            }
+
+            const allRouterPaths: Nilable<IRouterPathItem[]> = (method as any)[ROUTER_PATHS];
+            if (!allRouterPaths?.length) {
+                throw new Error(`Method ${String(methodName)} in controller ${controller.__file} is no request handler`);
+            }
+
+            allRouterPaths.forEach(({ httpMethod, routerPath }) => {
+                allRunners.push({
+                    "action": async (runnerContext) => {
+                        const testContext: ITestEventHandlerContext = {
+                            "context": "controller",
+                            "describe": description.name,
+                            "file": controller.__file,
+                            httpMethod,
+                            "index": runnerContext.index,
+                            "it": options.name,
+                            methodName,
+                            "route": routerPath,
+                            server,
+                            settings,
+                            "totalCount": runnerContext.totalCount
+                        };
+
+                        await server.emit("test", testContext);
+                    }
+                });
+            });
+        });
+
+        const totalCount = allRunners.length;
+        let globalError: any;
+
+        // global preparations
+        await beforeAll({
+            totalCount
+        });
+        try {
+            // now execute runners
+            for (let i = 0; i < totalCount; i++) {
+                let testError: any;
+
+                try {
+                    // test preparations
+                    await beforeEach({
+                        "index": i,
+                        totalCount
+                    });
+
+                    const runner = allRunners[i];
+                    const { action } = runner;
+
+                    await action({
+                        "index": i,
+                        totalCount
+                    });
+                }
+                catch (error) {
+                    testError = error;
+                }
+                finally {
+                    // test cleanups
+                    await afterEach({
+                        "error": testError,
+                        "index": i,
+                        totalCount
+                    });
+                }
+            }
+        }
+        catch (error) {
+            globalError = error;
+        }
+        finally {
+            // global cleanups
+            await afterAll({
+                "error": globalError,
+                totalCount
+            });
+        }
+    };
+}

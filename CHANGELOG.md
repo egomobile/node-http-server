@@ -1,5 +1,12 @@
 # Change Log (@egomobile/http-server)
 
+## 0.41.0
+
+- add `Describe()` and `It()` decorators, that can setup (unit-)tests for controller methods, e.g.
+- `npm update`s
+- code cleanups and improvements
+- (bug-)fixes
+
 ## 0.40.0
 
 - add `doesValidate`, `doesValidateQuery`, `hasAuthorize` and `middlewares` properties to [IDocumentationUpdaterContext interface](https://egomobile.github.io/node-http-server/interfaces/IDocumentationUpdaterContext.html)

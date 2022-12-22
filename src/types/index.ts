@@ -22,6 +22,20 @@ import type { ParseError } from "../errors/parse";
 import type { Constructor, Func, Nilable, ObjectKey, Optional, PartialBy } from "./internal";
 
 /**
+ * `afterAll()` function for (unit-)tests.
+ *
+ * @param {IAfterAllTestsContext} context The context.
+ */
+export type AfterAllTestsFunc = (context: IAfterAllTestsContext) => any;
+
+/**
+ * `afterEach()` function for (unit-)tests.
+ *
+ * @param {IAfterEachTestContext} context The context.
+ */
+export type AfterEachTestFunc = (context: IAfterEachTestContext) => any;
+
+/**
  * An 'authorize' argument value.
  */
 export type AuthorizeArgumentValue = AuthorizeOptionArgument1 | AuthorizeRoles;
@@ -78,6 +92,20 @@ export type AuthorizeValidator = (context: IAuthorizeValidatorContext) => any;
  *  A validator for 'authorize' actions.
  */
 export type AuthorizeValidatorValue = AuthorizeValidator | string;
+
+/**
+ * `beforeAll()` function for (unit-)tests.
+ *
+ * @param {IBeforeAllTestsContext} context The context.
+ */
+export type BeforeAllTestsFunc = (context: IBeforeAllTestsContext) => any;
+
+/**
+ * `beforeEach()` function for (unit-)tests.
+ *
+ * @param {IBeforeEachTestContext} context The context.
+ */
+export type BeforeEachTestFunc = (context: IBeforeEachTestContext) => any;
 
 /**
  * A function, that is invoked after a controller has been
@@ -237,6 +265,38 @@ export interface IAuthorizedUserProviderContext {
 }
 
 /**
+ * Context for a `AfterAllTestsFunc` function / method.
+ */
+export interface IAfterAllTestsContext {
+    /**
+     * The global error, if occurred.
+     */
+    error?: any;
+    /**
+     * The total number of tests.
+     */
+    totalCount: number;
+}
+
+/**
+ * Context for a `AfterEachTestFunc` function / method.
+ */
+export interface IAfterEachTestContext {
+    /**
+     * The error by single test, if occurred.
+     */
+    error?: any;
+    /**
+     * The current zero-based index.
+     */
+    index: number;
+    /**
+     * The total number of tests.
+     */
+    totalCount: number;
+}
+
+/**
  * Options for an 'authorize' decorator or prop.
  */
 export interface IAuthorizeOptions {
@@ -282,6 +342,30 @@ export interface IAuthorizeValidatorContext {
      * List of roles.
      */
     roles: AuthorizeRoles;
+}
+
+/**
+ * Context for a `BeforeAllTestsFunc` function / method.
+ */
+export interface IBeforeAllTestsContext {
+    /**
+     * The total number of tests.
+     */
+    totalCount: number;
+}
+
+/**
+ * Context for a `BeforeEachTestFunc` function / method.
+ */
+export interface IBeforeEachTestContext {
+    /**
+     * The current zero-based index.
+     */
+    index: number;
+    /**
+     * The total number of tests.
+     */
+    totalCount: number;
 }
 
 /**
@@ -872,6 +956,16 @@ export interface IHttpServer {
     delete(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
 
     /**
+     * Emits an event.
+     *
+     * @param {string} event The name of the event to emit.
+     * @param {any[]} [args] One or more argument for the event.
+     *
+     * @returns {any} The result.
+     */
+    emit(event: "test", context: ITestEventHandlerContext): Promise<any>;
+
+    /**
      * Gets the current error handler.
      */
     readonly errorHandler: HttpErrorHandler;
@@ -969,6 +1063,14 @@ export interface IHttpServer {
      * Gets the current "not found" handler.
      */
     readonly notFoundHandler: HttpNotFoundHandler;
+
+    /**
+     * Registers an event handler, which should be executed once.
+     *
+     * @param {string} event The name of the event.
+     * @param {TestEventHandler} handler The handler to execute.
+     */
+    once(event: "test", handler: TestEventHandler): this;
 
     /**
      * Registers a route for a OPTIONS request.
@@ -1136,6 +1238,11 @@ export interface IHttpServer {
     setNotFoundHandler(handler: HttpNotFoundHandler): this;
 
     /**
+     * Runs tests.
+     */
+    test(): Promise<void>;
+
+    /**
      * Registers a route for a TRACE request.
      *
      * @param {HttpRequestPath} path The path.
@@ -1250,6 +1357,9 @@ export interface IParameterDataTransformerContext {
     source: any;
 }
 
+/**
+ * Options for `Parameter` decorator.
+ */
 export interface IParameterOptions<TSource extends ParameterSource> {
     /**
      * The name of the source.
@@ -1385,6 +1495,62 @@ export interface ISwaggerInitializedEventArguments {
 }
 
 /**
+ * A context for a `TestEventHandler`.
+ */
+export interface ITestEventHandlerContext {
+    /**
+     * The context, where the test is running in.
+     */
+    context: "controller";
+    /**
+     * The test group / description.
+     */
+    describe: string;
+    /**
+     * The full path of the underlying file.
+     */
+    file: string;
+    /**
+     * The HTTP method.
+     */
+    httpMethod: HttpMethod;
+    /**
+     * The zero-based index of the current test.
+     */
+    index: number;
+    /**
+     * The description of the specific test.
+     */
+    it: string;
+    /**
+     * The nam / key of the underlying method.
+     */
+    methodName: string | symbol;
+    /**
+     * The path of the route.
+     */
+    route: string;
+    /**
+     * The underlying server instance.
+     */
+    server: IHttpServer;
+    /**
+     * The settings to use.
+     */
+    settings: ITestSettings;
+    /**
+     * The total number of tests.
+     */
+    totalCount: number;
+}
+
+/**
+ * Options, setting up a test.
+ */
+export interface ITestSettings {
+}
+
+/**
  * A handler, which is invoked, when a JSON schema validation fails.
  *
  * @param {IJsonSchemaError[]} errors The list of errors.
@@ -1401,9 +1567,9 @@ export type LazyImportValue<T extends any = any> = T | (() => T);
 /**
  * A next function.
  *
- * @param {Optional<any>} [error] The error, if occurred.
+ * @param {Nilable<any>} [error] The error, if occurred.
  */
-export type NextFunction = (error?: Optional<any>) => void;
+export type NextFunction = (error?: Nilable<any>) => void;
 
 /**
  * A possible value for a first argument for `Parameter` decorator.
@@ -1497,6 +1663,13 @@ export type SetupAuthorizeMiddlewareHandler = (context: ISetupAuthorizeMiddlewar
  * @param {ISwaggerInitializedEventArguments} args The arguments.
  */
 export type SwaggerInitializedEventHandler = (args: ISwaggerInitializedEventArguments) => any;
+
+/**
+ * An event handler, running a test.
+ *
+ * @param {ITestEventHandlerContext} context The context.
+ */
+export type TestEventHandler = (context: ITestEventHandlerContext) => any;
 
 /**
  * An unique middleware.
