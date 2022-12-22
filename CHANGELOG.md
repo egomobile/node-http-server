@@ -3,6 +3,7 @@
 ## 0.41.0
 
 - add `Describe()` and `It()` decorators, that can setup (unit-)tests for controller methods, e.g.
+- if Swagger documentation is activated, all endpoints have to be documented by default now ... this behavior can be controlled by new `requiresDocumentationEverywhere` prop of [IControllersOptions interface](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html)
 - `npm update`s
 - code cleanups and improvements
 - (bug-)fixes

@@ -50,6 +50,12 @@ export interface ICreateServerOptions {
          * A custom function, which should be executed BEFORE EACH tests.
          */
         beforeEach?: Nilable<BeforeEachTestFunc>;
+        /**
+         * This is value indicates, that all endpoints require at least one test.
+         *
+         * @default true
+         */
+        requiresTestsEverywhere?: Nilable<boolean>;
     }>;
 }
 
@@ -125,6 +131,10 @@ export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHt
     if (!isNil(serverOptions?.tests?.beforeEach) && typeof serverOptions?.tests?.beforeEach !== "function") {
         throw new TypeError("serverOptions.tests.beforeEach must be of type function");
     }
+
+    const shouldHaveTestsEverywhere = isNil(serverOptions?.tests?.requiresTestsEverywhere) ?
+        true :
+        !!serverOptions?.tests?.requiresTestsEverywhere;
 
     let errorHandler: HttpErrorHandler = defaultHttpErrorHandler;
     const globalMiddlewares: HttpMiddleware[] = [];
@@ -440,7 +450,10 @@ export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHt
         }
     });
 
-    setupHttpServerControllerMethod(server);
+    setupHttpServerControllerMethod({
+        server,
+        shouldHaveTestsEverywhere
+    });
     setupEventMethods(server);
     setupHttpServerTestMethod({
         "options": serverOptions,

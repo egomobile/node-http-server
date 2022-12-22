@@ -631,7 +631,13 @@ export interface IControllersOptions {
      */
     patterns?: Nilable<string | string[]>;
     /**
-     * The custom root directory. Default: 'controllers'
+     * Custom value, which indicates, that all endpoints require at least one test.
+     */
+    requiresTestsEverywhere?: Nilable<boolean>;
+    /**
+     * The custom root directory.
+     *
+     * @default "controllers"
      */
     rootDir?: Nilable<string>;
     /**
@@ -652,13 +658,21 @@ export interface IControllersOptions {
  */
 export interface IControllersSwaggerOptions {
     /**
-     * The base path. Default: /swagger
+     * The base path.
+     *
+     * @default "/swagger"
      */
     basePath?: Nilable<string>;
     /**
      * The base document.
      */
     document: ControllersSwaggerBaseDocument;
+    /**
+     * Value, which indicates, if all endpoints should have documentation or not.
+     *
+     * @default true
+     */
+    requiresDocumentationEverywhere?: Nilable<boolean>;
     /**
      * One or more required middleware for the Swagger endpoint(s).
      */
@@ -778,7 +792,7 @@ export interface IHttpRequestHandlerOptions {
      * Automatic call `end()` method on response context
      * when handler was executed successfully.
      *
-     * Default: (true)
+     * @default true
      */
     autoEnd?: Optional<boolean>;
     /**
@@ -1303,7 +1317,9 @@ export interface IHttpServer {
  */
 export interface IHttpStringBodyParserOptions extends IHttpBodyParserOptions {
     /**
-     * The custom string encoding to use. Default: utf8
+     * The custom string encoding to use.
+     *
+     * @default "utf8"
      */
     encoding?: Nilable<BufferEncoding>;
 }
