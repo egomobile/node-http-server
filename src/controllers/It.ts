@@ -18,7 +18,7 @@
 import type { ITestSettings } from "..";
 import { ADD_CONTROLLER_METHOD_TEST_ACTION, TEST_OPTIONS } from "../constants";
 import type { InitControllerMethodTestAction, ITestOptions, Nilable } from "../types/internal";
-import { isNil } from "../utils";
+import { asAsync, isNil } from "../utils";
 import { getListFromObject, getMethodOrThrow } from "./utils";
 
 /**
@@ -55,6 +55,88 @@ export function It(name: string, settings?: Nilable<ITestSettings>): MethodDecor
         }
     }
 
+    let getExpectedStatus = async () => {
+        return 200;
+    };
+    if (!isNil(settings?.expections?.status)) {
+        if (typeof settings!.expections!.status === "number") {
+            getExpectedStatus = async () => {
+                return settings!.expections!.status as number;
+            };
+        }
+        else if (typeof settings!.expections!.status === "function") {
+            getExpectedStatus = asAsync(settings!.expections!.status);
+        }
+        else {
+            throw new TypeError("settings.expections.status must be of type number or function");
+        }
+    }
+
+    let getExpectedHeaders = async (): Promise<Record<string, string | RegExp>> => {
+        return {};
+    };
+    if (!isNil(settings?.expections?.headers)) {
+        if (typeof settings!.expections!.status === "object") {
+            getExpectedHeaders = async () => {
+                return settings!.expections!.headers as Record<string, string | RegExp>;
+            };
+        }
+        else if (typeof settings!.expections!.headers === "function") {
+            getExpectedStatus = asAsync(settings!.expections!.headers);
+        }
+        else {
+            throw new TypeError("settings.expections.headers must be of type object or function");
+        }
+    }
+
+    let getExpectedBody = async (): Promise<any> => {
+        return undefined;
+    };
+    if (!isNil(settings?.expections?.body)) {
+        if (typeof settings!.expections!.headers === "function") {
+            getExpectedStatus = asAsync(settings!.expections!.body);
+        }
+        else {
+            getExpectedHeaders = async () => {
+                return settings!.expections!.body;
+            };
+        }
+    }
+
+    let getParameters = async (): Promise<Record<string, string>> => {
+        return {};
+    };
+    if (!isNil(settings?.parameters)) {
+        if (typeof settings!.parameters === "object") {
+            getParameters = async () => {
+                return settings!.parameters as Record<string, string>;
+            };
+        }
+        else if (typeof settings!.parameters === "function") {
+            getParameters = asAsync(settings!.parameters!);
+        }
+        else {
+            throw new TypeError("settings.getParameters must be of type object or function");
+        }
+    }
+
+    let getHeaders = async (): Promise<Record<string, string>> => {
+        return {};
+    };
+    if (!isNil(settings?.headers)) {
+        if (typeof settings!.headers === "object") {
+            getHeaders = async () => {
+                return settings!.headers as Record<string, string>;
+            };
+        }
+        else if (typeof settings!.parameters === "function") {
+            getHeaders = asAsync(settings!.parameters!);
+        }
+        else {
+            throw new TypeError("settings.getHeaders must be of type object or function");
+        }
+    }
+
     return function (target, methodName, descriptor) {
         const method = getMethodOrThrow(descriptor);
 
@@ -62,6 +144,11 @@ export function It(name: string, settings?: Nilable<ITestSettings>): MethodDecor
             ({ controller, server }) => {
                 const options: ITestOptions = {
                     controller,
+                    getExpectedBody,
+                    getExpectedHeaders,
+                    getExpectedStatus,
+                    getHeaders,
+                    getParameters,
                     method,
                     methodName,
                     name,

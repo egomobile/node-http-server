@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, ICreateServerOptions, IHttpServer, ITestEventHandlerContext } from "..";
+import type { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, ICreateServerOptions, IHttpServer, ITestEventHandlerContext, ITestSettingValueGetterContext } from "..";
 import { ROUTER_PATHS, TEST_DESCRIPTION, TEST_OPTIONS } from "../constants";
 import type { IRouterPathItem, ITestDescription, ITestOptions, Nilable } from "../types/internal";
 import { asAsync } from "../utils";
@@ -60,7 +60,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
         // flat and separate list of runners (`allRunners`), so we can better
         // count and provide possibility to implement progress
         allTestOptions.forEach((options) => {
-            const { controller, method, methodName, settings } = options;
+            const { controller, getExpectedHeaders, getExpectedStatus, getHeaders, getParameters, method, methodName } = options;
 
             const description: ITestDescription = (controller as any)[TEST_DESCRIPTION];
             if (typeof description !== "object") {
@@ -72,20 +72,44 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                 throw new Error(`Method ${String(methodName)} in controller ${controller.__file} is no request handler`);
             }
 
-            allRouterPaths.forEach(({ httpMethod, routerPath }) => {
+            allRouterPaths.forEach(({ httpMethod, "routerPath": route }) => {
                 allRunners.push({
                     "action": async (runnerContext) => {
+                        const valueGetterContext: ITestSettingValueGetterContext = {
+                        };
+
+                        // create object with headers with lowercase keys
+                        const headers: Record<string, string> = {};
+                        for (const [key, value] of Object.entries(await getHeaders(valueGetterContext))) {
+                            headers[key.toLowerCase().trim()] = String(value ?? "");
+                        }
+
+                        const parameters = await getParameters(valueGetterContext);
+
+                        let escapedRoute = route;
+                        for (const [paramName, paramValue] of Object.entries(parameters)) {
+                            escapedRoute = escapedRoute
+                                .split(`:${paramName}`)
+                                .join(encodeURIComponent(paramValue));
+                        }
+
                         const testContext: ITestEventHandlerContext = {
                             "context": "controller",
                             "describe": description.name,
+                            escapedRoute,
+                            "expectations": {
+                                "headers": await getExpectedHeaders(valueGetterContext),
+                                "status": await getExpectedStatus(valueGetterContext)
+                            },
                             "file": controller.__file,
+                            headers,
                             httpMethod,
                             "index": runnerContext.index,
                             "it": options.name,
                             methodName,
-                            "route": routerPath,
+                            route,
+                            parameters,
                             server,
-                            settings,
                             "totalCount": runnerContext.totalCount
                         };
 

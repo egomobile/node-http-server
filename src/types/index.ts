@@ -1523,9 +1523,21 @@ export interface ITestEventHandlerContext {
      */
     describe: string;
     /**
+     * Read-to-use path of the route with injected / replaced and escaped parameter values.
+     */
+    escapedRoute: string;
+    /**
+     * Expectations for the response.
+     */
+    expectations: ITestEventHandlerContextExpectations;
+    /**
      * The full path of the underlying file.
      */
     file: string;
+    /**
+     * HTTP request headers.
+     */
+    headers: Record<string, string>;
     /**
      * The HTTP method.
      */
@@ -1543,17 +1555,17 @@ export interface ITestEventHandlerContext {
      */
     methodName: string | symbol;
     /**
-     * The path of the route.
+     * The path of the route with possible parameters.
      */
     route: string;
+    /**
+     * URL parameters to use.
+     */
+    parameters: Record<string, string>;
     /**
      * The underlying server instance.
      */
     server: IHttpServer;
-    /**
-     * The settings to use.
-     */
-    settings: ITestSettings;
     /**
      * The total number of tests.
      */
@@ -1561,9 +1573,61 @@ export interface ITestEventHandlerContext {
 }
 
 /**
+ * Expectations for a test response.
+ */
+export interface ITestEventHandlerContextExpectations {
+    /**
+     * Headers.
+     */
+    headers: Record<string, string | RegExp>;
+    /**
+     * The status code.
+     */
+    status: number;
+}
+
+/**
+ * Expectations for a test.
+ */
+export interface ITestSettingExpectations {
+    /**
+     * The expected body.
+     */
+    body?: Nilable<TestSettingValueOrGetter<any>>;
+    /**
+     * The expected headers.
+     */
+    headers?: Nilable<TestSettingValueOrGetter<Record<string, string | RegExp>>>;
+    /**
+     * The expected status code.
+     *
+     * @default 200
+     */
+    status?: Nilable<TestSettingValueOrGetter<number>>;
+}
+
+/**
  * Options, setting up a test.
  */
 export interface ITestSettings {
+    /**
+     * Sets up the expectations.
+     */
+    expections?: Nilable<ITestSettingExpectations>;
+    /**
+     * Request headers.
+     */
+    headers?: Nilable<TestSettingValueOrGetter<Record<string, any>>>;
+    /**
+     * URL parameters.
+     */
+    parameters?: Nilable<TestSettingValueOrGetter<Record<string, string>>>;
+}
+
+/**
+ * Context for a test setting value getter.
+ */
+export interface ITestSettingValueGetterContext {
 }
 
 /**
@@ -1686,6 +1750,12 @@ export type SwaggerInitializedEventHandler = (args: ISwaggerInitializedEventArgu
  * @param {ITestEventHandlerContext} context The context.
  */
 export type TestEventHandler = (context: ITestEventHandlerContext) => any;
+
+/**
+ * A value or function, which returns a value for a test setting.
+ */
+export type TestSettingValueOrGetter<T extends any = any> =
+    T | ((context: ITestSettingValueGetterContext) => T) | ((context: ITestSettingValueGetterContext) => PromiseLike<T>);
 
 /**
  * An unique middleware.
