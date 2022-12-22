@@ -187,14 +187,14 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         }
     }
 
-    if (!isNil(settings)) {
-        if (typeof settings !== "object") {
-            throw new TypeError("settings must be of type object");
+    if (isNil(settings)) {
+        if (!shouldAllowEmptySettings) {
+            throw new TypeError("settings cannot be empty");
         }
     }
     else {
-        if (!shouldAllowEmptySettings) {
-            throw new TypeError("settings cannot be empty");
+        if (typeof settings !== "object") {
+            throw new TypeError("settings must be of type object");
         }
     }
 

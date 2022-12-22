@@ -15,7 +15,8 @@
 
 import path from "path";
 import { Response } from "supertest";
-import createHttpServer, { IHttpServer } from "..";
+import createHttpServer, { ICreateServerOptions, IHttpServer } from "..";
+import { Nilable } from "../types/internal";
 
 export function binaryParser(response: Response, done: (ex: any, data?: Buffer) => any) {
     response.setEncoding("binary");
@@ -35,12 +36,16 @@ export function binaryParser(response: Response, done: (ex: any, data?: Buffer) 
     });
 }
 
-export function createServer(): IHttpServer {
-    return createHttpServer();
+export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHttpServer {
+    return createHttpServer(serverOptions);
 }
 
 export function createServerAndInitControllers() {
-    const server = createServer();
+    const server = createServer({
+        "tests": {
+            "requiresTestsEverywhere": false
+        }
+    });
 
     server.controllers({
         "rootDir": path.join(__dirname, "controllers"),
