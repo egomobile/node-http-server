@@ -29,11 +29,13 @@ interface IGetSettingsContext {
 }
 
 interface IToTestOptionsOptions {
+    shouldAllowEmptySettings: boolean;
     controller: IHttpController<IHttpServer>;
     method: Function;
     methodName: string | symbol;
     name: string;
     settings: Nilable<ITestSettings>;
+    shouldUseModuleAsDefault: boolean;
 }
 
 /**
@@ -133,7 +135,7 @@ export function It(name: string, settingsOrGetter?: Nilable<ItSettingsOrGetter>)
         const method = getMethodOrThrow(descriptor);
 
         getListFromObject<InitControllerMethodTestAction>(method, ADD_CONTROLLER_METHOD_TEST_ACTION).push(
-            ({ controller, server }) => {
+            ({ controller, server, shouldAllowEmptySettings, shouldUseModuleAsDefault }) => {
                 getListFromObject<TestOptionsGetter>(server, TEST_OPTIONS).push(
                     async () => {
                         return toTestOptions({
@@ -144,7 +146,9 @@ export function It(name: string, settingsOrGetter?: Nilable<ItSettingsOrGetter>)
                             "settings": await getSettings({
                                 controller,
                                 methodName
-                            })
+                            }),
+                            shouldAllowEmptySettings,
+                            shouldUseModuleAsDefault
                         });
                     }
                 );
@@ -154,7 +158,7 @@ export function It(name: string, settingsOrGetter?: Nilable<ItSettingsOrGetter>)
 }
 
 async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptions> {
-    const { controller, method, methodName, name } = options;
+    const { controller, method, methodName, name, shouldAllowEmptySettings, shouldUseModuleAsDefault } = options;
     let { settings } = options;
 
     if (isNil(settings)) {
@@ -175,11 +179,22 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
 
             settings = controllerSpecModule?.[methodName];
         }
+        else {
+            if (shouldUseModuleAsDefault) {
+                // required
+                throw new Error(`${controllerSpecFile} required but not found`);
+            }
+        }
     }
 
     if (!isNil(settings)) {
         if (typeof settings !== "object") {
             throw new TypeError("settings must be of type object");
+        }
+    }
+    else {
+        if (!shouldAllowEmptySettings) {
+            throw new TypeError("settings cannot be empty");
         }
     }
 

@@ -99,6 +99,8 @@ export interface IInitControllerParseErrorHandlerActionContext {
 export interface IInitControllerMethodTestActionContext {
     controller: IHttpController<IHttpServer>;
     server: IHttpServer;
+    shouldAllowEmptySettings: boolean;
+    shouldUseModuleAsDefault: boolean;
 }
 
 export interface IInitControllerValidationErrorHandlerActionContext {

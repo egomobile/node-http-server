@@ -75,7 +75,9 @@ interface ICreateRequestHandlerWithSerializerOptions {
 
 export interface ISetupHttpServerControllerMethodOptions {
     server: IHttpServer;
+    shouldAllowEmptyTestSettings: boolean;
     shouldHaveTestsEverywhere: boolean;
+    shouldUseTestModuleAsDefault: boolean;
 }
 
 interface IUpdateMiddlewaresOptions {
@@ -620,6 +622,14 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
             shouldHaveTestsEverywhere = !!options.requiresTestsEverywhere;  // custom
         }
 
+        let shouldUseTestModuleAsDefault: boolean;
+        if (isNil(options.requiresTestModuleAsDefault)) {
+            shouldUseTestModuleAsDefault = setupOptions.shouldUseTestModuleAsDefault;  // default
+        }
+        else {
+            shouldUseTestModuleAsDefault = !!options.requiresTestModuleAsDefault;  // custom
+        }
+
         let swagger: Nilable<IControllersSwaggerOptions>;
         if (!isNil(options.swagger)) {
             if (options.swagger !== false) {
@@ -905,7 +915,9 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                 getListFromObject<InitControllerMethodTestAction>(propValue, ADD_CONTROLLER_METHOD_TEST_ACTION).forEach((action) => {
                     action({
                         controller,
-                        server
+                        server,
+                        "shouldAllowEmptySettings": !!options?.allowEmptyTestSettings,
+                        "shouldUseModuleAsDefault": shouldUseTestModuleAsDefault
                     });
 
                     ++numberOfTests;

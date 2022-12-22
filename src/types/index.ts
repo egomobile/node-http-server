@@ -586,6 +586,10 @@ export interface IControllersAuthorizeOptions {
  */
 export interface IControllersOptions {
     /**
+     * Custom value, which indicates, that, if empty settings are allowed or not.
+     */
+    allowEmptyTestSettings?: Nilable<boolean>;
+    /**
      * Options for 'authorize' feature.
      */
     authorize?: Nilable<IControllersAuthorizeOptions>;
@@ -630,6 +634,10 @@ export interface IControllersOptions {
      * @see https://www.npmjs.com/package/minimatch
      */
     patterns?: Nilable<string | string[]>;
+    /**
+     * Custom value, which indicates, that, if no settings are specified, a module file with it is required.
+     */
+    requiresTestModuleAsDefault?: Nilable<boolean>;
     /**
      * Custom value, which indicates, that all endpoints require at least one test.
      */

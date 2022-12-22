@@ -43,6 +43,12 @@ export interface ICreateServerOptions {
          */
         afterEach?: Nilable<AfterEachTestFunc>;
         /**
+         * Allow empty test settings or not.
+         *
+         * @default false
+         */
+        allowEmptyTestSettings?: boolean;
+        /**
          * A custom function, which should be executed BEFORE ALL tests. This is executed once.
          */
         beforeAll?: Nilable<BeforeAllTestsFunc>;
@@ -50,6 +56,12 @@ export interface ICreateServerOptions {
          * A custom function, which should be executed BEFORE EACH tests.
          */
         beforeEach?: Nilable<BeforeEachTestFunc>;
+        /**
+         * If no settings are specified, a module file with it is required.
+         *
+         * @default true
+         */
+        requiresModuleAsDefault?: Nilable<boolean>;
         /**
          * This is value indicates, that all endpoints require at least one test.
          *
@@ -132,9 +144,13 @@ export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHt
         throw new TypeError("serverOptions.tests.beforeEach must be of type function");
     }
 
+    const shouldUseTestModuleAsDefault = isNil(serverOptions?.tests?.requiresModuleAsDefault) ?
+        true :
+        !!serverOptions?.tests?.requiresModuleAsDefault;
     const shouldHaveTestsEverywhere = isNil(serverOptions?.tests?.requiresTestsEverywhere) ?
         true :
         !!serverOptions?.tests?.requiresTestsEverywhere;
+    const shouldAllowEmptyTestSettings = !!serverOptions?.tests?.allowEmptyTestSettings;
 
     let errorHandler: HttpErrorHandler = defaultHttpErrorHandler;
     const globalMiddlewares: HttpMiddleware[] = [];
@@ -452,7 +468,9 @@ export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHt
 
     setupHttpServerControllerMethod({
         server,
-        shouldHaveTestsEverywhere
+        shouldAllowEmptyTestSettings,
+        shouldHaveTestsEverywhere,
+        shouldUseTestModuleAsDefault
     });
     setupEventMethods(server);
     setupHttpServerTestMethod({
