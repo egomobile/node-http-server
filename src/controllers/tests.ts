@@ -15,7 +15,7 @@
 
 import type { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, ICreateServerOptions, IHttpServer, ITestEventHandlerContext, ITestSettingValueGetterContext } from "..";
 import { ROUTER_PATHS, TEST_DESCRIPTION, TEST_OPTIONS } from "../constants";
-import type { IRouterPathItem, ITestDescription, ITestOptions, Nilable } from "../types/internal";
+import type { IRouterPathItem, ITestDescription, ITestOptions, Nilable, TestOptionsGetter } from "../types/internal";
 import { asAsync } from "../utils";
 import { getListFromObject } from "./utils";
 
@@ -54,70 +54,72 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
     server.test = async () => {
         const allRunners: ITestRunnerItem[] = [];
 
-        const allTestOptions = getListFromObject<ITestOptions>(server, TEST_OPTIONS, true, true);
+        const allTestOptionGetters = getListFromObject<TestOptionsGetter>(server, TEST_OPTIONS, true, true);
 
         // we will organize all tests into
         // flat and separate list of runners (`allRunners`), so we can better
         // count and provide possibility to implement progress
-        allTestOptions.forEach((options) => {
-            const { controller, getExpectedHeaders, getExpectedStatus, getHeaders, getParameters, method, methodName } = options;
+        for (const getOptions of allTestOptionGetters) {
+            ((options: ITestOptions) => {
+                const { controller, getExpectedHeaders, getExpectedStatus, getHeaders, getParameters, method, methodName } = options;
 
-            const description: ITestDescription = (controller as any)[TEST_DESCRIPTION];
-            if (typeof description !== "object") {
-                return;  // tests not enabled
-            }
+                const description: ITestDescription = (controller as any)[TEST_DESCRIPTION];
+                if (typeof description !== "object") {
+                    return;  // tests not enabled
+                }
 
-            const allRouterPaths: Nilable<IRouterPathItem[]> = (method as any)[ROUTER_PATHS];
-            if (!allRouterPaths?.length) {
-                throw new Error(`Method ${String(methodName)} in controller ${controller.__file} is no request handler`);
-            }
+                const allRouterPaths: Nilable<IRouterPathItem[]> = (method as any)[ROUTER_PATHS];
+                if (!allRouterPaths?.length) {
+                    throw new Error(`Method ${String(methodName)} in controller ${controller.__file} is no request handler`);
+                }
 
-            allRouterPaths.forEach(({ httpMethod, "routerPath": route }) => {
-                allRunners.push({
-                    "action": async (runnerContext) => {
-                        const valueGetterContext: ITestSettingValueGetterContext = {
-                        };
+                allRouterPaths.forEach(({ httpMethod, "routerPath": route }) => {
+                    allRunners.push({
+                        "action": async (runnerContext) => {
+                            const valueGetterContext: ITestSettingValueGetterContext = {
+                            };
 
-                        // create object with headers with lowercase keys
-                        const headers: Record<string, string> = {};
-                        for (const [key, value] of Object.entries(await getHeaders(valueGetterContext))) {
-                            headers[key.toLowerCase().trim()] = String(value ?? "");
+                            // create object with headers with lowercase keys
+                            const headers: Record<string, string> = {};
+                            for (const [key, value] of Object.entries(await getHeaders(valueGetterContext))) {
+                                headers[key.toLowerCase().trim()] = String(value ?? "");
+                            }
+
+                            const parameters = await getParameters(valueGetterContext);
+
+                            let escapedRoute = route;
+                            for (const [paramName, paramValue] of Object.entries(parameters)) {
+                                escapedRoute = escapedRoute
+                                    .split(`:${paramName}`)
+                                    .join(encodeURIComponent(paramValue));
+                            }
+
+                            const testContext: ITestEventHandlerContext = {
+                                "context": "controller",
+                                "describe": description.name,
+                                escapedRoute,
+                                "expectations": {
+                                    "headers": await getExpectedHeaders(valueGetterContext),
+                                    "status": await getExpectedStatus(valueGetterContext)
+                                },
+                                "file": controller.__file,
+                                headers,
+                                httpMethod,
+                                "index": runnerContext.index,
+                                "it": options.name,
+                                methodName,
+                                route,
+                                parameters,
+                                server,
+                                "totalCount": runnerContext.totalCount
+                            };
+
+                            await server.emit("test", testContext);
                         }
-
-                        const parameters = await getParameters(valueGetterContext);
-
-                        let escapedRoute = route;
-                        for (const [paramName, paramValue] of Object.entries(parameters)) {
-                            escapedRoute = escapedRoute
-                                .split(`:${paramName}`)
-                                .join(encodeURIComponent(paramValue));
-                        }
-
-                        const testContext: ITestEventHandlerContext = {
-                            "context": "controller",
-                            "describe": description.name,
-                            escapedRoute,
-                            "expectations": {
-                                "headers": await getExpectedHeaders(valueGetterContext),
-                                "status": await getExpectedStatus(valueGetterContext)
-                            },
-                            "file": controller.__file,
-                            headers,
-                            httpMethod,
-                            "index": runnerContext.index,
-                            "it": options.name,
-                            methodName,
-                            route,
-                            parameters,
-                            server,
-                            "totalCount": runnerContext.totalCount
-                        };
-
-                        await server.emit("test", testContext);
-                    }
+                    });
                 });
-            });
-        });
+            })(await getOptions());
+        }
 
         const totalCount = allRunners.length;
         let globalError: any;

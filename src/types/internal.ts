@@ -191,3 +191,5 @@ export type Optional<T extends any = any> = T | undefined;
 export type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>;
 
 export type ResolveControllerMethodInfo = (info: IControllerMethodInfo) => any;
+
+export type TestOptionsGetter = () => Promise<ITestOptions>;
