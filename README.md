@@ -6,7 +6,7 @@
 
 > Very fast alternative HTTP server to [Express](http://expressjs.com/), with
 > simple routing and middleware support and which is compatible with
-> [Node.js 14](https://nodejs.org/en/blog/release/v14.0.0/) or later.
+> [Node.js 16](https://nodejs.org/en/blog/release/v16.0.0/) or later.
 
 <a name="toc"></a>
 
@@ -302,6 +302,13 @@ await app.test();
 <a name="benchmarks"></a>
 
 ## Benchmarks [<a href="#toc">↑</a>]
+
+| &nbsp;                   |  `Express`  | `fastify` | `polka` | `@egomobile/http-server` |
+| ------------------------ | :---------: | :-------: | :-----: | :----------------------: |
+| `Express`                |      -      |    93%    |   39%   |          30% 🐌          |
+| `fastify`                |    107%     |     -     |   43%   |          32% 🐢          |
+| `polka`                  |    256%     |   238%    |    -    |          76% 🐇          |
+| `@egomobile/http-server` | 337% 🚀🚀🚀 | 314% 🚀🚀 | 132% 🚀 |            -             |
 
 The following benchmarks were made with [wrk](https://github.com/wg/wrk) on the following machine, running [Node v16.13.2](https://github.com/nodejs/node/blob/master/doc/changelogs/CHANGELOG_V16.md#16.13.2):
 
