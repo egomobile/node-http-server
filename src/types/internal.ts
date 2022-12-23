@@ -180,6 +180,8 @@ export interface ITestOptions {
     settings: ITestSettings;
 }
 
+export type List<T extends any = any> = T[] | Iterable<T> | IterableIterator<T>;
+
 export type ObjectNameListResolver = (obj: any) => string[];
 
 export type PrepareControllerMethodAction = (context: IPrepareControllerMethodActionContext) => void;

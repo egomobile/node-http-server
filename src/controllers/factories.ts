@@ -28,6 +28,7 @@ import type { Func, GetterFunc, IControllerClass, IControllerContext, IControlle
 import { asAsync, canHttpMethodHandleBodies, getAllClassProps, getFunctionParamNames, isClass, isNil, limitToBytes, walkDirSync } from "../utils";
 import { params } from "../validators/params";
 import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath, setupMiddlewaresBySchema, setupMiddlewaresBySwaggerDocumentation, setupSwaggerDocumentation, toParameterValueUpdaters } from "./utils";
+import { sortControllerFiles } from "./utils/files";
 
 type GetContollerValue<TValue extends any = any> = (controller: IHttpController, server: IHttpServer) => TValue;
 
@@ -751,7 +752,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
         };
 
         // collect matching files
-        const controllerFiles: IControllerFile[] = [];
+        let controllerFiles: IControllerFile[] = [];
         walkDirSync(rootDir, (file) => {
             const basename = path.basename(file, path.extname(file));
             if (basename.endsWith(".spec")) {
@@ -778,7 +779,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
             throw new Error(`No controller files found in ${rootDir}`);
         }
 
-        controllerFiles.sort();
+        controllerFiles = sortControllerFiles(controllerFiles);
 
         const controllerClasses: IControllerClass[] = [];
 

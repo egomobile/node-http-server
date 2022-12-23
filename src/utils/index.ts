@@ -20,7 +20,7 @@ import { middleware } from "..";
 import { httpMethodsWithBodies } from "../constants";
 import { EntityTooLargeError } from "../errors";
 import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, UniqueHttpMiddleware } from "../types";
-import type { Constructor, Nilable, Nullable, ObjectNameListResolver, Optional } from "../types/internal";
+import type { Constructor, List, Nilable, Nullable, ObjectNameListResolver, Optional } from "../types/internal";
 
 interface ICreateWithEntityTooLargeActionOptions {
     action: HttpMiddleware;
@@ -210,6 +210,22 @@ export function limitToBytes(limit?: Nilable<number>): Nilable<number> {
     }
 
     return limit * 1048576;
+}
+
+export function multiSort<T extends any = any>(
+    arr: List<T>,
+    ...selectors: ((item: T) => any)[]
+) {
+    return [...arr].sort((x, y) => {
+        for (const selector of selectors) {
+            const sortValue = compareValuesBy(x, y, selector);
+            if (sortValue !== 0) {
+                return sortValue;
+            }
+        }
+
+        return 0;
+    });
 }
 
 export function readStream(stream: NodeJS.ReadableStream) {

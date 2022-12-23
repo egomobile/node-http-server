@@ -3,6 +3,12 @@
 ## 0.41.0
 
 - **BREAKING CHANGE**: module requires at least [Node 16+](https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V16.md) now
+- **BREAKING CHANGE**: controller files are now sorted the following way:
+  - by number of parts, separated by path chars like `/`
+  - then: all directories, starting with `@`, will be moved to the bottom
+  - then: by directory path (case-insensitive)
+  - then: all files, starting with `@`, will be moved to the bottom
+  - then: by file name (case-insensitive)
 - add `Describe()` and `It()` decorators, that can setup (unit-)tests for controller methods, e.g.
 - implement `validateAjv()` middleware
 - if Swagger documentation is activated, all endpoints have to be documented by default now ... this behavior can be controlled by new `requiresDocumentationEverywhere` prop of [IControllersOptions interface](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html)
