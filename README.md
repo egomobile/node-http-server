@@ -240,6 +240,9 @@ export default class MyController extends ControllerBase {
 }
 ```
 
+[The wiki page](https://github.com/egomobile/node-http-server/wiki/Testing)
+describes anything is more details.
+
 ### Initialization [<a href="#testing">↑</a>]
 
 ```typescript
