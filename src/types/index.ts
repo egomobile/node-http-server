@@ -1621,7 +1621,7 @@ export interface ITestSettings {
     /**
      * Sets up the expectations.
      */
-    expections?: Nilable<ITestSettingExpectations>;
+    expectations?: Nilable<ITestSettingExpectations>;
     /**
      * Request headers.
      */

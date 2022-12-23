@@ -101,7 +101,7 @@ export function It(name: string, settingsOrGetter?: Nilable<ItSettingsOrGetter>)
             getSettings = async ({ controller, methodName }) => {
                 const controllerFileExt = path.extname(controller.__file);
 
-                let moduleFile = settingsOrGetter;
+                let moduleFile = settingsOrGetter as string;
                 if (!moduleFile.endsWith(controllerFileExt)) {
                     moduleFile += controllerFileExt;
                 }
@@ -112,7 +112,7 @@ export function It(name: string, settingsOrGetter?: Nilable<ItSettingsOrGetter>)
                     moduleFile = path.join(controllerDir, moduleFile);
                 }
 
-                if (fs.existsSync(moduleFile)) {
+                if (!fs.existsSync(moduleFile)) {
                     throw new Error(`${moduleFile} not found`);
                 }
 
@@ -201,47 +201,47 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
     let getExpectedStatus = async () => {
         return 200;
     };
-    if (!isNil(settings?.expections?.status)) {
-        if (typeof settings!.expections!.status === "number") {
+    if (!isNil(settings?.expectations?.status)) {
+        if (typeof settings!.expectations!.status === "number") {
             getExpectedStatus = async () => {
-                return settings!.expections!.status as number;
+                return settings!.expectations!.status as number;
             };
         }
-        else if (typeof settings!.expections!.status === "function") {
-            getExpectedStatus = asAsync(settings!.expections!.status);
+        else if (typeof settings!.expectations!.status === "function") {
+            getExpectedStatus = asAsync(settings!.expectations!.status);
         }
         else {
-            throw new TypeError("settings.expections.status must be of type number or function");
+            throw new TypeError("settings.expectations.status must be of type number or function");
         }
     }
 
     let getExpectedHeaders = async (): Promise<Record<string, string | RegExp>> => {
         return {};
     };
-    if (!isNil(settings?.expections?.headers)) {
-        if (typeof settings!.expections!.status === "object") {
+    if (!isNil(settings?.expectations?.headers)) {
+        if (typeof settings!.expectations!.status === "object") {
             getExpectedHeaders = async () => {
-                return settings!.expections!.headers as Record<string, string | RegExp>;
+                return settings!.expectations!.headers as Record<string, string | RegExp>;
             };
         }
-        else if (typeof settings!.expections!.headers === "function") {
-            getExpectedStatus = asAsync(settings!.expections!.headers);
+        else if (typeof settings!.expectations!.headers === "function") {
+            getExpectedStatus = asAsync(settings!.expectations!.headers);
         }
         else {
-            throw new TypeError("settings.expections.headers must be of type object or function");
+            throw new TypeError("settings.expectations.headers must be of type object or function");
         }
     }
 
     let getExpectedBody = async (): Promise<any> => {
         return undefined;
     };
-    if (!isNil(settings?.expections?.body)) {
-        if (typeof settings!.expections!.headers === "function") {
-            getExpectedStatus = asAsync(settings!.expections!.body);
+    if (!isNil(settings?.expectations?.body)) {
+        if (typeof settings!.expectations!.headers === "function") {
+            getExpectedStatus = asAsync(settings!.expectations!.body);
         }
         else {
             getExpectedHeaders = async () => {
-                return settings!.expections!.body;
+                return settings!.expectations!.body;
             };
         }
     }
