@@ -163,7 +163,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                         "cancellationReason": undefined!,
                                         "cancellationRequested": undefined!,
                                         "context": "controller",
-                                        "describe": description.name,
+                                        "description": options.name,
                                         escapedRoute,
                                         "expectations": {
                                             body,
@@ -171,10 +171,10 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                             "status": await getExpectedStatus(valueGetterContext)
                                         },
                                         "file": controller.__file,
+                                        "group": description.name,
                                         headers,
                                         httpMethod,
                                         "index": runnerContext.index,
-                                        "it": options.name,
                                         methodName,
                                         "onCancellationRequested": undefined,
                                         parameters,

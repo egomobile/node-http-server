@@ -1560,9 +1560,9 @@ export interface ITestEventHandlerContext {
      */
     context: "controller";
     /**
-     * The test group / description.
+     * The description of the specific test.
      */
-    describe: string;
+    description: string;
     /**
      * Read-to-use path of the route with injected / replaced and escaped parameter values.
      */
@@ -1576,6 +1576,10 @@ export interface ITestEventHandlerContext {
      */
     file: string;
     /**
+     * The test group / category.
+     */
+    group: string;
+    /**
      * HTTP request headers.
      */
     headers: Record<string, string>;
@@ -1587,10 +1591,6 @@ export interface ITestEventHandlerContext {
      * The zero-based index of the current test.
      */
     index: number;
-    /**
-     * The description of the specific test.
-     */
-    it: string;
     /**
      * The nam / key of the underlying method.
      */

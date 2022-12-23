@@ -253,17 +253,17 @@ const app = createServer();
 app.once("test", async (context) => {
   const {
     body,
-    describe,
+    description,
     escapedRoute,
     expectations,
+    group,
     headers,
     httpMethod,
     server,
-    it,
   } = context;
 
   try {
-    process.stdout.write(`Running test [${describe}] '${it}' ... `);
+    process.stdout.write(`Running test [${group}] '${description}' ... `);
 
     // prepare request ...
     // HTTP method ...
