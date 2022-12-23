@@ -27,7 +27,7 @@ import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgu
 import type { Func, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerMethodTestAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, IRouterPathItem, Nilable, PrepareControllerMethodAction } from "../types/internal";
 import { asAsync, canHttpMethodHandleBodies, getAllClassProps, getFunctionParamNames, isClass, isNil, limitToBytes, walkDirSync } from "../utils";
 import { params } from "../validators/params";
-import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath, setupMiddlewaresByJoiSchema, setupMiddlewaresBySwaggerDocumentation, setupSwaggerDocumentation, toParameterValueUpdaters } from "./utils";
+import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath, setupMiddlewaresBySchema, setupMiddlewaresBySwaggerDocumentation, setupSwaggerDocumentation, toParameterValueUpdaters } from "./utils";
 
 type GetContollerValue<TValue extends any = any> = (controller: IHttpController, server: IHttpServer) => TValue;
 
@@ -197,8 +197,8 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                     // [arg2] HttpMiddleware[]
                     decoratorOptions.use = arg2;
                 }
-                else if (isSchema(arg2)) {
-                    // [arg2] AnySchema
+                else if (isSchema(arg2) || typeof arg2 === "object") {
+                    // [arg2] Schema
                     // [arg3] number
 
                     decoratorOptions.schema = arg2;
@@ -369,8 +369,8 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                         shouldAddQueryMiddleware = !decoratorOptions?.noQueryParams;
                     }
 
-                    // Joi schema?
-                    setupMiddlewaresByJoiSchema({
+                    // schema?
+                    setupMiddlewaresBySchema({
                         controller,
                         decoratorOptions,
                         globalOptions,

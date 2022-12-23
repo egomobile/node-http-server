@@ -17,7 +17,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { AnySchema } from "joi";
-import type { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRoutePath, HttpInputDataFormat, HttpMiddleware, IControllerRouteWithBodyOptions } from "../types";
+import type { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRoutePath, HttpInputDataFormat, HttpMiddleware, IControllerRouteWithBodyOptions, Schema } from "../types";
 import type { Nilable } from "../types/internal";
 import { createHttpMethodDecorator } from "./factories";
 
@@ -59,7 +59,7 @@ import { createHttpMethodDecorator } from "./factories";
  * @param {Nilable<number>} [limit] A custom limited, size in MB, for the input data.
  * @param {Nilable<IControllerRouteOptions>} [options] Custom options.
  * @param {Nilable<ControllerRoutePath>} [path] The custom path.
- * @param {Nilable<AnySchema>} [schema] An optional schema, that validates the body.
+ * @param {Nilable<Schema>} [schema] An optional schema, that validates the body.
  * @param {Nilable<HttpMiddleware[]>} [use] Additional middlewares.
  *
  * @returns {MethodDecorator} The new decorator function.
@@ -71,7 +71,7 @@ export function PATCH(schema: AnySchema, limit?: Nilable<number>): MethodDecorat
 export function PATCH(use: HttpMiddleware[]): MethodDecorator;
 export function PATCH(path: ControllerRoutePath): MethodDecorator;
 export function PATCH(path: ControllerRoutePath, use: HttpMiddleware[]): MethodDecorator;
-export function PATCH(path: ControllerRoutePath, schema: AnySchema, limit?: Nilable<number>): MethodDecorator;
+export function PATCH(path: ControllerRoutePath, schema: Schema, limit?: Nilable<number>): MethodDecorator;
 export function PATCH(
     arg1?: Nilable<ControllerRouteArgument1<IControllerRouteWithBodyOptions>>,
     arg2?: Nilable<ControllerRouteArgument2>,

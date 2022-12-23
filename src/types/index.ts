@@ -142,7 +142,7 @@ export type ControllerRouteArgument1<TOptions extends IControllerRouteOptions = 
  * like GET() or POST().
  */
 export type ControllerRouteArgument2
-    = AnySchema | HttpMiddleware[] | number | Nilable<HttpInputDataFormat>;
+    = AnySchema | HttpMiddleware[] | number | Nilable<HttpInputDataFormat> | Schema;
 
 /**
  * A possible value for a third argument of a HTTP method / controller route decorator
@@ -541,7 +541,7 @@ export interface IControllerRouteWithBodyOptions extends IControllerRouteOptions
      *
      * 'json()' is used to parse the input.
      */
-    schema?: Nilable<AnySchema>;
+    schema?: Nilable<Schema>;
     /**
      * Custom parse error handler.
      */

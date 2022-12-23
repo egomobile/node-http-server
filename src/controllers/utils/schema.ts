@@ -1,8 +1,9 @@
+import { isSchema } from "joi";
 import { createBodyParserMiddlewareByFormat } from ".";
 import { PARSE_ERROR_HANDLER, VALIDATION_ERROR_HANDLER } from "../../constants";
-import { defaultParseErrorHandler, defaultValidationFailedHandler, json, validate } from "../../middlewares";
-import { HttpInputDataFormat, HttpMiddleware, IControllerRouteWithBodyOptions, IControllersOptions, IHttpController, IHttpServer, ValidationFailedHandler } from "../../types";
-import { Nilable } from "../../types/internal";
+import { defaultParseErrorHandler, defaultValidationFailedHandler, json, validate, validateAjv } from "../../middlewares";
+import { HttpInputDataFormat, HttpMiddleware, IControllerRouteWithBodyOptions, IControllersOptions, IHttpController, IHttpServer, SchemaValidationFailedHandler, ValidationFailedHandler } from "../../types";
+import type { Nilable } from "../../types/internal";
 import { asAsync, isNil } from "../../utils";
 
 export interface ISetupMiddlewaresByJoiSchemaOptions {
@@ -11,6 +12,20 @@ export interface ISetupMiddlewaresByJoiSchemaOptions {
     globalOptions: Nilable<IControllersOptions>;
     middlewares: HttpMiddleware[];
     throwIfOptionsIncompatibleWithHTTPMethod: () => any;
+}
+
+function createWrappedSchemaValidationErrorHandler(handler: Nilable<SchemaValidationFailedHandler>): Nilable<SchemaValidationFailedHandler> {
+    if (isNil(handler)) {
+        return handler;
+    }
+
+    handler = asAsync<SchemaValidationFailedHandler>(handler);
+
+    return async (error, request, response) => {
+        await handler!(error, request, response);
+
+        response.end();
+    };
 }
 
 function createWrappedValidationErrorHandler(handler: Nilable<ValidationFailedHandler>): Nilable<ValidationFailedHandler> {
@@ -27,25 +42,19 @@ function createWrappedValidationErrorHandler(handler: Nilable<ValidationFailedHa
     };
 }
 
-export function setupMiddlewaresByJoiSchema({
+export function setupMiddlewaresBySchema({
     controller,
     decoratorOptions,
     globalOptions,
     middlewares,
     throwIfOptionsIncompatibleWithHTTPMethod
 }: ISetupMiddlewaresByJoiSchemaOptions) {
-    if (!decoratorOptions?.schema) {
+    const schema = decoratorOptions?.schema;
+    if (!schema) {
         return;
     }
 
     throwIfOptionsIncompatibleWithHTTPMethod();
-
-    const validationErrorHandler =
-        createWrappedValidationErrorHandler(
-            decoratorOptions.onValidationFailed ||
-            (controller as any)[VALIDATION_ERROR_HANDLER] ||
-            globalOptions?.onSchemaValidationFailed
-        ) || defaultValidationFailedHandler;
 
     const parseErrorHandler = (
         decoratorOptions.onParsingFailed ||
@@ -67,11 +76,39 @@ export function setupMiddlewaresByJoiSchema({
             });
         };
 
-    middlewares.push(
-        createDataParser(),
-        validate(decoratorOptions.schema, {
-            "onValidationFailed": validationErrorHandler
-        })
-    );
+    if (isSchema(schema)) {
+        // Joi schema
+
+        const validationErrorHandler =
+            createWrappedValidationErrorHandler(
+                decoratorOptions.onValidationFailed ||
+                (controller as any)[VALIDATION_ERROR_HANDLER] ||
+                globalOptions?.onSchemaValidationFailed
+            ) || defaultValidationFailedHandler;
+
+        middlewares.push(
+            createDataParser(),
+            validate(schema, {
+                "onValidationFailed": validationErrorHandler
+            })
+        );
+    }
+    else {
+        // JSON / Ajv schema
+
+        const validationErrorHandler =
+            createWrappedSchemaValidationErrorHandler(
+                decoratorOptions.onValidationFailed ||
+                (controller as any)[VALIDATION_ERROR_HANDLER] ||
+                globalOptions?.onSchemaValidationFailed
+            ) || defaultValidationFailedHandler;
+
+        middlewares.push(
+            createDataParser(),
+            validateAjv(schema, {
+                "onValidationFailed": validationErrorHandler as any
+            })
+        );
+    }
 }
 
