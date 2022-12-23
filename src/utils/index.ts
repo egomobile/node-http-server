@@ -302,7 +302,14 @@ export function sortObjectByKeys<T extends any = any>(obj: T): T {
 
 export function toUniqueHttpMiddleware(id: symbol, mw: HttpMiddleware): UniqueHttpMiddleware {
     const namedMiddleware = mw as UniqueHttpMiddleware;
-    (namedMiddleware as any)[middleware] = id;
+
+    // namedMiddleware[middleware]
+    Object.defineProperty(namedMiddleware, middleware, {
+        "enumerable": true,
+        "get": () => {
+            return id;
+        }
+    });
 
     return namedMiddleware;
 }

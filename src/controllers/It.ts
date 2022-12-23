@@ -17,7 +17,7 @@
 
 import fs from "fs";
 import path from "path";
-import type { IHttpController, IHttpServer, ITestSettings } from "..";
+import type { IHttpController, IHttpServer, ITestSettings, TestResponseValidator } from "..";
 import { ADD_CONTROLLER_METHOD_TEST_ACTION, TEST_OPTIONS } from "../constants";
 import type { InitControllerMethodTestAction, ITestOptions, Nilable, TestOptionsGetter } from "../types/internal";
 import { asAsync, isNil } from "../utils";
@@ -38,23 +38,16 @@ interface IToTestOptionsOptions {
     shouldUseModuleAsDefault: boolean;
 }
 
-/**
- * A possible value for `settingsOrGetter` argument of `It()` decorator.
- * The value can be an `ITestSettings` object, a getter, which returns it
- * or a path to module with the settings (relative path will be mapped to
- * the controller's directory).
- */
-export type ItSettingsOrGetter =
+export type ItSettingsOrValidator =
     ITestSettings |
-    (() => ITestSettings) |
-    (() => PromiseLike<ITestSettings>) |
+    TestResponseValidator |
     string;
 
 /**
  * Sets up a request method for use in (unit-)tests.
  *
  * @param {string} name A description / name for the controller / class.
- * @param {Nilable<ItSettingsOrGetter>} [settingsOrGetter] Custom settings or a function, which return them.
+ * @param {Nilable<ItSettingsOrValidator>} [settingsOrValidator] Custom settings or a function, which validates a response.
  *
  * @example
  * ```
@@ -73,35 +66,43 @@ export type ItSettingsOrGetter =
  *
  * @returns {MethodDecorator} The method decorator.
  */
-export function It(name: string, settingsOrGetter?: Nilable<ItSettingsOrGetter>): MethodDecorator {
+export function It(name: string, settingsOrValidator?: Nilable<ItSettingsOrValidator>): MethodDecorator {
     if (typeof name !== "string") {
         throw new TypeError("name must be of type string");
     }
 
     let getSettings: (context: IGetSettingsContext) => Promise<Nilable<ITestSettings>>;
-    if (isNil(settingsOrGetter)) {
-        // default setting(s)
+    if (isNil(settingsOrValidator)) {
+        const defaultSettings: ITestSettings = {};
+
         getSettings = async () => {
-            return settingsOrGetter as Nilable<ITestSettings>;
+            return defaultSettings;
         };
     }
     else {
-        if (typeof settingsOrGetter === "object") {
-            // object
+        if (typeof settingsOrValidator === "object") {
+            const settings = settingsOrValidator as ITestSettings;
+
             getSettings = async () => {
-                return settingsOrGetter as ITestSettings;
+                return settings;
             };
         }
-        else if (typeof settingsOrGetter === "function") {
-            // getter
-            getSettings = asAsync(settingsOrGetter);
+        else if (typeof settingsOrValidator === "function") {
+            const validator = asAsync<TestResponseValidator>(settingsOrValidator);
+
+            getSettings = async () => {
+                return {
+                    validator
+                };
+            };
         }
-        else if (typeof settingsOrGetter === "string") {
-            // module path
+        else if (typeof settingsOrValidator === "string") {
+            const pathToModule = settingsOrValidator;
+
             getSettings = async ({ controller, methodName }) => {
                 const controllerFileExt = path.extname(controller.__file);
 
-                let moduleFile = settingsOrGetter as string;
+                let moduleFile = pathToModule;
                 if (!moduleFile.endsWith(controllerFileExt)) {
                     moduleFile += controllerFileExt;
                 }
@@ -123,7 +124,9 @@ export function It(name: string, settingsOrGetter?: Nilable<ItSettingsOrGetter>)
 
                 const controllerSpecModule = require(moduleFile);
 
-                return controllerSpecModule?.[methodName];
+                // try to find an export, with the exact the same name / key
+                // as the underlying controller method
+                return toSettings(controllerSpecModule?.[methodName]);
             };
         }
         else {
@@ -157,6 +160,20 @@ export function It(name: string, settingsOrGetter?: Nilable<ItSettingsOrGetter>)
     };
 }
 
+function toSettings(val: unknown): Nilable<ITestSettings> {
+    if (typeof val === "function") {
+        return {
+            "validator": val as TestResponseValidator
+        };
+    }
+
+    if (typeof val === "object" || isNil(val)) {
+        return val as Nilable<ITestSettings>;
+    }
+
+    throw new TypeError("val must be of type function or object");
+}
+
 async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptions> {
     const { controller, method, methodName, name, shouldAllowEmptySettings, shouldUseModuleAsDefault } = options;
     let { settings } = options;
@@ -177,7 +194,9 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
 
             const controllerSpecModule = require(controllerSpecFile);
 
-            settings = controllerSpecModule?.[methodName];
+            // try to find an export, with the exact the same name / key
+            // as the underlying controller method
+            settings = toSettings(controllerSpecModule?.[methodName]);
         }
         else {
             if (shouldUseModuleAsDefault) {

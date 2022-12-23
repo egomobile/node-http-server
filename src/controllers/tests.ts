@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, ICreateServerOptions, IHttpServer, ITestEventHandlerContext, ITestSettingValueGetterContext } from "..";
+import type { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, ICreateServerOptions, IHttpServer, ITestEventHandlerContext, ITestSettingValueGetterContext, TestResponseValidator } from "..";
 import { ROUTER_PATHS, TEST_DESCRIPTION, TEST_OPTIONS } from "../constants";
 import type { IRouterPathItem, ITestDescription, ITestOptions, Nilable, TestOptionsGetter } from "../types/internal";
 import { asAsync } from "../utils";
@@ -62,6 +62,9 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
         for (const getOptions of allTestOptionGetters) {
             ((options: ITestOptions) => {
                 const { controller, getExpectedHeaders, getExpectedStatus, getHeaders, getParameters, method, methodName } = options;
+                const validator = typeof options.settings.validator === "function" ?
+                    asAsync<TestResponseValidator>(options.settings.validator) :
+                    undefined;
 
                 const description: ITestDescription = (controller as any)[TEST_DESCRIPTION];
                 if (typeof description !== "object") {
@@ -111,7 +114,8 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                 route,
                                 parameters,
                                 server,
-                                "totalCount": runnerContext.totalCount
+                                "totalCount": runnerContext.totalCount,
+                                "validate": validator
                             };
 
                             await server.emit("test", testContext);

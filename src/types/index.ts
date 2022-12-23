@@ -1578,6 +1578,10 @@ export interface ITestEventHandlerContext {
      * The total number of tests.
      */
     totalCount: number;
+    /**
+     * A custom validator function.
+     */
+    validate?: (context: ITestResponseValidatorContext) => Promise<any>;
 }
 
 /**
@@ -1630,12 +1634,34 @@ export interface ITestSettings {
      * URL parameters.
      */
     parameters?: Nilable<TestSettingValueOrGetter<Record<string, string>>>;
+    /**
+     * A custom validator function.
+     */
+    validator?: Nilable<TestResponseValidator>;
 }
 
 /**
  * Context for a test setting value getter.
  */
 export interface ITestSettingValueGetterContext {
+}
+
+/**
+ * Context for a `TestResponseValidator` function.
+ */
+export interface ITestResponseValidatorContext {
+    /**
+     * The raw body.
+     */
+    body: Buffer;
+    /**
+     * The response headers.
+     */
+    headers: Record<string, string>;
+    /**
+     * The status code.
+     */
+    status: number;
 }
 
 /**
@@ -1760,6 +1786,13 @@ export type SwaggerInitializedEventHandler = (args: ISwaggerInitializedEventArgu
 export type TestEventHandler = (context: ITestEventHandlerContext) => any;
 
 /**
+ * A function validating a response from a test.
+ *
+ * @param {ITestResponseValidatorContext} context The context.
+ */
+export type TestResponseValidator = (context: ITestResponseValidatorContext) => any;
+
+/**
  * A value or function, which returns a value for a test setting.
  */
 export type TestSettingValueOrGetter<T extends any = any> =
@@ -1772,7 +1805,7 @@ export type UniqueHttpMiddleware = HttpMiddleware & {
     /**
      * The key, which indicates the (type) of middleware.
      */
-    [middleware]: symbol;
+    readonly [middleware]: unique symbol;
 };
 
 /**
