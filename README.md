@@ -19,6 +19,7 @@
   - [Controllers](#controllers)
   - [Error handling](#error-handling)
     - [Pretty error pages](#pretty-error-pages)
+  - [Testing](#testing)
 - [Benchmarks](#benchmarks)
 - [Credits](#credits)
 - [Documentation](#documentation)
@@ -197,6 +198,106 @@ main().catch(console.error);
 A possible result could be:
 
 <kbd><img src="./assets/screenshot.png" /></kbd>
+
+<a name="testing"></a>
+
+## Testing [<a href="#usage">↑</a>]
+
+With decorators [@Describe()](https://egomobile.github.io/node-http-server/functions/Describe.html) and [@It()](https://egomobile.github.io/node-http-server/functions/It.html), you can write automatic (unit-)tests, realized by any framework you want.
+
+This example shows, how to implement tests with [SuperTest](https://github.com/ladjs/supertest):
+
+### Controller [<a href="#testing">↑</a>]
+
+```typescript
+import {
+  Controller,
+  ControllerBase,
+  Describe,
+  GET,
+  IHttpRequest,
+  IHttpResponse,
+  It,
+} from "@egomobile/http-server";
+
+@Controller()
+@Describe("My controller")
+export default class MyController extends ControllerBase {
+  @GET("/foo/:bar")
+  @It("should return BUZZ in code with status 202", {
+    expectations: {
+      body: "BUZZ",
+      status: 202,
+    },
+    parameters: {
+      bar: "buzz",
+    },
+  })
+  async index(request: IHttpRequest, response: IHttpResponse) {
+    response.writeHead(202);
+    response.write(request.params!.bar.toUpperCase());
+  }
+}
+```
+
+### Initialization [<a href="#testing">↑</a>]
+
+```typescript
+import assert from "assert";
+import supertest from "supertest";
+import { createServer } from "@egomobile/http-server";
+
+const app = createServer();
+
+// event, that is executed, if a test is requested
+app.once("test", async (context) => {
+  const {
+    body,
+    describe,
+    escapedRoute,
+    expectations,
+    headers,
+    httpMethod,
+    server,
+    it,
+  } = context;
+
+  try {
+    process.stdout.write(`Running test [${describe}] '${it}' ... `);
+
+    // prepare request ...
+    // HTTP method ...
+    let request = supertest(server)[httpMethod](escapedRoute);
+    // request headers ...
+    for (const [headerName, headerValue] of Object.entries(headers)) {
+      request = request.set(headerName, headerValue);
+    }
+
+    // send it
+    const response = await request.send(body);
+
+    assert.strictEqual(response.statusCode, expectations.status);
+
+    // maybe some more code checking headers and
+    // body data from `expectations` ...
+
+    process.stdout.write(`✅\n`);
+  } catch (error) {
+    process.stdout.write(`❌: ${error}\n`);
+  }
+});
+
+// run tests
+await app.test();
+
+// alternative:
+//
+// if you set `EGO_RUN_SETUP` to a truthy value like `1`
+// the server does not start listening, instead it simply
+// runs `app.test()`
+//
+// await app.listen();
+```
 
 <a name="benchmarks"></a>
 

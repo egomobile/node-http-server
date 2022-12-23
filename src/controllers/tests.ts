@@ -61,7 +61,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
         // count and provide possibility to implement progress
         for (const getOptions of allTestOptionGetters) {
             ((options: ITestOptions) => {
-                const { controller, getExpectedBody, getExpectedHeaders, getExpectedStatus, getHeaders, getParameters, getTimeout, method, methodName } = options;
+                const { controller, getBody, getExpectedBody, getExpectedHeaders, getExpectedStatus, getHeaders, getParameters, getTimeout, method, methodName } = options;
                 const validator = typeof options.settings.validator === "function" ?
                     asAsync<TestResponseValidator>(options.settings.validator) :
                     undefined;
@@ -159,6 +159,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                     }
 
                                     const testContext: ITestEventHandlerContext = {
+                                        "body": await getBody(valueGetterContext),
                                         "cancellationReason": undefined!,
                                         "cancellationRequested": undefined!,
                                         "context": "controller",

@@ -1544,6 +1544,10 @@ export interface ITestEventCancellationEventHandlerContext {
  */
 export interface ITestEventHandlerContext {
     /**
+     * The body.
+     */
+    body: any;
+    /**
      * A reason for cancellation.
      */
     readonly cancellationReason: Optional<"timeout">;
@@ -1659,6 +1663,10 @@ export interface ITestSettingExpectations {
  * Options, setting up a test.
  */
 export interface ITestSettings {
+    /**
+     * Request body.
+     */
+    body?: Nilable<TestSettingValueOrGetter<any>>;
     /**
      * Sets up the expectations.
      */

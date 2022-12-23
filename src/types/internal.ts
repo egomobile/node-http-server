@@ -167,6 +167,7 @@ export interface ITestDescription {
 
 export interface ITestOptions {
     controller: IHttpController;
+    getBody: (context: ITestSettingValueGetterContext) => Promise<any>;
     getExpectedBody: (context: ITestSettingValueGetterContext) => Promise<any>;
     getExpectedHeaders: (context: ITestSettingValueGetterContext) => Promise<Record<string, string | RegExp>>;
     getExpectedStatus: (context: ITestSettingValueGetterContext) => Promise<number>;

@@ -253,7 +253,7 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
             };
         }
         else if (typeof settings!.expectations!.headers === "function") {
-            getExpectedStatus = asAsync(settings!.expectations!.headers);
+            getExpectedHeaders = asAsync(settings!.expectations!.headers);
         }
         else {
             throw new TypeError("settings.expectations.headers must be of type object or function");
@@ -265,10 +265,10 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
     };
     if (!isNil(settings?.expectations?.body)) {
         if (typeof settings!.expectations!.headers === "function") {
-            getExpectedStatus = asAsync(settings!.expectations!.body);
+            getExpectedBody = asAsync(settings!.expectations!.body);
         }
         else {
-            getExpectedHeaders = async () => {
+            getExpectedBody = async () => {
                 return settings!.expectations!.body;
             };
         }
@@ -308,6 +308,18 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         }
     }
 
+    let getBody: () => Promise<any>;
+    if (typeof settings!.body === "function") {
+        getBody = asAsync(settings!.body!);
+    }
+    else {
+        const body = settings!.body;
+
+        getBody = async () => {
+            return body;
+        };
+    }
+
     let getTimeout: () => Promise<number>;
     if (isNil(settings?.timeout)) {
         getTimeout = async () => {
@@ -332,6 +344,7 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
 
     return {
         controller,
+        getBody,
         getExpectedBody,
         getExpectedHeaders,
         getExpectedStatus,
