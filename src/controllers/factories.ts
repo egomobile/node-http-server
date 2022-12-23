@@ -19,21 +19,27 @@ import minimatch from "minimatch";
 import OpenAPISchemaValidator from "openapi-schema-validator";
 import { OpenAPIV3 } from "openapi-types";
 import path from "path";
-import { CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER } from "../constants";
+import { ADD_CONTROLLER_METHOD_TEST_ACTION, CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER } from "../constants";
 import { SwaggerValidationError } from "../errors";
 import { buffer, query } from "../middlewares";
 import { setupSwaggerUIForServerControllers } from "../swagger";
-import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ParameterOptions, ResponseSerializer } from "../types";
-import type { Func, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, Nilable, PrepareControllerMethodAction } from "../types/internal";
+import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRouteWithBodyOptions, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ParameterOptions, ResponseSerializer } from "../types";
+import type { Func, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerMethodTestAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, IRouterPathItem, Nilable, PrepareControllerMethodAction } from "../types/internal";
 import { asAsync, canHttpMethodHandleBodies, getAllClassProps, getFunctionParamNames, isClass, isNil, limitToBytes, walkDirSync } from "../utils";
 import { params } from "../validators/params";
-import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath, setupMiddlewaresByJoiSchema, setupMiddlewaresBySwaggerDocumentation, setupSwaggerDocumentation, toParameterValueUpdaters } from "./utils";
+import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath, setupMiddlewaresBySchema, setupMiddlewaresBySwaggerDocumentation, setupSwaggerDocumentation, toParameterValueUpdaters } from "./utils";
+import { sortControllerFiles } from "./utils/files";
 
 type GetContollerValue<TValue extends any = any> = (controller: IHttpController, server: IHttpServer) => TValue;
 
 interface ICompileRouteHandlerOptions {
     controller: IHttpController<IHttpServer>;
     method: Function;
+}
+
+interface IControllerMethodWithoutTests {
+    cls: IControllerClass;
+    methods: IControllerMethodInfo[];
 }
 
 interface ICreateControllerMethodRequestHandlerOptions {
@@ -43,7 +49,7 @@ interface ICreateControllerMethodRequestHandlerOptions {
 
 export interface ICreateHttpMethodDecoratorOptions {
     decoratorOptions: {
-        arg1: Nilable<ControllerRouteArgument1<IControllerRouteWithBodyOptions>>;
+        arg1: Nilable<ControllerRouteArgument1<ControllerRouteWithBodyOptions>>;
         arg2: Nilable<ControllerRouteArgument2>;
         arg3: Nilable<ControllerRouteArgument3>;
     };
@@ -52,7 +58,7 @@ export interface ICreateHttpMethodDecoratorOptions {
 
 interface ICreateInitControllerMethodActionOptions {
     controllerMethodName: string;
-    decoratorOptions: Nilable<IControllerRouteWithBodyOptions>;
+    decoratorOptions: Nilable<ControllerRouteWithBodyOptions>;
     getErrorHandler: GetContollerValue<HttpErrorHandler>;
     httpMethod: HttpMethod;
     middlewares: HttpMiddleware[];
@@ -66,6 +72,14 @@ export interface ICreateParameterDecoratorOptions {
 interface ICreateRequestHandlerWithSerializerOptions {
     handler: HttpRequestHandler;
     serializer: ResponseSerializer;
+}
+
+export interface ISetupHttpServerControllerMethodOptions {
+    server: IHttpServer;
+    shouldAllowEmptyTestSettings: boolean;
+    shouldHaveTestsEverywhere: boolean;
+    shouldUseTestModuleAsDefault: boolean;
+    testTimeout: number;
 }
 
 interface IUpdateMiddlewaresOptions {
@@ -158,7 +172,7 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
 
     const { arg1, arg2, arg3 } = options.decoratorOptions;
 
-    let decoratorOptions: Nilable<IControllerRouteWithBodyOptions>;
+    let decoratorOptions: Nilable<ControllerRouteWithBodyOptions>;
 
     if (!isNil(arg1)) {
         if (isSchema(arg1)) {
@@ -184,8 +198,8 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                     // [arg2] HttpMiddleware[]
                     decoratorOptions.use = arg2;
                 }
-                else if (isSchema(arg2)) {
-                    // [arg2] AnySchema
+                else if (isSchema(arg2) || typeof arg2 === "object") {
+                    // [arg2] Schema
                     // [arg3] number
 
                     decoratorOptions.schema = arg2;
@@ -224,7 +238,7 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
             }
         }
         else if (typeof arg1 === "object") {
-            // [arg1] IControllerRouteOptions | IControllerRouteWithBodyOptions
+            // [arg1] IControllerRouteOptions | ControllerRouteWithBodyOptions
             decoratorOptions = arg1;
         }
         else {
@@ -269,8 +283,8 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
     }
 
     if (!isNil(decoratorOptions?.schema)) {
-        if (!isSchema(decoratorOptions?.schema)) {
-            throw new TypeError("decoratorOptions.schema must be a Joi object");
+        if (!isSchema(decoratorOptions?.schema) && typeof decoratorOptions?.schema !== "object") {
+            throw new TypeError("decoratorOptions.schema must be a schema object");
         }
     }
 
@@ -356,8 +370,8 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                         shouldAddQueryMiddleware = !decoratorOptions?.noQueryParams;
                     }
 
-                    // Joi schema?
-                    setupMiddlewaresByJoiSchema({
+                    // schema?
+                    setupMiddlewaresBySchema({
                         controller,
                         decoratorOptions,
                         globalOptions,
@@ -422,12 +436,21 @@ function createInitControllerMethodAction({
         routerPath = normalizeRouterPath(routerPath);
         routerPath = routerPath.split("/@").join("/:");
 
-        let allRouterPaths: Nilable<string[]> = (method as any)[ROUTER_PATHS];
+        let allRouterPaths: Nilable<IRouterPathItem[]> = (method as any)[ROUTER_PATHS];
         if (!allRouterPaths) {
+            // not initialized yet
             (method as any)[ROUTER_PATHS] = allRouterPaths = [];
         }
-        if (!allRouterPaths.includes(routerPath)) {
-            allRouterPaths.push(routerPath);
+        if (!allRouterPaths.some((item) => {
+            return item.httpMethod === httpMethod &&
+                item.routerPath === routerPath;
+        })) {
+            // no duplicates
+
+            allRouterPaths.push({
+                httpMethod,
+                routerPath
+            });
         }
 
         if (routerPath.includes("/:")) {
@@ -549,7 +572,9 @@ function createRequestHandlerWithSerializer({ handler, serializer }: ICreateRequ
     };
 }
 
-export function setupHttpServerControllerMethod(server: IHttpServer) {
+export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerControllerMethodOptions) {
+    const { server } = setupOptions;
+
     server.controllers = (...args: any[]) => {
         const isTypeScript = __filename.endsWith(".ts");
 
@@ -589,6 +614,35 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
 
         if (!options) {
             options = {};
+        }
+
+        let shouldHaveTestsEverywhere: boolean;
+        if (isNil(options.requiresTestsEverywhere)) {
+            shouldHaveTestsEverywhere = setupOptions.shouldHaveTestsEverywhere;  // default
+        }
+        else {
+            shouldHaveTestsEverywhere = !!options.requiresTestsEverywhere;  // custom
+        }
+
+        let shouldUseTestModuleAsDefault: boolean;
+        if (isNil(options.requiresTestModuleAsDefault)) {
+            shouldUseTestModuleAsDefault = setupOptions.shouldUseTestModuleAsDefault;  // default
+        }
+        else {
+            shouldUseTestModuleAsDefault = !!options.requiresTestModuleAsDefault;  // custom
+        }
+
+        let testTimeout: number;
+        if (isNil(options.testTimeout)) {
+            testTimeout = setupOptions.testTimeout;  // default
+        }
+        else {
+            // custom
+            if (typeof options.testTimeout !== "number") {
+                throw new TypeError("options.testTimeout must be of type number");
+            }
+
+            testTimeout = options.testTimeout;
         }
 
         let swagger: Nilable<IControllersSwaggerOptions>;
@@ -698,8 +752,13 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
         };
 
         // collect matching files
-        const controllerFiles: IControllerFile[] = [];
+        let controllerFiles: IControllerFile[] = [];
         walkDirSync(rootDir, (file) => {
+            const basename = path.basename(file, path.extname(file));
+            if (basename.endsWith(".spec")) {
+                return;  // no test files
+            }
+
             const relativePath = normalizeRouterPath(
                 path.relative(rootDir, file)
             );
@@ -720,7 +779,7 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
             throw new Error(`No controller files found in ${rootDir}`);
         }
 
-        controllerFiles.sort();
+        controllerFiles = sortControllerFiles(controllerFiles);
 
         const controllerClasses: IControllerClass[] = [];
 
@@ -749,6 +808,9 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
             throw new Error(`No controllers found in ${rootDir}`);
         }
 
+        const controllerMethodsWithoutSwagger: IControllerMethodWithoutTests[] = [];
+        const controllerMethodsWithoutTests: IControllerMethodWithoutTests[] = [];
+
         controllerClasses.forEach(cls => {
             const contollerOptions: IHttpControllerOptions = {
                 "app": server,
@@ -773,99 +835,133 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
                 }
 
                 const propValue: unknown = (controller as any)[prop];
-                if (typeof propValue === "function") {
-                    if (prop === "constructor") {
-                        return;  // not the constructor
-                    }
+                if (typeof propValue !== "function") {
+                    return;
+                }
 
-                    // cleanups
-                    delete (propValue as any)[CONTROLLER_METHOD_PARAMETERS];
+                if (prop === "constructor") {
+                    return;  // not the constructor
+                }
 
-                    const methods: IControllerMethodInfo[] = [];
+                let numberOfSwaggerDocs = 0;
+                let numberOfTests = 0;
 
-                    // (pre) controller methods
-                    getListFromObject<PrepareControllerMethodAction>(propValue, PREPARE_CONTROLLER_METHOD_ACTIONS).forEach(action => {
-                        action({
-                            controller,
-                            "controllerClass": cls["class"],
-                            "fullFilePath": cls.file.fullPath,
-                            "method": propValue,
-                            "relativeFilePath": cls.file.relativePath,
-                            server,
-                            "globalOptions": options
-                        });
-                    }, true);
+                // cleanups
+                delete (propValue as any)[CONTROLLER_METHOD_PARAMETERS];
 
-                    // response serializer
-                    getListFromObject<InitControllerSerializerAction>(propValue, SETUP_RESPONSE_SERIALIZER).forEach((action) => {
-                        action({
-                            controller
-                        });
-                    }, true);
+                const methods: IControllerMethodInfo[] = [];
 
-                    // controller methods
-                    getListFromObject<InitControllerMethodAction>(propValue, INIT_CONTROLLER_METHOD_ACTIONS).forEach(action => {
-                        action({
-                            controller,
-                            "controllerClass": cls["class"],
-                            "fullFilePath": cls.file.fullPath,
-                            "method": propValue,
-                            "relativeFilePath": cls.file.relativePath,
-                            server,
-                            "globalOptions": options,
-                            "resolveInfo": (info) => {
-                                methods.push(info);
-                            }
-                        });
-                    }, true);
-
-                    // error handlers
-                    getListFromObject<InitControllerErrorHandlerAction>(propValue, SETUP_ERROR_HANDLER).forEach((action) => {
-                        action({
-                            controller
-                        });
-                    }, true);
-
-                    // parse error handlers
-                    getListFromObject<InitControllerParseErrorHandlerAction>(propValue, SETUP_PARSE_ERROR_HANDLER).forEach((action) => {
-                        action({
-                            controller
-                        });
-                    }, true);
-
-                    // schema validator error handlers
-                    getListFromObject<InitControllerValidationErrorHandlerAction>(propValue, SETUP_VALIDATION_ERROR_HANDLER).forEach((action) => {
-                        action({
-                            controller
-                        });
-                    }, true);
-
-                    // Swagger documentation updater method / action
-                    getListFromObject<InitDocumentationUpdaterAction>(propValue, SETUP_DOCUMENTATION_UPDATER).forEach(action => {
-                        action({
-                            controller
-                        });
-                    }, true);
-
-                    // Swagger documentation
-                    getListFromObject<InitControllerMethodSwaggerAction>(propValue, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS).forEach(action => {
-                        action({
-                            "apiDocument": swaggerDoc,
-                            controller,
-                            "controllerClass": cls["class"]
-                        });
-                    }, true);
-
-                    // tell, that controller method has been initialized
-                    onControllerMethodInitialized?.({
-                        "app": server,
+                // (pre) controller methods
+                getListFromObject<PrepareControllerMethodAction>(propValue, PREPARE_CONTROLLER_METHOD_ACTIONS).forEach(action => {
+                    action({
                         controller,
                         "controllerClass": cls["class"],
-                        "fullPath": cls.file.fullPath,
-                        "function": propValue as Func,
-                        "methods": methods,
-                        "name": prop,
-                        "relativePath": cls.file.relativePath
+                        "fullFilePath": cls.file.fullPath,
+                        "method": propValue,
+                        "relativeFilePath": cls.file.relativePath,
+                        server,
+                        "globalOptions": options
+                    });
+                }, true);
+
+                // response serializer
+                getListFromObject<InitControllerSerializerAction>(propValue, SETUP_RESPONSE_SERIALIZER).forEach((action) => {
+                    action({
+                        controller
+                    });
+                }, true);
+
+                // controller methods
+                getListFromObject<InitControllerMethodAction>(propValue, INIT_CONTROLLER_METHOD_ACTIONS).forEach(action => {
+                    action({
+                        controller,
+                        "controllerClass": cls["class"],
+                        "fullFilePath": cls.file.fullPath,
+                        "method": propValue,
+                        "relativeFilePath": cls.file.relativePath,
+                        server,
+                        "globalOptions": options,
+                        "resolveInfo": (info) => {
+                            methods.push(info);
+                        }
+                    });
+                }, true);
+
+                // error handlers
+                getListFromObject<InitControllerErrorHandlerAction>(propValue, SETUP_ERROR_HANDLER).forEach((action) => {
+                    action({
+                        controller
+                    });
+                }, true);
+
+                // parse error handlers
+                getListFromObject<InitControllerParseErrorHandlerAction>(propValue, SETUP_PARSE_ERROR_HANDLER).forEach((action) => {
+                    action({
+                        controller
+                    });
+                }, true);
+
+                // schema validator error handlers
+                getListFromObject<InitControllerValidationErrorHandlerAction>(propValue, SETUP_VALIDATION_ERROR_HANDLER).forEach((action) => {
+                    action({
+                        controller
+                    });
+                }, true);
+
+                // Swagger documentation updater method / action
+                getListFromObject<InitDocumentationUpdaterAction>(propValue, SETUP_DOCUMENTATION_UPDATER).forEach(action => {
+                    action({
+                        controller
+                    });
+                }, true);
+
+                // Swagger documentation
+                getListFromObject<InitControllerMethodSwaggerAction>(propValue, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS).forEach(action => {
+                    action({
+                        "apiDocument": swaggerDoc,
+                        controller,
+                        "controllerClass": cls["class"]
+                    });
+
+                    ++numberOfSwaggerDocs;
+                }, true);
+
+                // (unit-)tests
+                getListFromObject<InitControllerMethodTestAction>(propValue, ADD_CONTROLLER_METHOD_TEST_ACTION).forEach((action) => {
+                    action({
+                        controller,
+                        server,
+                        "shouldAllowEmptySettings": !!options?.allowEmptyTestSettings,
+                        "shouldUseModuleAsDefault": shouldUseTestModuleAsDefault,
+                        "timeout": testTimeout
+                    });
+
+                    ++numberOfTests;
+                });
+
+                // tell, that controller method has been initialized
+                onControllerMethodInitialized?.({
+                    "app": server,
+                    controller,
+                    "controllerClass": cls["class"],
+                    "fullPath": cls.file.fullPath,
+                    "function": propValue as Func,
+                    "methods": methods,
+                    "name": prop,
+                    "relativePath": cls.file.relativePath
+                });
+
+                if (!numberOfSwaggerDocs) {
+                    controllerMethodsWithoutSwagger.push({
+                        "cls": cls,
+                        methods
+                    });
+                }
+
+                if (!numberOfTests) {
+                    controllerMethodsWithoutTests.push({
+                        "cls": cls,
+                        methods
                     });
                 }
             });
@@ -885,8 +981,50 @@ export function setupHttpServerControllerMethod(server: IHttpServer) {
             });
         });
 
+        if (shouldHaveTestsEverywhere) {
+            // check if there is at least one method without a test
+            // defined by `It()` decorator
+
+            if (controllerMethodsWithoutTests.length) {
+                // we have at least one missing test defintion => throw error
+
+                const missingTestsText = controllerMethodsWithoutTests.map(({ cls, methods }) => {
+                    return `${cls.file.fullPath}: ${methods.map((m) => {
+                        return m.name;
+                    }).join(", ")}`;
+                }).join("\n");
+
+                throw Error(
+                    `The following controller methods have no test defined:
+
+${missingTestsText}`
+                );
+            }
+        }
+
         if (swagger) {
             const shouldValidate = isNil(swagger.validate) ? true : !!swagger.validate;
+            const shouldHaveDocumentationEverywhere = isNil(swagger.requiresDocumentationEverywhere) ? true : !!swagger.requiresDocumentationEverywhere;
+
+            if (shouldHaveDocumentationEverywhere) {
+                // check if at least one method have no documentation
+
+                if (controllerMethodsWithoutSwagger.length) {
+                    // we have at least one missing documentation => throw error
+
+                    const missingDocsText = controllerMethodsWithoutSwagger.map(({ cls, methods }) => {
+                        return `${cls.file.fullPath}: ${methods.map((m) => {
+                            return m.name;
+                        }).join(", ")}`;
+                    }).join("\n");
+
+                    throw Error(
+                        `The following controller methods have no documentation defined:
+    
+${missingDocsText}`
+                    );
+                }
+            }
 
             if (shouldValidate) {
                 const validationResult = new OpenAPISchemaValidator({

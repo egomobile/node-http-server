@@ -1,6 +1,21 @@
+// This file is part of the @egomobile/http-server distribution.
+// Copyright (c) Next.e.GO Mobile SE, Aachen, Germany (https://e-go-mobile.com/)
+//
+// @egomobile/http-server is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation, version 3.
+//
+// @egomobile/http-server is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
+
 import type { ServerResponse } from "http";
 import type { OpenAPIV3 } from "openapi-types";
-import type { HttpMiddleware, HttpPathValidator, HttpRequestHandler, IControllerMethodInfo, IControllersOptions, IHttpController, IHttpServer, ImportValues, ParameterOptions } from ".";
+import type { HttpMethod, HttpMiddleware, HttpPathValidator, HttpRequestHandler, IControllerMethodInfo, IControllersOptions, IHttpController, IHttpServer, ImportValues, ITestSettings, ITestSettingValueGetterContext, ParameterOptions } from ".";
 
 export type Constructor<T extends any = any> = (new (...args: any[]) => T);
 
@@ -81,6 +96,14 @@ export interface IInitControllerParseErrorHandlerActionContext {
     controller: IHttpController<IHttpServer>;
 }
 
+export interface IInitControllerMethodTestActionContext {
+    controller: IHttpController<IHttpServer>;
+    server: IHttpServer;
+    shouldAllowEmptySettings: boolean;
+    shouldUseModuleAsDefault: boolean;
+    timeout: number;
+}
+
 export interface IInitControllerValidationErrorHandlerActionContext {
     controller: IHttpController<IHttpServer>;
 }
@@ -102,6 +125,8 @@ export type InitControllerImportAction = (context: IInitControllerImportActionCo
 export type InitControllerSerializerAction = (context: IInitControllerSerializerActionContext) => void;
 
 export type InitControllerMethodSwaggerAction = (context: IInitControllerMethodSwaggerActionContext) => void;
+
+export type InitControllerMethodTestAction = (context: IInitControllerMethodTestActionContext) => void;
 
 export type InitControllerParseErrorHandlerAction = (context: IInitControllerParseErrorHandlerActionContext) => void;
 
@@ -126,10 +151,36 @@ export interface IRequestHandlerContext {
     middlewares?: Nilable<HttpMiddleware[]>;
 }
 
+export interface IRouterPathItem {
+    httpMethod: HttpMethod;
+    routerPath: string;
+}
+
 export interface ISwaggerMethodInfo {
     doc: OpenAPIV3.PathItemObject;
     method: Function;
 }
+
+export interface ITestDescription {
+    name: string;
+}
+
+export interface ITestOptions {
+    controller: IHttpController;
+    getBody: (context: ITestSettingValueGetterContext) => Promise<any>;
+    getExpectedBody: (context: ITestSettingValueGetterContext) => Promise<any>;
+    getExpectedHeaders: (context: ITestSettingValueGetterContext) => Promise<Record<string, string | RegExp>>;
+    getExpectedStatus: (context: ITestSettingValueGetterContext) => Promise<number>;
+    getHeaders: (context: ITestSettingValueGetterContext) => Promise<Record<string, any>>;
+    getParameters: (context: ITestSettingValueGetterContext) => Promise<Record<string, string>>;
+    getTimeout: (context: ITestSettingValueGetterContext) => Promise<number>;
+    method: Function;
+    methodName: string | symbol;
+    name: string;
+    settings: ITestSettings;
+}
+
+export type List<T extends any = any> = T[] | Iterable<T> | IterableIterator<T>;
 
 export type ObjectNameListResolver = (obj: any) => string[];
 
@@ -147,3 +198,5 @@ export type Optional<T extends any = any> = T | undefined;
 export type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>;
 
 export type ResolveControllerMethodInfo = (info: IControllerMethodInfo) => any;
+
+export type TestOptionsGetter = () => Promise<ITestOptions>;

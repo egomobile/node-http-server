@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRoutePath, HttpMiddleware, IControllerRouteOptions, IControllerRouteWithBodyOptions } from "../types";
+import type { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRoutePath, HttpMiddleware, IControllerRouteOptions } from "../types";
 import type { Nilable } from "../types/internal";
 import { createHttpMethodDecorator } from "./factories";
 
@@ -67,7 +67,7 @@ export function DELETE(path: ControllerRoutePath, use?: Nilable<HttpMiddleware[]
 export function DELETE(arg1?: Nilable<ControllerRouteArgument1>, arg2?: Nilable<ControllerRouteArgument2>): MethodDecorator {
     return createHttpMethodDecorator({
         "decoratorOptions": {
-            "arg1": arg1 as Nilable<ControllerRouteArgument1<IControllerRouteWithBodyOptions>>,
+            "arg1": arg1 as Nilable<ControllerRouteArgument1<IControllerRouteOptions>>,
             "arg2": arg2 as Nilable<ControllerRouteArgument2>,
             "arg3": undefined
         },

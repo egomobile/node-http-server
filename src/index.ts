@@ -17,12 +17,71 @@
 
 /// <reference path="../index.d.ts" />
 
+import ajv from "ajv";
 import { createServer as createHttpServer, IncomingMessage, Server, ServerResponse } from "http";
 import joi from "joi";
 import { setupHttpServerControllerMethod } from "./controllers/factories";
-import type { HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction, UniqueHttpMiddleware } from "./types";
+import { setupHttpServerTestMethod } from "./controllers/tests";
+import { setupEventMethods } from "./events";
+import type { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction, UniqueHttpMiddleware } from "./types";
 import type { GroupedHttpRequestHandlers, IRequestHandlerContext, Nilable, Optional } from "./types/internal";
-import { asAsync, getUrlWithoutQuery, isNil } from "./utils";
+import { asAsync, getUrlWithoutQuery, isNil, isTruthy } from "./utils";
+
+/**
+ * Options for `createServer()` function.
+ */
+export interface ICreateServerOptions {
+    /**
+     * Custom settings for (unit-)tests.
+     */
+    tests?: Nilable<IServerTestOptions>;
+}
+
+/**
+ * Options for server tests.
+ */
+export interface IServerTestOptions {
+    /**
+     * A custom function, which should be executed AFTER ALL tests. This is executed once.
+     */
+    afterAll?: Nilable<AfterAllTestsFunc>;
+    /**
+     * A custom function, which should be executed AFTER EACH tests.
+     */
+    afterEach?: Nilable<AfterEachTestFunc>;
+    /**
+     * Allow empty test settings or not.
+     *
+     * @default false
+     */
+    allowEmptyTestSettings?: boolean;
+    /**
+     * A custom function, which should be executed BEFORE ALL tests. This is executed once.
+     */
+    beforeAll?: Nilable<BeforeAllTestsFunc>;
+    /**
+     * A custom function, which should be executed BEFORE EACH tests.
+     */
+    beforeEach?: Nilable<BeforeEachTestFunc>;
+    /**
+     * If no settings are specified, a module file with it is required.
+     *
+     * @default true
+     */
+    requiresModuleAsDefault?: Nilable<boolean>;
+    /**
+     * This is value indicates, that all endpoints require at least one test.
+     *
+     * @default true
+     */
+    requiresTestsEverywhere?: Nilable<boolean>;
+    /**
+     * Custom value for a (default) timeout for tests, in ms.
+     *
+     * @default 5000
+     */
+    timeout?: Nilable<number>;
+}
 
 /**
  * The default HTTP error handler.
@@ -59,10 +118,17 @@ export const defaultHttpNotFoundHandler: HttpNotFoundHandler = async (request, r
     response.end();
 };
 
+/**
+ * Default timeout value for tests.
+ */
+export const defaultTestTimeout = 5000;
+
 const supportedHttpMethods = ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE"];
 
 /**
  * Creates a new instance of a HTTP server.
+ *
+ * @param {Nilable<ICreateServerOptions>} [serverOptions] Custom options.
  *
  * @example
  * ```
@@ -81,7 +147,37 @@ const supportedHttpMethods = ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PA
  *
  * @returns {IHttpServer} The new instance.
  */
-export const createServer = (): IHttpServer => {
+export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHttpServer {
+    if (!isNil(serverOptions?.tests?.afterAll) && typeof serverOptions?.tests?.afterAll !== "function") {
+        throw new TypeError("serverOptions.tests.afterAll must be of type function");
+    }
+    if (!isNil(serverOptions?.tests?.afterEach) && typeof serverOptions?.tests?.afterEach !== "function") {
+        throw new TypeError("serverOptions.tests.afterEach must be of type function");
+    }
+    if (!isNil(serverOptions?.tests?.beforeAll) && typeof serverOptions?.tests?.beforeAll !== "function") {
+        throw new TypeError("serverOptions.tests.beforeAll must be of type function");
+    }
+    if (!isNil(serverOptions?.tests?.beforeEach) && typeof serverOptions?.tests?.beforeEach !== "function") {
+        throw new TypeError("serverOptions.tests.beforeEach must be of type function");
+    }
+
+    let testTimeout = defaultTestTimeout;
+    if (!isNil(serverOptions?.tests?.timeout)) {
+        if (typeof serverOptions?.tests?.timeout !== "number") {
+            throw new TypeError("serverOptions.tests.timeout must be of type number");
+        }
+
+        testTimeout = serverOptions.tests.timeout;
+    }
+
+    const shouldUseTestModuleAsDefault = isNil(serverOptions?.tests?.requiresModuleAsDefault) ?
+        true :
+        !!serverOptions?.tests?.requiresModuleAsDefault;
+    const shouldHaveTestsEverywhere = isNil(serverOptions?.tests?.requiresTestsEverywhere) ?
+        true :
+        !!serverOptions?.tests?.requiresTestsEverywhere;
+    const shouldAllowEmptyTestSettings = !!serverOptions?.tests?.allowEmptyTestSettings;
+
     let errorHandler: HttpErrorHandler = defaultHttpErrorHandler;
     const globalMiddlewares: HttpMiddleware[] = [];
     let instance: Optional<Server>;
@@ -332,11 +428,24 @@ export const createServer = (): IHttpServer => {
                 reject(ex);
             });
 
-            newInstance.listen(port as number, "0.0.0.0", () => {
+            const finalize = () => {
                 (server as any).port = port;
 
                 resolve(undefined);
-            });
+            };
+
+            if (isTruthy(process.env.EGO_RUN_TESTS)) {
+                // run tests instead of creating a new instance
+
+                finalize();
+
+                server.test()
+                    .then(resolve)
+                    .catch(reject);
+            }
+            else {
+                newInstance.listen(port as number, "0.0.0.0", finalize);
+            }
 
             instance = newInstance;
         });
@@ -383,12 +492,23 @@ export const createServer = (): IHttpServer => {
         }
     });
 
-    setupHttpServerControllerMethod(server);
+    setupHttpServerControllerMethod({
+        server,
+        shouldAllowEmptyTestSettings,
+        shouldHaveTestsEverywhere,
+        shouldUseTestModuleAsDefault,
+        testTimeout
+    });
+    setupEventMethods(server);
+    setupHttpServerTestMethod({
+        "options": serverOptions,
+        server
+    });
 
     resetInstance();
 
     return server;
-};
+}
 
 /**
  * Checks if a value is an `UniqueHttpMiddleware`.
@@ -524,6 +644,10 @@ function mergeHandler(
 
 // <EXPORTS>
 export {
+    default as Ajv,
+    ErrorObject as AjvError
+} from "ajv";
+export {
     AlternativesSchema,
     AnySchema,
     ArraySchema,
@@ -538,6 +662,28 @@ export {
     SchemaMap, StrictSchemaMap, StringSchema, SymbolSchema, ValidationError as JoiValidationError
 } from "joi";
 export {
+    JSONSchema4,
+    JSONSchema4Array,
+    JSONSchema4Object,
+    JSONSchema4Type,
+    JSONSchema4TypeName,
+    JSONSchema4Version,
+    JSONSchema6,
+    JSONSchema6Array,
+    JSONSchema6Definition,
+    JSONSchema6Object,
+    JSONSchema6Type,
+    JSONSchema6TypeName,
+    JSONSchema6Version,
+    JSONSchema7,
+    JSONSchema7Array,
+    JSONSchema7Definition,
+    JSONSchema7Object,
+    JSONSchema7Type,
+    JSONSchema7TypeName,
+    JSONSchema7Version
+} from "json-schema";
+export {
     OpenAPIV3
 } from "openapi-types";
 export * from "./controllers";
@@ -546,7 +692,13 @@ export * from "./middlewares";
 export * from "./types";
 export * from "./validators";
 
+/**
+ * Alias for `ajv` module.
+ */
+export const jsonSchema = ajv;
+/**
+ * Alias for `joi` module.
+ */
 export const schema = joi;
-
 
 // </EXPORTS>

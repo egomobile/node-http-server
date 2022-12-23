@@ -139,18 +139,34 @@ describe("controllers", () => {
         expect(data).toMatchObject(expectedObject);
     });
 
-    it.each(invalidInputData)("should return 400 when do a POST request on /test_schema_validation route for existing TestSchemaValidationController with invalid input data", async (data) => {
+    it.each(invalidInputData)("should return 400 when do a POST request on /test_schema_validation/joi route for existing TestSchemaValidationController with invalid input data", async (data) => {
         const server = createServerAndInitControllers();
 
-        await request(server).post("/test_schema_validation")
+        await request(server).post("/test_schema_validation/joi")
             .send(data)
             .expect(400);
     });
 
-    it.each(invalidInputData)("should return 409 when do a POST request on /test_schema_validation route for existing TestSchemaValidationController with invalid input data", async (data) => {
+    it.each(invalidInputData)("should return 409 when do a POST request on /test_schema_validation/joi/foo route for existing TestSchemaValidationController with invalid input data", async (data) => {
         const server = createServerAndInitControllers();
 
-        await request(server).post("/test_schema_validation/foo")
+        await request(server).post("/test_schema_validation/joi/foo")
+            .send(data)
+            .expect(409);
+    });
+
+    it.each(invalidInputData)("should return 400 when do a POST request on /test_schema_validation/ajv route for existing TestSchemaValidationController with invalid input data", async (data) => {
+        const server = createServerAndInitControllers();
+
+        await request(server).post("/test_schema_validation/ajv")
+            .send(data)
+            .expect(400);
+    });
+
+    it.each(invalidInputData)("should return 409 when do a POST request on /test_schema_validation/ajv/foo route for existing TestSchemaValidationController with invalid input data", async (data) => {
+        const server = createServerAndInitControllers();
+
+        await request(server).post("/test_schema_validation/ajv/foo")
             .send(data)
             .expect(409);
     });

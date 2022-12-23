@@ -13,13 +13,29 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import type { ErrorObject as AjvError } from "ajv";
 import type { IncomingMessage, ServerResponse } from "http";
 import type { AnySchema, ValidationError as JoiValidationError } from "joi";
+import type { JSONSchema4, JSONSchema6, JSONSchema7 } from "json-schema";
 import type { OpenAPIV3 } from "openapi-types";
 import type { URLSearchParams } from "url";
 import type { middleware } from "..";
 import type { ParseError } from "../errors/parse";
 import type { Constructor, Func, Nilable, ObjectKey, Optional, PartialBy } from "./internal";
+
+/**
+ * `afterAll()` function for (unit-)tests.
+ *
+ * @param {IAfterAllTestsContext} context The context.
+ */
+export type AfterAllTestsFunc = (context: IAfterAllTestsContext) => any;
+
+/**
+ * `afterEach()` function for (unit-)tests.
+ *
+ * @param {IAfterEachTestContext} context The context.
+ */
+export type AfterEachTestFunc = (context: IAfterEachTestContext) => any;
 
 /**
  * An 'authorize' argument value.
@@ -80,6 +96,25 @@ export type AuthorizeValidator = (context: IAuthorizeValidatorContext) => any;
 export type AuthorizeValidatorValue = AuthorizeValidator | string;
 
 /**
+ * `beforeAll()` function for (unit-)tests.
+ *
+ * @param {IBeforeAllTestsContext} context The context.
+ */
+export type BeforeAllTestsFunc = (context: IBeforeAllTestsContext) => any;
+
+/**
+ * `beforeEach()` function for (unit-)tests.
+ *
+ * @param {IBeforeEachTestContext} context The context.
+ */
+export type BeforeEachTestFunc = (context: IBeforeEachTestContext) => any;
+
+/**
+ * Possible and known values for a cancellation.
+ */
+export type CancellationReason = "timeout";
+
+/**
  * A function, that is invoked after a controller has been
  * created, initialized and added to the context.
  *
@@ -107,7 +142,7 @@ export type ControllerRouteArgument1<TOptions extends IControllerRouteOptions = 
  * like GET() or POST().
  */
 export type ControllerRouteArgument2
-    = AnySchema | HttpMiddleware[] | number | Nilable<HttpInputDataFormat>;
+    = AnySchema | HttpMiddleware[] | number | Nilable<HttpInputDataFormat> | Schema;
 
 /**
  * A possible value for a third argument of a HTTP method / controller route decorator
@@ -119,6 +154,14 @@ export type ControllerRouteArgument3 = number;
  * A possible value for a path of a controller route.
  */
 export type ControllerRoutePath = string;
+
+/**
+ * Possible values for controller router decorators with bodies.
+ */
+export type ControllerRouteWithBodyOptions =
+    IControllerRouteWithBodyAndJoiSchemaOptions |
+    IControllerRouteWithBodyAndJsonSchemaOptions |
+    IControllerRouteWithBodyAndNoSchemaOptions;
 
 /**
  * Base document of an 'IControllersSwaggerOptions' object.
@@ -237,6 +280,38 @@ export interface IAuthorizedUserProviderContext {
 }
 
 /**
+ * Context for a `AfterAllTestsFunc` function / method.
+ */
+export interface IAfterAllTestsContext {
+    /**
+     * The global error, if occurred.
+     */
+    error?: any;
+    /**
+     * The total number of tests.
+     */
+    totalCount: number;
+}
+
+/**
+ * Context for a `AfterEachTestFunc` function / method.
+ */
+export interface IAfterEachTestContext {
+    /**
+     * The error by single test, if occurred.
+     */
+    error?: any;
+    /**
+     * The current zero-based index.
+     */
+    index: number;
+    /**
+     * The total number of tests.
+     */
+    totalCount: number;
+}
+
+/**
  * Options for an 'authorize' decorator or prop.
  */
 export interface IAuthorizeOptions {
@@ -282,6 +357,30 @@ export interface IAuthorizeValidatorContext {
      * List of roles.
      */
     roles: AuthorizeRoles;
+}
+
+/**
+ * Context for a `BeforeAllTestsFunc` function / method.
+ */
+export interface IBeforeAllTestsContext {
+    /**
+     * The total number of tests.
+     */
+    totalCount: number;
+}
+
+/**
+ * Context for a `BeforeEachTestFunc` function / method.
+ */
+export interface IBeforeEachTestContext {
+    /**
+     * The current zero-based index.
+     */
+    index: number;
+    /**
+     * The total number of tests.
+     */
+    totalCount: number;
 }
 
 /**
@@ -337,7 +436,7 @@ export interface IControllerMethodInfo {
     /**
      * The underlying options.
      */
-    options: Optional<IControllerRouteOptions | IControllerRouteWithBodyOptions>;
+    options: Optional<IControllerRouteOptions | ControllerRouteWithBodyOptions>;
     /**
      * The route path.
      */
@@ -433,7 +532,7 @@ export interface IControllerRouteOptions {
 /**
  * Options for a controller route with a body.
  */
-export interface IControllerRouteWithBodyOptions extends IControllerRouteOptions {
+export interface IControllerRouteWithBodyAndNoSchemaOptions extends IControllerRouteOptions {
     /**
      * The expected data of the input format.
      */
@@ -446,19 +545,45 @@ export interface IControllerRouteWithBodyOptions extends IControllerRouteOptions
      */
     limit?: Nilable<number>;
     /**
-     * The object schema to validate.
-     *
-     * 'json()' is used to parse the input.
-     */
-    schema?: Nilable<AnySchema>;
-    /**
      * Custom parse error handler.
      */
     onParsingFailed?: Nilable<ParseErrorHandler>;
     /**
      * Custom schema validation error handler.
      */
+    onValidationFailed?: Nilable<SchemaValidationFailedHandler | ValidationFailedHandler>;
+    /**
+     * An optional schema to use for the validation.
+     */
+    schema?: Nilable<Schema>;
+}
+
+/**
+ * Options for a controller route with a body, which validates with a Joi schema.
+ */
+export interface IControllerRouteWithBodyAndJoiSchemaOptions extends IControllerRouteWithBodyAndNoSchemaOptions {
+    /**
+     * @inheritdoc
+     */
     onValidationFailed?: Nilable<ValidationFailedHandler>;
+    /**
+     * @inheritdoc
+     */
+    schema: Nilable<AnySchema>;
+}
+
+/**
+ * Options for a controller route with a body, which validates with a JSON schema.
+ */
+export interface IControllerRouteWithBodyAndJsonSchemaOptions extends IControllerRouteWithBodyAndNoSchemaOptions {
+    /**
+     * @inheritdoc
+     */
+    onValidationFailed?: Nilable<SchemaValidationFailedHandler>;
+    /**
+     * @inheritdoc
+     */
+    schema: Nilable<JsonSchema>;
 }
 
 /**
@@ -501,6 +626,10 @@ export interface IControllersAuthorizeOptions {
  * Options for 'controllers()' method of 'IHttpServer' instance.
  */
 export interface IControllersOptions {
+    /**
+     * Custom value, which indicates, that, if empty settings are allowed or not.
+     */
+    allowEmptyTestSettings?: Nilable<boolean>;
     /**
      * Options for 'authorize' feature.
      */
@@ -547,13 +676,29 @@ export interface IControllersOptions {
      */
     patterns?: Nilable<string | string[]>;
     /**
-     * The custom root directory. Default: 'controllers'
+     * Custom value, which indicates, that, if no settings are specified, a module file with it is required.
+     */
+    requiresTestModuleAsDefault?: Nilable<boolean>;
+    /**
+     * Custom value, which indicates, that all endpoints require at least one test.
+     */
+    requiresTestsEverywhere?: Nilable<boolean>;
+    /**
+     * The custom root directory.
+     *
+     * @default "controllers"
      */
     rootDir?: Nilable<string>;
     /**
      * Options to setup Swagger UI.
      */
     swagger?: Nilable<ControllersSwaggerOptionsValue>;
+    /**
+     * Custom value for a (default) timeout for tests, in ms.
+     *
+     * @default 5000
+     */
+    testTimeout?: Nilable<number>;
     /**
      * Default, which indicates, to validate request data with schema in `documentation` prop
      * of a request decorator like `@GET()` or `@POST()` or not.
@@ -568,13 +713,21 @@ export interface IControllersOptions {
  */
 export interface IControllersSwaggerOptions {
     /**
-     * The base path. Default: /swagger
+     * The base path.
+     *
+     * @default "/swagger"
      */
     basePath?: Nilable<string>;
     /**
      * The base document.
      */
     document: ControllersSwaggerBaseDocument;
+    /**
+     * Value, which indicates, if all endpoints should have documentation or not.
+     *
+     * @default true
+     */
+    requiresDocumentationEverywhere?: Nilable<boolean>;
     /**
      * One or more required middleware for the Swagger endpoint(s).
      */
@@ -694,7 +847,7 @@ export interface IHttpRequestHandlerOptions {
      * Automatic call `end()` method on response context
      * when handler was executed successfully.
      *
-     * Default: (true)
+     * @default true
      */
     autoEnd?: Optional<boolean>;
     /**
@@ -872,6 +1025,16 @@ export interface IHttpServer {
     delete(path: HttpRequestPath, optionsOrMiddlewares: HttpOptionsOrMiddlewares, handler: HttpRequestHandler): this;
 
     /**
+     * Emits an event.
+     *
+     * @param {string} event The name of the event to emit.
+     * @param {any[]} [args] One or more argument for the event.
+     *
+     * @returns {any} The result.
+     */
+    emit(event: "test", context: ITestEventHandlerContext): Promise<any>;
+
+    /**
      * Gets the current error handler.
      */
     readonly errorHandler: HttpErrorHandler;
@@ -969,6 +1132,14 @@ export interface IHttpServer {
      * Gets the current "not found" handler.
      */
     readonly notFoundHandler: HttpNotFoundHandler;
+
+    /**
+     * Registers an event handler, which should be executed once.
+     *
+     * @param {string} event The name of the event.
+     * @param {TestEventHandler} handler The handler to execute.
+     */
+    once(event: "test", handler: TestEventHandler): this;
 
     /**
      * Registers a route for a OPTIONS request.
@@ -1136,6 +1307,11 @@ export interface IHttpServer {
     setNotFoundHandler(handler: HttpNotFoundHandler): this;
 
     /**
+     * Runs tests.
+     */
+    test(): Promise<void>;
+
+    /**
      * Registers a route for a TRACE request.
      *
      * @param {HttpRequestPath} path The path.
@@ -1196,7 +1372,9 @@ export interface IHttpServer {
  */
 export interface IHttpStringBodyParserOptions extends IHttpBodyParserOptions {
     /**
-     * The custom string encoding to use. Default: utf8
+     * The custom string encoding to use.
+     *
+     * @default "utf8"
      */
     encoding?: Nilable<BufferEncoding>;
 }
@@ -1250,6 +1428,9 @@ export interface IParameterDataTransformerContext {
     source: any;
 }
 
+/**
+ * Options for `Parameter` decorator.
+ */
 export interface IParameterOptions<TSource extends ParameterSource> {
     /**
      * The name of the source.
@@ -1385,6 +1566,195 @@ export interface ISwaggerInitializedEventArguments {
 }
 
 /**
+ * Context for a `TestEventCancellationEventHandler` function.
+ */
+export interface ITestEventCancellationEventHandlerContext {
+    /**
+     * The reason.
+     */
+    reason: CancellationReason;
+}
+
+/**
+ * A context for a `TestEventHandler`.
+ */
+export interface ITestEventHandlerContext {
+    /**
+     * The body.
+     */
+    body: any;
+    /**
+     * A reason for cancellation.
+     */
+    readonly cancellationReason: Optional<"timeout">;
+    /**
+     * Gets if cancellation has been requested or not.
+     */
+    readonly cancellationRequested: boolean;
+    /**
+     * The context, where the test is running in.
+     */
+    context: "controller";
+    /**
+     * The description of the specific test.
+     */
+    description: string;
+    /**
+     * Read-to-use path of the route with injected / replaced and escaped parameter values.
+     */
+    escapedRoute: string;
+    /**
+     * Expectations for the response.
+     */
+    expectations: ITestEventHandlerContextExpectations;
+    /**
+     * The full path of the underlying file.
+     */
+    file: string;
+    /**
+     * The test group / category.
+     */
+    group: string;
+    /**
+     * HTTP request headers.
+     */
+    headers: Record<string, string>;
+    /**
+     * The HTTP method.
+     */
+    httpMethod: HttpMethod;
+    /**
+     * The zero-based index of the current test.
+     */
+    index: number;
+    /**
+     * The nam / key of the underlying method.
+     */
+    methodName: string | symbol;
+    /**
+     * Gets or sets a function, which listens for a cancellation event.
+     */
+    onCancellationRequested: Nilable<TestEventCancellationEventHandler>;
+    /**
+     * The path of the route with possible parameters.
+     */
+    route: string;
+    /**
+     * URL parameters to use.
+     */
+    parameters: Record<string, string>;
+    /**
+     * The underlying server instance.
+     */
+    server: IHttpServer;
+    /**
+     * The total number of tests.
+     */
+    totalCount: number;
+    /**
+     * A custom validator function.
+     */
+    validate?: (context: ITestResponseValidatorContext) => Promise<any>;
+}
+
+/**
+ * Expectations for a test response.
+ */
+export interface ITestEventHandlerContextExpectations {
+    /**
+     * The body.
+     */
+    body: any;
+    /**
+     * Headers.
+     */
+    headers: Record<string, string | RegExp>;
+    /**
+     * The status code.
+     */
+    status: number;
+}
+
+/**
+ * Expectations for a test.
+ */
+export interface ITestSettingExpectations {
+    /**
+     * The expected body.
+     */
+    body?: Nilable<TestSettingValueOrGetter<any>>;
+    /**
+     * The expected headers.
+     */
+    headers?: Nilable<TestSettingValueOrGetter<Record<string, string | RegExp>>>;
+    /**
+     * The expected status code.
+     *
+     * @default 200
+     */
+    status?: Nilable<TestSettingValueOrGetter<number>>;
+}
+
+/**
+ * Options, setting up a test.
+ */
+export interface ITestSettings {
+    /**
+     * Request body.
+     */
+    body?: Nilable<TestSettingValueOrGetter<any>>;
+    /**
+     * Sets up the expectations.
+     */
+    expectations?: Nilable<ITestSettingExpectations>;
+    /**
+     * Request headers.
+     */
+    headers?: Nilable<TestSettingValueOrGetter<Record<string, any>>>;
+    /**
+     * URL parameters.
+     */
+    parameters?: Nilable<TestSettingValueOrGetter<Record<string, string>>>;
+    /**
+     * Custom timeout value in ms.
+     */
+    timeout?: Nilable<TestSettingValueOrGetter<number>>;
+    /**
+     * A custom validator function.
+     */
+    validator?: Nilable<TestResponseValidator>;
+}
+
+/**
+ * Context for a test setting value getter.
+ */
+export interface ITestSettingValueGetterContext {
+}
+
+/**
+ * Context for a `TestResponseValidator` function.
+ */
+export interface ITestResponseValidatorContext {
+    /**
+     * The raw body.
+     */
+    body: Buffer;
+    /**
+     * The response headers.
+     */
+    headers: Record<string, string>;
+    /**
+     * The status code.
+     */
+    status: number;
+}
+
+/**
+ * A possible value for a JSONSchema*
+ */
+export type JsonSchema = JSONSchema4 | JSONSchema6 | JSONSchema7;
+
+/**
  * A handler, which is invoked, when a JSON schema validation fails.
  *
  * @param {IJsonSchemaError[]} errors The list of errors.
@@ -1401,9 +1771,9 @@ export type LazyImportValue<T extends any = any> = T | (() => T);
 /**
  * A next function.
  *
- * @param {Optional<any>} [error] The error, if occurred.
+ * @param {Nilable<any>} [error] The error, if occurred.
  */
-export type NextFunction = (error?: Optional<any>) => void;
+export type NextFunction = (error?: Nilable<any>) => void;
 
 /**
  * A possible value for a first argument for `Parameter` decorator.
@@ -1492,11 +1862,52 @@ export type ResponseSerializer<TResult extends any = any> =
 export type SetupAuthorizeMiddlewareHandler = (context: ISetupAuthorizeMiddlewareHandlerContext) => any;
 
 /**
+ * A possible value for a schema.
+ */
+export type Schema = AnySchema | JsonSchema;
+
+/**
+ * A handler for fast and generic JSON schema validations.
+ *
+ * @param {AjvError[]} errors The occurred errors.
+ * @param {IHttpRequest} request The request context.
+ * @param {IHttpResponse} response The response context.
+ */
+export type SchemaValidationFailedHandler = (errors: AjvError[], request: IHttpRequest, response: IHttpResponse) => any;
+
+/**
  * Is invoked after a Swagger documentation has been loaded, initialized and added to the context.
  *
  * @param {ISwaggerInitializedEventArguments} args The arguments.
  */
 export type SwaggerInitializedEventHandler = (args: ISwaggerInitializedEventArguments) => any;
+
+/**
+ * A listener / handler, which is invoked, when a cancellation is required.
+ *
+ * @param {ITestEventCancellationEventHandlerContext} context The context.
+ */
+export type TestEventCancellationEventHandler = (context: ITestEventCancellationEventHandlerContext) => any;
+
+/**
+ * An event handler, running a test.
+ *
+ * @param {ITestEventHandlerContext} context The context.
+ */
+export type TestEventHandler = (context: ITestEventHandlerContext) => any;
+
+/**
+ * A function validating a response from a test.
+ *
+ * @param {ITestResponseValidatorContext} context The context.
+ */
+export type TestResponseValidator = (context: ITestResponseValidatorContext) => any;
+
+/**
+ * A value or function, which returns a value for a test setting.
+ */
+export type TestSettingValueOrGetter<T extends any = any> =
+    T | ((context: ITestSettingValueGetterContext) => T) | ((context: ITestSettingValueGetterContext) => PromiseLike<T>);
 
 /**
  * An unique middleware.
@@ -1505,7 +1916,7 @@ export type UniqueHttpMiddleware = HttpMiddleware & {
     /**
      * The key, which indicates the (type) of middleware.
      */
-    [middleware]: symbol;
+    readonly [middleware]: unique symbol;
 };
 
 /**

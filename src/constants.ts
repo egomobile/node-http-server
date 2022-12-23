@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+export const ADD_CONTROLLER_METHOD_TEST_ACTION = Symbol("ADD_CONTROLLER_METHOD_TEST_ACTION");
 export const CONTROLLER_METHOD_PARAMETERS = Symbol("CONTROLLER_METHOD_PARAMETERS");
 export const CONTROLLERS_CONTEXES = Symbol("CONTROLLERS_CONTEXES");
 export const CONTROLLER_MIDDLEWARES = Symbol("CONTROLLER_MIDDLEWARES");
@@ -34,6 +35,8 @@ export const SETUP_RESPONSE_SERIALIZER = Symbol("SETUP_RESPONSE_SERIALIZER");
 export const SETUP_PARSE_ERROR_HANDLER = Symbol("SETUP_PARSE_ERROR_HANDLER");
 export const SETUP_VALIDATION_ERROR_HANDLER = Symbol("SETUP_VALIDATION_ERROR_HANDLER");
 export const SWAGGER_METHOD_INFO = Symbol("SWAGGER_METHOD_INFO");
+export const TEST_DESCRIPTION = Symbol("TEST_DESCRIPTION");
+export const TEST_OPTIONS = Symbol("TEST_OPTIONS");
 export const VALIDATION_ERROR_HANDLER = Symbol("VALIDATION_ERROR_HANDLER");
 
 export const httpMethodsWithBodies = ["POST", "PUT", "PATCH"];

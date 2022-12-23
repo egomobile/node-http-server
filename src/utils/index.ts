@@ -20,7 +20,7 @@ import { middleware } from "..";
 import { httpMethodsWithBodies } from "../constants";
 import { EntityTooLargeError } from "../errors";
 import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, UniqueHttpMiddleware } from "../types";
-import type { Constructor, Nilable, Nullable, ObjectNameListResolver, Optional } from "../types/internal";
+import type { Constructor, List, Nilable, Nullable, ObjectNameListResolver, Optional } from "../types/internal";
 
 interface ICreateWithEntityTooLargeActionOptions {
     action: HttpMiddleware;
@@ -28,6 +28,7 @@ interface ICreateWithEntityTooLargeActionOptions {
 }
 
 const propSepChar = String.fromCharCode(0);
+const truthyValues = ["true", "1", "yes", "y"];
 
 export function asAsync<TFunc extends Function = Function>(func: Function): TFunc {
     if (func.constructor.name === "AsyncFunction") {
@@ -41,6 +42,16 @@ export function asAsync<TFunc extends Function = Function>(func: Function): TFun
 
 export function canHttpMethodHandleBodies(method: Nilable<string>): boolean {
     return httpMethodsWithBodies.includes(method as any);
+}
+
+export function clone<T extends any = any>(input: T): T {
+    if (!input) {
+        return input;
+    }
+
+    return JSON.parse(
+        JSON.stringify(input)
+    );
 }
 
 export function compareValues<T>(x: T, y: T): number {
@@ -187,12 +198,34 @@ export function isNil(val: unknown): val is (undefined | null) {
     return typeof val === "undefined" || val === null;
 }
 
+export function isTruthy(val: unknown): boolean {
+    return truthyValues.includes(
+        String(val ?? "").toLowerCase().trim()
+    );
+}
+
 export function limitToBytes(limit?: Nilable<number>): Nilable<number> {
     if (isNil(limit)) {
         return limit;
     }
 
     return limit * 1048576;
+}
+
+export function multiSort<T extends any = any>(
+    arr: List<T>,
+    ...selectors: ((item: T) => any)[]
+) {
+    return [...arr].sort((x, y) => {
+        for (const selector of selectors) {
+            const sortValue = compareValuesBy(x, y, selector);
+            if (sortValue !== 0) {
+                return sortValue;
+            }
+        }
+
+        return 0;
+    });
 }
 
 export function readStream(stream: NodeJS.ReadableStream) {
@@ -295,7 +328,14 @@ export function sortObjectByKeys<T extends any = any>(obj: T): T {
 
 export function toUniqueHttpMiddleware(id: symbol, mw: HttpMiddleware): UniqueHttpMiddleware {
     const namedMiddleware = mw as UniqueHttpMiddleware;
-    (namedMiddleware as any)[middleware] = id;
+
+    // namedMiddleware[middleware]
+    Object.defineProperty(namedMiddleware, middleware, {
+        "enumerable": true,
+        "get": () => {
+            return id;
+        }
+    });
 
     return namedMiddleware;
 }

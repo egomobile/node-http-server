@@ -13,10 +13,11 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import type { JSONSchema7 } from "json-schema";
 import request from "supertest";
-import { schema } from "..";
-import { json, validate } from "../middlewares";
-import { IHttpRequest, IHttpResponse, ValidationFailedHandler } from "../types";
+import type { SchemaValidationFailedHandler } from "..";
+import { json, validateAjv } from "../middlewares";
+import type { IHttpRequest, IHttpResponse } from "../types";
 import { binaryParser, createServer } from "./utils";
 
 interface IMySchema {
@@ -24,10 +25,22 @@ interface IMySchema {
     name?: string;
 }
 
-const mySchema = schema.object({
-    "email": schema.string().strict().trim().email().required(),
-    "name": schema.string().strict().trim().min(1).optional()
-});
+const mySchema: JSONSchema7 = {
+    "type": "object",
+    "required": ["email"],
+    "properties": {
+        "email": {
+            "type": "string",
+            "pattern": "^(([^<>()[\\].,;:\\s@\"]+(\\.[^<>()[\\].,;:\\s@\"]+)*)|(\".+\"))@(([^<>()[\\].,;:\\s@\"]+\\.)+[^<>()[\\].,;:\\s@\"]{2,})$",
+            "minLength": 1
+        },
+        "name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(\\S+)(.*)(\\S*)$"
+        }
+    }
+};
 
 const validData: IMySchema[] = [{
     "email": "marcel.kloubert@e-go-mobile.com"
@@ -51,7 +64,7 @@ const invalidData: any[] = [
     { "email": "marcel.kloubert@e-go-mobile.com", "name": 666 }
 ];
 
-describe("validate() middleware", () => {
+describe("validateAjv() middleware", () => {
     ["patch", "put", "post"].forEach(method => {
         const methodName = method.toUpperCase();
 
@@ -59,7 +72,7 @@ describe("validate() middleware", () => {
             const server = createServer();
             const resultText = typeof vd;
 
-            (server as any)[method]("/", [json(), validate(mySchema)], async (req: IHttpRequest, resp: IHttpResponse) => {
+            (server as any)[method]("/", [json(), validateAjv(mySchema)], async (req: IHttpRequest, resp: IHttpResponse) => {
                 resp.write(typeof req.body);
             });
 
@@ -81,7 +94,7 @@ describe("validate() middleware", () => {
         it.each(invalidData)(`should return 400 when do a ${methodName} request and send invalid JSON data`, async (ivd) => {
             const server = createServer();
 
-            (server as any)[method]("/", [json(), validate(mySchema)], async (req: IHttpRequest, resp: IHttpResponse) => {
+            (server as any)[method]("/", [json(), validateAjv(mySchema)], async (req: IHttpRequest, resp: IHttpResponse) => {
                 resp.write(typeof req.body);
             });
 
@@ -94,9 +107,11 @@ describe("validate() middleware", () => {
         it.each(invalidData)(`should return 403 when do a ${methodName} request and send invalid JSON data and a custom handler`, async (ivd) => {
             const server = createServer();
 
-            const onValidationError: ValidationFailedHandler = async (ex, req, resp) => {
+            const onValidationError: SchemaValidationFailedHandler = async (errors, req, resp) => {
                 const errorMessage = Buffer.from(
-                    ex.message,
+                    errors.map((error) => {
+                        return error.message || "";
+                    }).join(),
                     "utf8"
                 );
 
@@ -110,13 +125,13 @@ describe("validate() middleware", () => {
                 resp.end();
             };
 
-            (server as any)[method]("/", [json(), validate(mySchema, onValidationError)], async (req: IHttpRequest, resp: IHttpResponse) => {
+            (server as any)[method]("/", [json(), validateAjv(mySchema, onValidationError)], async (req: IHttpRequest, resp: IHttpResponse) => {
                 resp.write(typeof req.body);
             });
 
             const response = await (request(server) as any)[method]("/")
-                .parse(binaryParser)
                 .send(JSON.stringify(ivd))
+                .parse(binaryParser)
                 .expect(403);
 
             const data = response.body;
