@@ -34,48 +34,53 @@ export interface ICreateServerOptions {
     /**
      * Custom settings for (unit-)tests.
      */
-    tests?: Nilable<{
-        /**
-         * A custom function, which should be executed AFTER ALL tests. This is executed once.
-         */
-        afterAll?: Nilable<AfterAllTestsFunc>;
-        /**
-         * A custom function, which should be executed AFTER EACH tests.
-         */
-        afterEach?: Nilable<AfterEachTestFunc>;
-        /**
-         * Allow empty test settings or not.
-         *
-         * @default false
-         */
-        allowEmptyTestSettings?: boolean;
-        /**
-         * A custom function, which should be executed BEFORE ALL tests. This is executed once.
-         */
-        beforeAll?: Nilable<BeforeAllTestsFunc>;
-        /**
-         * A custom function, which should be executed BEFORE EACH tests.
-         */
-        beforeEach?: Nilable<BeforeEachTestFunc>;
-        /**
-         * If no settings are specified, a module file with it is required.
-         *
-         * @default true
-         */
-        requiresModuleAsDefault?: Nilable<boolean>;
-        /**
-         * This is value indicates, that all endpoints require at least one test.
-         *
-         * @default true
-         */
-        requiresTestsEverywhere?: Nilable<boolean>;
-        /**
-         * Custom value for a (default) timeout for tests, in ms.
-         *
-         * @default 5000
-         */
-        timeout?: Nilable<number>;
-    }>;
+    tests?: Nilable<IServerTestOptions>;
+}
+
+/**
+ * Options for server tests.
+ */
+export interface IServerTestOptions {
+    /**
+     * A custom function, which should be executed AFTER ALL tests. This is executed once.
+     */
+    afterAll?: Nilable<AfterAllTestsFunc>;
+    /**
+     * A custom function, which should be executed AFTER EACH tests.
+     */
+    afterEach?: Nilable<AfterEachTestFunc>;
+    /**
+     * Allow empty test settings or not.
+     *
+     * @default false
+     */
+    allowEmptyTestSettings?: boolean;
+    /**
+     * A custom function, which should be executed BEFORE ALL tests. This is executed once.
+     */
+    beforeAll?: Nilable<BeforeAllTestsFunc>;
+    /**
+     * A custom function, which should be executed BEFORE EACH tests.
+     */
+    beforeEach?: Nilable<BeforeEachTestFunc>;
+    /**
+     * If no settings are specified, a module file with it is required.
+     *
+     * @default true
+     */
+    requiresModuleAsDefault?: Nilable<boolean>;
+    /**
+     * This is value indicates, that all endpoints require at least one test.
+     *
+     * @default true
+     */
+    requiresTestsEverywhere?: Nilable<boolean>;
+    /**
+     * Custom value for a (default) timeout for tests, in ms.
+     *
+     * @default 5000
+     */
+    timeout?: Nilable<number>;
 }
 
 /**
