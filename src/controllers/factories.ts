@@ -78,6 +78,7 @@ export interface ISetupHttpServerControllerMethodOptions {
     shouldAllowEmptyTestSettings: boolean;
     shouldHaveTestsEverywhere: boolean;
     shouldUseTestModuleAsDefault: boolean;
+    testTimeout: number;
 }
 
 interface IUpdateMiddlewaresOptions {
@@ -630,6 +631,19 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
             shouldUseTestModuleAsDefault = !!options.requiresTestModuleAsDefault;  // custom
         }
 
+        let testTimeout: number;
+        if (isNil(options.testTimeout)) {
+            testTimeout = setupOptions.testTimeout;  // default
+        }
+        else {
+            // custom
+            if (typeof options.testTimeout !== "number") {
+                throw new TypeError("options.testTimeout must be of type number");
+            }
+
+            testTimeout = options.testTimeout;
+        }
+
         let swagger: Nilable<IControllersSwaggerOptions>;
         if (!isNil(options.swagger)) {
             if (options.swagger !== false) {
@@ -917,7 +931,8 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                         controller,
                         server,
                         "shouldAllowEmptySettings": !!options?.allowEmptyTestSettings,
-                        "shouldUseModuleAsDefault": shouldUseTestModuleAsDefault
+                        "shouldUseModuleAsDefault": shouldUseTestModuleAsDefault,
+                        "timeout": testTimeout
                     });
 
                     ++numberOfTests;

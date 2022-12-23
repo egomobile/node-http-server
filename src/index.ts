@@ -68,6 +68,12 @@ export interface ICreateServerOptions {
          * @default true
          */
         requiresTestsEverywhere?: Nilable<boolean>;
+        /**
+         * Custom value for a (default) timeout for tests, in ms.
+         *
+         * @default 5000
+         */
+        timeout?: Nilable<number>;
     }>;
 }
 
@@ -106,6 +112,11 @@ export const defaultHttpNotFoundHandler: HttpNotFoundHandler = async (request, r
     response.end();
 };
 
+/**
+ * Default timeout value for tests.
+ */
+export const defaultTestTimeout = 5000;
+
 const supportedHttpMethods = ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE"];
 
 /**
@@ -142,6 +153,15 @@ export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHt
     }
     if (!isNil(serverOptions?.tests?.beforeEach) && typeof serverOptions?.tests?.beforeEach !== "function") {
         throw new TypeError("serverOptions.tests.beforeEach must be of type function");
+    }
+
+    let testTimeout = defaultTestTimeout;
+    if (!isNil(serverOptions?.tests?.timeout)) {
+        if (typeof serverOptions?.tests?.timeout !== "number") {
+            throw new TypeError("serverOptions.tests.timeout must be of type number");
+        }
+
+        testTimeout = serverOptions.tests.timeout;
     }
 
     const shouldUseTestModuleAsDefault = isNil(serverOptions?.tests?.requiresModuleAsDefault) ?
@@ -470,7 +490,8 @@ export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHt
         server,
         shouldAllowEmptyTestSettings,
         shouldHaveTestsEverywhere,
-        shouldUseTestModuleAsDefault
+        shouldUseTestModuleAsDefault,
+        testTimeout
     });
     setupEventMethods(server);
     setupHttpServerTestMethod({

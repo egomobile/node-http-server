@@ -101,6 +101,7 @@ export interface IInitControllerMethodTestActionContext {
     server: IHttpServer;
     shouldAllowEmptySettings: boolean;
     shouldUseModuleAsDefault: boolean;
+    timeout: number;
 }
 
 export interface IInitControllerValidationErrorHandlerActionContext {
@@ -171,6 +172,7 @@ export interface ITestOptions {
     getExpectedStatus: (context: ITestSettingValueGetterContext) => Promise<number>;
     getHeaders: (context: ITestSettingValueGetterContext) => Promise<Record<string, any>>;
     getParameters: (context: ITestSettingValueGetterContext) => Promise<Record<string, string>>;
+    getTimeout: (context: ITestSettingValueGetterContext) => Promise<number>;
     method: Function;
     methodName: string | symbol;
     name: string;

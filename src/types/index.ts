@@ -108,6 +108,11 @@ export type BeforeAllTestsFunc = (context: IBeforeAllTestsContext) => any;
 export type BeforeEachTestFunc = (context: IBeforeEachTestContext) => any;
 
 /**
+ * Possible and known values for a cancellation.
+ */
+export type CancellationReason = "timeout";
+
+/**
  * A function, that is invoked after a controller has been
  * created, initialized and added to the context.
  *
@@ -652,6 +657,12 @@ export interface IControllersOptions {
      * Options to setup Swagger UI.
      */
     swagger?: Nilable<ControllersSwaggerOptionsValue>;
+    /**
+     * Custom value for a (default) timeout for tests, in ms.
+     *
+     * @default 5000
+     */
+    testTimeout?: Nilable<number>;
     /**
      * Default, which indicates, to validate request data with schema in `documentation` prop
      * of a request decorator like `@GET()` or `@POST()` or not.
@@ -1519,9 +1530,27 @@ export interface ISwaggerInitializedEventArguments {
 }
 
 /**
+ * Context for a `TestEventCancellationEventHandler` function.
+ */
+export interface ITestEventCancellationEventHandlerContext {
+    /**
+     * The reason.
+     */
+    reason: CancellationReason;
+}
+
+/**
  * A context for a `TestEventHandler`.
  */
 export interface ITestEventHandlerContext {
+    /**
+     * A reason for cancellation.
+     */
+    readonly cancellationReason: Optional<"timeout">;
+    /**
+     * Gets if cancellation has been requested or not.
+     */
+    readonly cancellationRequested: boolean;
     /**
      * The context, where the test is running in.
      */
@@ -1563,6 +1592,10 @@ export interface ITestEventHandlerContext {
      */
     methodName: string | symbol;
     /**
+     * Gets or sets a function, which listens for a cancellation event.
+     */
+    onCancellationRequested: Nilable<TestEventCancellationEventHandler>;
+    /**
      * The path of the route with possible parameters.
      */
     route: string;
@@ -1588,6 +1621,10 @@ export interface ITestEventHandlerContext {
  * Expectations for a test response.
  */
 export interface ITestEventHandlerContextExpectations {
+    /**
+     * The body.
+     */
+    body: any;
     /**
      * Headers.
      */
@@ -1634,6 +1671,10 @@ export interface ITestSettings {
      * URL parameters.
      */
     parameters?: Nilable<TestSettingValueOrGetter<Record<string, string>>>;
+    /**
+     * Custom timeout value in ms.
+     */
+    timeout?: Nilable<TestSettingValueOrGetter<number>>;
     /**
      * A custom validator function.
      */
@@ -1777,6 +1818,13 @@ export type SetupAuthorizeMiddlewareHandler = (context: ISetupAuthorizeMiddlewar
  * @param {ISwaggerInitializedEventArguments} args The arguments.
  */
 export type SwaggerInitializedEventHandler = (args: ISwaggerInitializedEventArguments) => any;
+
+/**
+ * A listener / handler, which is invoked, when a cancellation is required.
+ *
+ * @param {ITestEventCancellationEventHandlerContext} context The context.
+ */
+export type TestEventCancellationEventHandler = (context: ITestEventCancellationEventHandlerContext) => any;
 
 /**
  * An event handler, running a test.

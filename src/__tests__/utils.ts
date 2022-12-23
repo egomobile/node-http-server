@@ -14,9 +14,9 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import path from "path";
-import { Response } from "supertest";
+import type { Response } from "supertest";
 import createHttpServer, { ICreateServerOptions, IHttpServer } from "..";
-import { Nilable } from "../types/internal";
+import type { Nilable } from "../types/internal";
 
 export function binaryParser(response: Response, done: (ex: any, data?: Buffer) => any) {
     response.setEncoding("binary");

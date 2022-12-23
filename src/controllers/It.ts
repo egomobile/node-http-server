@@ -36,8 +36,16 @@ interface IToTestOptionsOptions {
     name: string;
     settings: Nilable<ITestSettings>;
     shouldUseModuleAsDefault: boolean;
+    timeout: number;
 }
 
+/**
+ * Possible value for second value of `@It()` decorator.
+ *
+ * - `object` => use as settings object
+ * - `function` => use custom validator
+ * - `string` => path to a module, relative paths will be mapped to the directory of the underlying controller (file)
+ */
 export type ItSettingsOrValidator =
     ITestSettings |
     TestResponseValidator |
@@ -138,7 +146,7 @@ export function It(name: string, settingsOrValidator?: Nilable<ItSettingsOrValid
         const method = getMethodOrThrow(descriptor);
 
         getListFromObject<InitControllerMethodTestAction>(method, ADD_CONTROLLER_METHOD_TEST_ACTION).push(
-            ({ controller, server, shouldAllowEmptySettings, shouldUseModuleAsDefault }) => {
+            ({ controller, server, shouldAllowEmptySettings, shouldUseModuleAsDefault, timeout }) => {
                 getListFromObject<TestOptionsGetter>(server, TEST_OPTIONS).push(
                     async () => {
                         return toTestOptions({
@@ -151,7 +159,8 @@ export function It(name: string, settingsOrValidator?: Nilable<ItSettingsOrValid
                                 methodName
                             }),
                             shouldAllowEmptySettings,
-                            shouldUseModuleAsDefault
+                            shouldUseModuleAsDefault,
+                            timeout
                         });
                     }
                 );
@@ -163,7 +172,7 @@ export function It(name: string, settingsOrValidator?: Nilable<ItSettingsOrValid
 function toSettings(val: unknown): Nilable<ITestSettings> {
     if (typeof val === "function") {
         return {
-            "validator": val as TestResponseValidator
+            "validator": asAsync<TestResponseValidator>(val)
         };
     }
 
@@ -175,7 +184,7 @@ function toSettings(val: unknown): Nilable<ITestSettings> {
 }
 
 async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptions> {
-    const { controller, method, methodName, name, shouldAllowEmptySettings, shouldUseModuleAsDefault } = options;
+    const { controller, method, methodName, name, shouldAllowEmptySettings, shouldUseModuleAsDefault, timeout } = options;
     let { settings } = options;
 
     if (isNil(settings)) {
@@ -299,6 +308,28 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         }
     }
 
+    let getTimeout: () => Promise<number>;
+    if (isNil(settings?.timeout)) {
+        getTimeout = async () => {
+            return timeout;
+        };
+    }
+    else {
+        if (typeof settings!.timeout === "number") {
+            const customTimeout = settings?.timeout as number;
+
+            getTimeout = async () => {
+                return customTimeout;
+            };
+        }
+        else if (typeof settings!.timeout === "function") {
+            getTimeout = asAsync(settings!.timeout);
+        }
+        else {
+            throw new TypeError("settings.timeout must be of type number or function");
+        }
+    }
+
     return {
         controller,
         getExpectedBody,
@@ -306,6 +337,7 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         getExpectedStatus,
         getHeaders,
         getParameters,
+        getTimeout,
         method,
         methodName,
         name,

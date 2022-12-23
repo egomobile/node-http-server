@@ -13,10 +13,10 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, ICreateServerOptions, IHttpServer, ITestEventHandlerContext, ITestSettingValueGetterContext, TestResponseValidator } from "..";
+import { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, CancellationError, CancellationReason, ICreateServerOptions, IHttpServer, ITestEventCancellationEventHandlerContext, ITestEventHandlerContext, ITestSettingValueGetterContext, TestEventCancellationEventHandler, TestResponseValidator, TimeoutError } from "..";
 import { ROUTER_PATHS, TEST_DESCRIPTION, TEST_OPTIONS } from "../constants";
-import type { IRouterPathItem, ITestDescription, ITestOptions, Nilable, TestOptionsGetter } from "../types/internal";
-import { asAsync } from "../utils";
+import type { IRouterPathItem, ITestDescription, ITestOptions, Nilable, Optional, TestOptionsGetter } from "../types/internal";
+import { asAsync, isNil } from "../utils";
 import { getListFromObject } from "./utils";
 
 export interface ISetupHttpServerTestMethodOptions {
@@ -61,7 +61,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
         // count and provide possibility to implement progress
         for (const getOptions of allTestOptionGetters) {
             ((options: ITestOptions) => {
-                const { controller, getExpectedHeaders, getExpectedStatus, getHeaders, getParameters, method, methodName } = options;
+                const { controller, getExpectedBody, getExpectedHeaders, getExpectedStatus, getHeaders, getParameters, getTimeout, method, methodName } = options;
                 const validator = typeof options.settings.validator === "function" ?
                     asAsync<TestResponseValidator>(options.settings.validator) :
                     undefined;
@@ -78,47 +78,158 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
 
                 allRouterPaths.forEach(({ httpMethod, "routerPath": route }) => {
                     allRunners.push({
-                        "action": async (runnerContext) => {
-                            const valueGetterContext: ITestSettingValueGetterContext = {
-                            };
+                        "action": (runnerContext) => {
+                            return new Promise<void>(async (resolve, reject) => {
+                                const valueGetterContext: ITestSettingValueGetterContext = {
+                                };
 
-                            // create object with headers with lowercase keys
-                            const headers: Record<string, string> = {};
-                            for (const [key, value] of Object.entries(await getHeaders(valueGetterContext))) {
-                                headers[key.toLowerCase().trim()] = String(value ?? "");
-                            }
+                                let cancellationReason: Optional<CancellationReason>;
+                                let isFinished = true;
+                                let isTimedOut = false;
+                                let onCancellationRequested: Nilable<TestEventCancellationEventHandler>;
+                                const timeout = await getTimeout(valueGetterContext);
+                                let to: NodeJS.Timeout | false = false;
 
-                            const parameters = await getParameters(valueGetterContext);
+                                const done = (failReason?: any) => {
+                                    if (isFinished) {
+                                        return;
+                                    }
+                                    isFinished = true;
 
-                            let escapedRoute = route;
-                            for (const [paramName, paramValue] of Object.entries(parameters)) {
-                                escapedRoute = escapedRoute
-                                    .split(`:${paramName}`)
-                                    .join(encodeURIComponent(paramValue));
-                            }
+                                    if (!isTimedOut && to !== false) {
+                                        clearTimeout(to);
+                                    }
 
-                            const testContext: ITestEventHandlerContext = {
-                                "context": "controller",
-                                "describe": description.name,
-                                escapedRoute,
-                                "expectations": {
-                                    "headers": await getExpectedHeaders(valueGetterContext),
-                                    "status": await getExpectedStatus(valueGetterContext)
-                                },
-                                "file": controller.__file,
-                                headers,
-                                httpMethod,
-                                "index": runnerContext.index,
-                                "it": options.name,
-                                methodName,
-                                route,
-                                parameters,
-                                server,
-                                "totalCount": runnerContext.totalCount,
-                                "validate": validator
-                            };
+                                    if (failReason) {
+                                        reject(failReason);
+                                    }
+                                    else {
+                                        resolve();
+                                    }
+                                };
+                                const cancel = async (reason: CancellationReason) => {
+                                    cancellationReason = reason;
 
-                            await server.emit("test", testContext);
+                                    const cancellationEventContext: ITestEventCancellationEventHandlerContext = {
+                                        reason
+                                    };
+
+                                    let failReason: any;
+                                    if (reason === "timeout") {
+                                        // setup with default
+
+                                        failReason = new TimeoutError(
+                                            timeout,
+                                            `Test ${options.name} (${description.name}) had to be cancelled after ${timeout} ms`
+                                        );
+                                    }
+
+                                    try {
+                                        await onCancellationRequested?.(cancellationEventContext);
+                                    }
+                                    catch (error) {
+                                        failReason = error;
+                                    }
+
+                                    done(new CancellationError(
+                                        reason,
+                                        String(
+                                            failReason?.message || `Test ${options.name} (${description.name}) has been cancelled`
+                                        ),
+                                        failReason
+                                    ));
+                                };
+
+                                try {
+                                    // create object with headers with lowercase keys
+                                    const headers: Record<string, string> = {};
+                                    for (const [key, value] of Object.entries(await getHeaders(valueGetterContext))) {
+                                        headers[key.toLowerCase().trim()] = String(value ?? "");
+                                    }
+
+                                    const body = await getExpectedBody(valueGetterContext);
+
+                                    const parameters = await getParameters(valueGetterContext);
+
+                                    let escapedRoute = route;
+                                    for (const [paramName, paramValue] of Object.entries(parameters)) {
+                                        escapedRoute = escapedRoute
+                                            .split(`:${paramName}`)
+                                            .join(encodeURIComponent(paramValue));
+                                    }
+
+                                    const testContext: ITestEventHandlerContext = {
+                                        "cancellationReason": undefined!,
+                                        "cancellationRequested": undefined!,
+                                        "context": "controller",
+                                        "describe": description.name,
+                                        escapedRoute,
+                                        "expectations": {
+                                            body,
+                                            "headers": await getExpectedHeaders(valueGetterContext),
+                                            "status": await getExpectedStatus(valueGetterContext)
+                                        },
+                                        "file": controller.__file,
+                                        headers,
+                                        httpMethod,
+                                        "index": runnerContext.index,
+                                        "it": options.name,
+                                        methodName,
+                                        "onCancellationRequested": undefined,
+                                        parameters,
+                                        route,
+                                        server,
+                                        "totalCount": runnerContext.totalCount,
+                                        "validate": validator
+                                    };
+
+                                    // testContext.cancellationReason
+                                    Object.defineProperty(testContext, "cancellationReason", {
+                                        "enumerable": true,
+                                        "get": () => {
+                                            return cancellationReason;
+                                        }
+                                    });
+                                    // testContext.cancellationRequested
+                                    Object.defineProperty(testContext, "cancellationRequested", {
+                                        "enumerable": true,
+                                        "get": () => {
+                                            return isTimedOut;
+                                        }
+                                    });
+                                    // testContext.onCancellationRequested
+                                    Object.defineProperty(testContext, "onCancellationRequested", {
+                                        "enumerable": true,
+                                        "get": () => {
+                                            return onCancellationRequested;
+                                        },
+                                        "set": (newValue) => {
+                                            if (!isNil(newValue) && typeof newValue !== "function") {
+                                                throw new TypeError("newValue must be of type function");
+                                            }
+
+                                            return onCancellationRequested = asAsync<TestEventCancellationEventHandler>(newValue);
+                                        }
+                                    });
+
+                                    // setup timeout ...
+                                    to = setTimeout(() => {
+                                        isTimedOut = true;
+
+                                        cancel("timeout")
+                                            .catch(done);
+                                    }, timeout);
+                                    // ... before start
+                                    server.emit("test", testContext)
+                                        .then(() => {
+                                            done();
+                                        })
+                                        .catch(done);
+                                }
+                                catch (error) {
+                                    done(error);
+                                }
+                            });
                         }
                     });
                 });
