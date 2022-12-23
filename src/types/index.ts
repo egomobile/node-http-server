@@ -13,10 +13,10 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import type { ErrorObject as AjvError } from "ajv";
 import type { IncomingMessage, ServerResponse } from "http";
 import type { AnySchema, ValidationError as JoiValidationError } from "joi";
-import type { JSONSchema7 } from "json-schema";
-
+import type { JSONSchema4, JSONSchema6, JSONSchema7 } from "json-schema";
 import type { OpenAPIV3 } from "openapi-types";
 import type { URLSearchParams } from "url";
 import type { middleware } from "..";
@@ -1716,6 +1716,11 @@ export interface ITestResponseValidatorContext {
 }
 
 /**
+ * A possible value for a JSONSchema*
+ */
+export type JsonSchema = JSONSchema4 | JSONSchema6 | JSONSchema7;
+
+/**
  * A handler, which is invoked, when a JSON schema validation fails.
  *
  * @param {IJsonSchemaError[]} errors The list of errors.
@@ -1825,7 +1830,16 @@ export type SetupAuthorizeMiddlewareHandler = (context: ISetupAuthorizeMiddlewar
 /**
  * A possible value for a schema.
  */
-export type Schema = AnySchema | JSONSchema7;
+export type Schema = AnySchema | JsonSchema;
+
+/**
+ * A handler for fast and generic JSON schema validations.
+ *
+ * @param {AjvError[]} errors The occurred errors.
+ * @param {IHttpRequest} request The request context.
+ * @param {IHttpResponse} response The response context.
+ */
+export type SchemaValidationFailedHandler = (errors: AjvError[], request: IHttpRequest, response: IHttpResponse) => any;
 
 /**
  * Is invoked after a Swagger documentation has been loaded, initialized and added to the context.

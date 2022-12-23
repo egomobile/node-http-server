@@ -17,6 +17,7 @@
 
 /// <reference path="../index.d.ts" />
 
+import ajv from "ajv";
 import { createServer as createHttpServer, IncomingMessage, Server, ServerResponse } from "http";
 import joi from "joi";
 import { setupHttpServerControllerMethod } from "./controllers/factories";
@@ -682,7 +683,13 @@ export * from "./middlewares";
 export * from "./types";
 export * from "./validators";
 
+/**
+ * Alias for `ajv` module.
+ */
+export const jsonSchema = ajv;
+/**
+ * Alias for `joi` module.
+ */
 export const schema = joi;
-
 
 // </EXPORTS>

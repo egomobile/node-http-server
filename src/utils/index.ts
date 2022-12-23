@@ -44,6 +44,16 @@ export function canHttpMethodHandleBodies(method: Nilable<string>): boolean {
     return httpMethodsWithBodies.includes(method as any);
 }
 
+export function clone<T extends any = any>(input: T): T {
+    if (!input) {
+        return input;
+    }
+
+    return JSON.parse(
+        JSON.stringify(input)
+    );
+}
+
 export function compareValues<T>(x: T, y: T): number {
     return compareValuesBy(x, y, item => {
         return item;
