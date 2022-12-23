@@ -639,6 +639,10 @@ function mergeHandler(
 
 // <EXPORTS>
 export {
+    default as Ajv,
+    ErrorObject as AjvError
+} from "ajv";
+export {
     AlternativesSchema,
     AnySchema,
     ArraySchema,

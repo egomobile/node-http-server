@@ -23,7 +23,7 @@ import { ADD_CONTROLLER_METHOD_TEST_ACTION, CONTROLLERS_CONTEXES, CONTROLLER_MET
 import { SwaggerValidationError } from "../errors";
 import { buffer, query } from "../middlewares";
 import { setupSwaggerUIForServerControllers } from "../swagger";
-import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllerRouteWithBodyOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ParameterOptions, ResponseSerializer } from "../types";
+import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRouteWithBodyOptions, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ParameterOptions, ResponseSerializer } from "../types";
 import type { Func, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerMethodTestAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, IRouterPathItem, Nilable, PrepareControllerMethodAction } from "../types/internal";
 import { asAsync, canHttpMethodHandleBodies, getAllClassProps, getFunctionParamNames, isClass, isNil, limitToBytes, walkDirSync } from "../utils";
 import { params } from "../validators/params";
@@ -48,7 +48,7 @@ interface ICreateControllerMethodRequestHandlerOptions {
 
 export interface ICreateHttpMethodDecoratorOptions {
     decoratorOptions: {
-        arg1: Nilable<ControllerRouteArgument1<IControllerRouteWithBodyOptions>>;
+        arg1: Nilable<ControllerRouteArgument1<ControllerRouteWithBodyOptions>>;
         arg2: Nilable<ControllerRouteArgument2>;
         arg3: Nilable<ControllerRouteArgument3>;
     };
@@ -57,7 +57,7 @@ export interface ICreateHttpMethodDecoratorOptions {
 
 interface ICreateInitControllerMethodActionOptions {
     controllerMethodName: string;
-    decoratorOptions: Nilable<IControllerRouteWithBodyOptions>;
+    decoratorOptions: Nilable<ControllerRouteWithBodyOptions>;
     getErrorHandler: GetContollerValue<HttpErrorHandler>;
     httpMethod: HttpMethod;
     middlewares: HttpMiddleware[];
@@ -171,7 +171,7 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
 
     const { arg1, arg2, arg3 } = options.decoratorOptions;
 
-    let decoratorOptions: Nilable<IControllerRouteWithBodyOptions>;
+    let decoratorOptions: Nilable<ControllerRouteWithBodyOptions>;
 
     if (!isNil(arg1)) {
         if (isSchema(arg1)) {
@@ -237,7 +237,7 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
             }
         }
         else if (typeof arg1 === "object") {
-            // [arg1] IControllerRouteOptions | IControllerRouteWithBodyOptions
+            // [arg1] IControllerRouteOptions | ControllerRouteWithBodyOptions
             decoratorOptions = arg1;
         }
         else {
@@ -282,8 +282,8 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
     }
 
     if (!isNil(decoratorOptions?.schema)) {
-        if (!isSchema(decoratorOptions?.schema)) {
-            throw new TypeError("decoratorOptions.schema must be a Joi object");
+        if (!isSchema(decoratorOptions?.schema) && typeof decoratorOptions?.schema !== "object") {
+            throw new TypeError("decoratorOptions.schema must be a schema object");
         }
     }
 

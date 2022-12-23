@@ -115,8 +115,8 @@ describe("validate() middleware", () => {
             });
 
             const response = await (request(server) as any)[method]("/")
-                .send(JSON.stringify(ivd))
                 .parse(binaryParser)
+                .send(JSON.stringify(ivd))
                 .expect(403);
 
             const data = response.body;

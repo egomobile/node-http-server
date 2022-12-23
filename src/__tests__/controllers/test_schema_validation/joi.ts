@@ -1,3 +1,4 @@
+import assert from "assert";
 import { Controller, IHttpRequest, IHttpResponse, JoiValidationError, schema } from "../../..";
 import { ControllerBase, POST } from "../../../controllers";
 import { ValidationErrorHandler } from "../../../controllers/ValidationErrorHandler";
@@ -34,6 +35,11 @@ export default class TestSchemaValidationController extends ControllerBase {
 
     @ValidationErrorHandler()
     async validationFailed(error: JoiValidationError, request: IHttpRequest, response: IHttpResponse) {
+        assert.strictEqual(
+            typeof error === "object" && !Array.isArray(error),
+            true
+        );
+
         const errorMessage = Buffer.from("VALIDATION ERROR: " + error.message, "utf8");
 
         response.writeHead(400, {

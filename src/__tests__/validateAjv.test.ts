@@ -13,8 +13,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import type { JSONSchema7 } from "json-schema";
 import request from "supertest";
-import type { JSONSchema7, SchemaValidationFailedHandler } from "..";
+import type { SchemaValidationFailedHandler } from "..";
 import { json, validateAjv } from "../middlewares";
 import type { IHttpRequest, IHttpResponse } from "../types";
 import { binaryParser, createServer } from "./utils";

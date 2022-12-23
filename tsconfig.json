@@ -4,13 +4,18 @@
     "outDir": "lib",
     "rootDir": "src",
     "target": "es2019",
-    "lib": ["es2019"],
+    "lib": [
+      "es2019"
+    ],
     "moduleResolution": "node",
     "declaration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "esModuleInterop": true,
-    "sourceMap": false
+    "sourceMap": true
   },
-  "exclude": ["node_modules", "sandbox"]
+  "exclude": [
+    "node_modules",
+    "sandbox"
+  ]
 }

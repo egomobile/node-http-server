@@ -1,14 +1,14 @@
 import { isSchema } from "joi";
 import { createBodyParserMiddlewareByFormat } from ".";
 import { PARSE_ERROR_HANDLER, VALIDATION_ERROR_HANDLER } from "../../constants";
-import { defaultParseErrorHandler, defaultValidationFailedHandler, json, validate, validateAjv } from "../../middlewares";
-import { HttpInputDataFormat, HttpMiddleware, IControllerRouteWithBodyOptions, IControllersOptions, IHttpController, IHttpServer, SchemaValidationFailedHandler, ValidationFailedHandler } from "../../types";
+import { defaultParseErrorHandler, defaultSchemaValidationFailedHandler, defaultValidationFailedHandler, json, validate, validateAjv } from "../../middlewares";
+import { ControllerRouteWithBodyOptions, HttpInputDataFormat, HttpMiddleware, IControllerRouteWithBodyAndJoiSchemaOptions, IControllerRouteWithBodyAndJsonSchemaOptions, IControllersOptions, IHttpController, IHttpServer, SchemaValidationFailedHandler, ValidationFailedHandler } from "../../types";
 import type { Nilable } from "../../types/internal";
 import { asAsync, isNil } from "../../utils";
 
 export interface ISetupMiddlewaresByJoiSchemaOptions {
     controller: IHttpController<IHttpServer>;
-    decoratorOptions: Nilable<IControllerRouteWithBodyOptions>;
+    decoratorOptions: Nilable<ControllerRouteWithBodyOptions>;
     globalOptions: Nilable<IControllersOptions>;
     middlewares: HttpMiddleware[];
     throwIfOptionsIncompatibleWithHTTPMethod: () => any;
@@ -77,11 +77,11 @@ export function setupMiddlewaresBySchema({
         };
 
     if (isSchema(schema)) {
-        // Joi schema
+        const optionsForJoiSchema = decoratorOptions as IControllerRouteWithBodyAndJoiSchemaOptions;
 
         const validationErrorHandler =
             createWrappedValidationErrorHandler(
-                decoratorOptions.onValidationFailed ||
+                optionsForJoiSchema.onValidationFailed ||
                 (controller as any)[VALIDATION_ERROR_HANDLER] ||
                 globalOptions?.onSchemaValidationFailed
             ) || defaultValidationFailedHandler;
@@ -94,19 +94,19 @@ export function setupMiddlewaresBySchema({
         );
     }
     else {
-        // JSON / Ajv schema
+        const optionsForJsonSchema = decoratorOptions as IControllerRouteWithBodyAndJsonSchemaOptions;
 
         const validationErrorHandler =
             createWrappedSchemaValidationErrorHandler(
-                decoratorOptions.onValidationFailed ||
+                optionsForJsonSchema.onValidationFailed ||
                 (controller as any)[VALIDATION_ERROR_HANDLER] ||
                 globalOptions?.onSchemaValidationFailed
-            ) || defaultValidationFailedHandler;
+            ) || defaultSchemaValidationFailedHandler;
 
         middlewares.push(
             createDataParser(),
             validateAjv(schema, {
-                "onValidationFailed": validationErrorHandler as any
+                "onValidationFailed": validationErrorHandler
             })
         );
     }

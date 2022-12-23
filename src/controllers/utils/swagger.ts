@@ -19,7 +19,7 @@ import { middleware } from "../..";
 import { DOCUMENTATION_UPDATER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, ROUTER_PATHS, SWAGGER_METHOD_INFO } from "../../constants";
 import { validateMiddleware, validateQueryMiddleware, validateWithSwagger } from "../../middlewares";
 import { toSwaggerPath } from "../../swagger/utils";
-import type { DocumentationUpdaterHandler, HttpMethod, HttpMiddleware, IControllerRouteWithBodyOptions, IControllersOptions } from "../../types";
+import type { ControllerRouteWithBodyOptions, DocumentationUpdaterHandler, HttpMethod, HttpMiddleware, IControllersOptions } from "../../types";
 import type { InitControllerMethodSwaggerAction, IRouterPathItem, ISwaggerMethodInfo, Nilable } from "../../types/internal";
 import { isNil, sortObjectByKeys } from "../../utils";
 
@@ -31,14 +31,14 @@ interface ICreateInitControllerMethodSwaggerActionOptions {
 };
 
 export interface ISetupMiddlewaresBySwaggerDocumentationOptions {
-    decoratorOptions: Nilable<IControllerRouteWithBodyOptions>;
+    decoratorOptions: Nilable<ControllerRouteWithBodyOptions>;
     globalOptions: Nilable<IControllersOptions>;
     middlewares: HttpMiddleware[];
     throwIfOptionsIncompatibleWithHTTPMethod: () => any;
 }
 
 export interface ISetupSwaggerDocumentationOptions {
-    decoratorOptions: Nilable<IControllerRouteWithBodyOptions>;
+    decoratorOptions: Nilable<ControllerRouteWithBodyOptions>;
     method: Function;
     methodName: string | symbol;
     middlewares: HttpMiddleware[];

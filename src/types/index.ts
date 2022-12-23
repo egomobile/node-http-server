@@ -156,6 +156,14 @@ export type ControllerRouteArgument3 = number;
 export type ControllerRoutePath = string;
 
 /**
+ * Possible values for controller router decorators with bodies.
+ */
+export type ControllerRouteWithBodyOptions =
+    IControllerRouteWithBodyAndJoiSchemaOptions |
+    IControllerRouteWithBodyAndJsonSchemaOptions |
+    IControllerRouteWithBodyAndNoSchemaOptions;
+
+/**
  * Base document of an 'IControllersSwaggerOptions' object.
  */
 export type ControllersSwaggerBaseDocument = Pick<Pick<OpenAPIV3.Document, Exclude<keyof OpenAPIV3.Document, "paths">>, Exclude<keyof Pick<OpenAPIV3.Document, Exclude<keyof OpenAPIV3.Document, "paths">>, "openapi">>;
@@ -428,7 +436,7 @@ export interface IControllerMethodInfo {
     /**
      * The underlying options.
      */
-    options: Optional<IControllerRouteOptions | IControllerRouteWithBodyOptions>;
+    options: Optional<IControllerRouteOptions | ControllerRouteWithBodyOptions>;
     /**
      * The route path.
      */
@@ -524,7 +532,7 @@ export interface IControllerRouteOptions {
 /**
  * Options for a controller route with a body.
  */
-export interface IControllerRouteWithBodyOptions extends IControllerRouteOptions {
+export interface IControllerRouteWithBodyAndNoSchemaOptions extends IControllerRouteOptions {
     /**
      * The expected data of the input format.
      */
@@ -537,19 +545,45 @@ export interface IControllerRouteWithBodyOptions extends IControllerRouteOptions
      */
     limit?: Nilable<number>;
     /**
-     * The object schema to validate.
-     *
-     * 'json()' is used to parse the input.
-     */
-    schema?: Nilable<Schema>;
-    /**
      * Custom parse error handler.
      */
     onParsingFailed?: Nilable<ParseErrorHandler>;
     /**
      * Custom schema validation error handler.
      */
+    onValidationFailed?: Nilable<SchemaValidationFailedHandler | ValidationFailedHandler>;
+    /**
+     * An optional schema to use for the validation.
+     */
+    schema?: Nilable<Schema>;
+}
+
+/**
+ * Options for a controller route with a body, which validates with a Joi schema.
+ */
+export interface IControllerRouteWithBodyAndJoiSchemaOptions extends IControllerRouteWithBodyAndNoSchemaOptions {
+    /**
+     * @inheritdoc
+     */
     onValidationFailed?: Nilable<ValidationFailedHandler>;
+    /**
+     * @inheritdoc
+     */
+    schema: Nilable<AnySchema>;
+}
+
+/**
+ * Options for a controller route with a body, which validates with a JSON schema.
+ */
+export interface IControllerRouteWithBodyAndJsonSchemaOptions extends IControllerRouteWithBodyAndNoSchemaOptions {
+    /**
+     * @inheritdoc
+     */
+    onValidationFailed?: Nilable<SchemaValidationFailedHandler>;
+    /**
+     * @inheritdoc
+     */
+    schema: Nilable<JsonSchema>;
 }
 
 /**
