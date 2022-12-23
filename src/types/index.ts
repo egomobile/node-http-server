@@ -15,6 +15,8 @@
 
 import type { IncomingMessage, ServerResponse } from "http";
 import type { AnySchema, ValidationError as JoiValidationError } from "joi";
+import type { JSONSchema7 } from "json-schema";
+
 import type { OpenAPIV3 } from "openapi-types";
 import type { URLSearchParams } from "url";
 import type { middleware } from "..";
@@ -1819,6 +1821,11 @@ export type ResponseSerializer<TResult extends any = any> =
  * @param {ISetupAuthorizeMiddlewareHandlerContext} context The context.
  */
 export type SetupAuthorizeMiddlewareHandler = (context: ISetupAuthorizeMiddlewareHandlerContext) => any;
+
+/**
+ * A possible value for a schema.
+ */
+export type Schema = AnySchema | JSONSchema7;
 
 /**
  * Is invoked after a Swagger documentation has been loaded, initialized and added to the context.

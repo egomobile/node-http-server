@@ -652,6 +652,28 @@ export {
     SchemaMap, StrictSchemaMap, StringSchema, SymbolSchema, ValidationError as JoiValidationError
 } from "joi";
 export {
+    JSONSchema4,
+    JSONSchema4Array,
+    JSONSchema4Object,
+    JSONSchema4Type,
+    JSONSchema4TypeName,
+    JSONSchema4Version,
+    JSONSchema6,
+    JSONSchema6Array,
+    JSONSchema6Definition,
+    JSONSchema6Object,
+    JSONSchema6Type,
+    JSONSchema6TypeName,
+    JSONSchema6Version,
+    JSONSchema7,
+    JSONSchema7Array,
+    JSONSchema7Definition,
+    JSONSchema7Object,
+    JSONSchema7Type,
+    JSONSchema7TypeName,
+    JSONSchema7Version
+} from "json-schema";
+export {
     OpenAPIV3
 } from "openapi-types";
 export * from "./controllers";

@@ -4,7 +4,7 @@
     "description": "Very fast alternative HTTP server to Express, with simple routing and middleware support and which is compatible with Node.js 12 or later.",
     "main": "lib/index.js",
     "engines": {
-        "node": ">=14.0.0"
+        "node": ">=16.0.0"
     },
     "scripts": {
         "build": "del ./lib && tsc",
@@ -38,7 +38,24 @@
         "routing",
         "middleware",
         "server",
-        "path matching"
+        "path matching",
+        "controller",
+        "mvc",
+        "express",
+        "connect",
+        "testing",
+        "unit test",
+        "decorator",
+        "typescript",
+        "nodejs",
+        "microservice",
+        "ajv",
+        "joi",
+        "validation",
+        "json",
+        "yaml",
+        "schema",
+        "ego"
     ],
     "author": "Next.e.GO Mobile SE, Aachen, Germany",
     "license": "LGPL-3.0",
@@ -54,6 +71,7 @@
     ],
     "dependencies": {
         "@types/json-schema": "7.0.11",
+        "ajv": "8.11.2",
         "filtrex": "3.0.0",
         "joi": "17.7.0",
         "js-yaml": "4.1.0",
