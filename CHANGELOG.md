@@ -1,8 +1,14 @@
 # Change Log (@egomobile/http-server)
 
-## 0.44.0
+## 0.45.0
 
-- **BREAKING CHANGE**: [validateWithDocumentation property](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html#validateWithDocumentation) in [IControllersOptions interface](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html) is `true` by default nor
+- add `isUIEnabled` property to [ISwaggerInitializedEventArguments interface](https://egomobile.github.io/node-http-server/interfaces/ISwaggerInitializedEventArguments.html)
+- (bug-)fixes
+
+## 0.44.1
+
+- **BREAKING CHANGE**: [validateWithDocumentation property](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html#validateWithDocumentation) in [IControllersOptions interface](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html) is `true` by default
+- (bug-)fixes
 
 ## 0.43.4
 

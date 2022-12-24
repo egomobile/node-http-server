@@ -170,7 +170,7 @@ export function prepareSwaggerDocumentFromResources({
                 }
 
                 const componentName = path.basename(file, path.extname(file));
-                const component = loadModule(file);
+                const component = loadModule(file, true);
 
                 setupObjectProperty<any>(document.components![key], componentName, component);
             }, false);

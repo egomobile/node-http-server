@@ -1586,6 +1586,10 @@ export interface ISwaggerInitializedEventArguments {
      * The underlying documentation.
      */
     documentation: OpenAPIV3.Document;
+    /**
+     * Indicates, if UI is enabled or not.
+     */
+    isUIEnabled: boolean;
 }
 
 /**

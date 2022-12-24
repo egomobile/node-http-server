@@ -581,10 +581,17 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
     const { server } = setupOptions;
 
     server.controllers = (...args: any[]) => {
+        const minimatchOpts: minimatch.IOptions = {
+            "dot": false,
+            "matchBase": true
+        };
+
         const isTypeScript = __filename.endsWith(".ts");
 
         const newControllersContext: IControllerContext = {
-            "controllers": []
+            "controllers": [],
+            "isSwaggerUIEnabled": false,
+            "swagger": undefined!
         };
 
         let options: Nilable<IControllersOptions>;
@@ -667,6 +674,18 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                 }
             }
         }
+
+        const swaggerDoc: OpenAPIV3.Document = {
+            ...(swagger?.document ? swagger.document : {
+                "info": {
+                    "title": "OpenAPI documentation with @egomobile/http-server by e.GO Mobile",
+                    "version": "0.0.1"
+                }
+            }),
+
+            "openapi": "3.0.3",
+            "paths": {}
+        };
 
         const onControllerInitialized = options.onControllerInitialized;
         if (!isNil(onControllerInitialized)) {
@@ -757,23 +776,6 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                 shouldLoadOpenAPIFiles = !!swagger.loadOpenAPIFiles;
             }
         }
-
-        const swaggerDoc: OpenAPIV3.Document = {
-            ...(swagger?.document ? swagger.document : {
-                "info": {
-                    "title": "OpenAPI documentation with @egomobile/http-server by e.GO Mobile",
-                    "version": "0.0.1"
-                }
-            }),
-
-            "openapi": "3.0.3",
-            "paths": {}
-        };
-
-        const minimatchOpts: minimatch.IOptions = {
-            "dot": false,
-            "matchBase": true
-        };
 
         // collect matching files
         let controllerFiles: IControllerFile[] = [];
@@ -944,18 +946,59 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                 }, true);
 
                 // Swagger documentation
-                getListFromObject<InitControllerMethodSwaggerAction>(propValue, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS).forEach(action => {
-                    action({
-                        "apiDocument": swaggerDoc,
-                        controller,
-                        "controllerClass": cls["class"],
-                        "resolveOperation": (operation) => {
-                            if (!swaggerOperations.includes(operation)) {
-                                swaggerOperations.push(operation);
+                {
+                    if (shouldLoadOpenAPIFiles) {
+                        // try load data from `.openapi` files
+
+                        prepareSwaggerDocumentFromOpenAPIFiles({
+                            "controllersRootDir": rootDir,
+                            "document": swaggerDoc,
+                            "doesScriptFileMatch": (file) => {
+                                const relativeFilePath = normalizeRouterPath(
+                                    path.relative(rootDir, file)
+                                );
+
+                                return patterns.some(p => {
+                                    return minimatch(relativeFilePath, p, minimatchOpts);
+                                });
+                            },
+                            methods
+                        });
+                    }
+
+                    if (swaggerResourcePath) {
+                        // prepare `swaggerDoc` with resource modules
+                        // in `swaggerResourcePath`
+
+                        prepareSwaggerDocumentFromResources({
+                            "document": swaggerDoc,
+                            "doesScriptFileMatch": (file) => {
+                                const relativeFilePath = normalizeRouterPath(
+                                    path.relative(swaggerResourcePath!, file)
+                                );
+
+                                return patterns.some(p => {
+                                    return minimatch(relativeFilePath, p, minimatchOpts);
+                                });
+                            },
+                            methods,
+                            "resourcePath": swaggerResourcePath
+                        });
+                    }
+
+                    getListFromObject<InitControllerMethodSwaggerAction>(propValue, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS).forEach(action => {
+                        action({
+                            "apiDocument": swaggerDoc,
+                            controller,
+                            "controllerClass": cls["class"],
+                            "resolveOperation": (operation) => {
+                                if (!swaggerOperations.includes(operation)) {
+                                    swaggerOperations.push(operation);
+                                }
                             }
-                        }
-                    });
-                }, true);
+                        });
+                    }, true);
+                }
 
                 // (unit-)tests
                 getListFromObject<InitControllerMethodTestAction>(propValue, ADD_CONTROLLER_METHOD_TEST_ACTION).forEach((action) => {
@@ -1034,43 +1077,9 @@ ${missingTestsText}`
             }
         }
 
-        if (swagger) {
-            const doesScriptFileMatch = (file: string): boolean => {
-                const relativeFilePath = normalizeRouterPath(
-                    path.relative(swaggerResourcePath!, file)
-                );
-
-                return patterns.some(p => {
-                    return minimatch(relativeFilePath, p, minimatchOpts);
-                });
-            };
-
-            if (shouldLoadOpenAPIFiles) {
-                // try load data from `.openapi` files
-
-                prepareSwaggerDocumentFromOpenAPIFiles({
-                    "controllersRootDir": rootDir,
-                    "document": swaggerDoc,
-                    doesScriptFileMatch,
-                    "methods": allMethods
-                });
-            }
-
-            if (swaggerResourcePath) {
-                // prepare `swaggerDoc` with resource modules
-                // in `swaggerResourcePath`
-
-                prepareSwaggerDocumentFromResources({
-                    "document": swaggerDoc,
-                    doesScriptFileMatch,
-                    "methods": allMethods,
-                    "resourcePath": swaggerResourcePath
-                });
-            }
-
-            const shouldValidate = isNil(swagger.validate) ? true : !!swagger.validate;
-            const shouldHaveDocumentationEverywhere = isNil(swagger.requiresDocumentationEverywhere) ? true : !!swagger.requiresDocumentationEverywhere;
-
+        // swagger
+        {
+            const shouldHaveDocumentationEverywhere = isNil(swagger?.requiresDocumentationEverywhere) ? true : !!swagger?.requiresDocumentationEverywhere;
             if (shouldHaveDocumentationEverywhere) {
                 // check if at least one method have no documentation
 
@@ -1092,7 +1101,8 @@ ${missingDocsText}`
                 }
             }
 
-            if (shouldValidate) {
+            const shouldValidateDocumentation = isNil(swagger?.validate) ? true : !!swagger?.validate;
+            if (shouldValidateDocumentation) {
                 const validationResult = new OpenAPISchemaValidator({
                     "version": 3
                 }).validate(swaggerDoc);
@@ -1108,21 +1118,26 @@ ${missingDocsText}`
                     );
                 }
             }
+        }
 
+        newControllersContext.swagger = swaggerDoc;
+
+        if (swagger) {
             setupSwaggerUIForServerControllers({
                 server,
                 "document": swaggerDoc,
                 "options": swagger
             });
 
-            newControllersContext.swagger = swaggerDoc;
-
-            // tell, that Swagger documentation has been initialized
-            onSwaggerInitialized?.({
-                "app": server,
-                "documentation": swaggerDoc
-            });
+            newControllersContext.isSwaggerUIEnabled = true;
         }
+
+        // tell, that Swagger documentation has been initialized
+        onSwaggerInitialized?.({
+            "app": server,
+            "documentation": swaggerDoc,
+            "isUIEnabled": newControllersContext.isSwaggerUIEnabled
+        });
 
         getListFromObject<IControllerContext>(server, CONTROLLERS_CONTEXES).push(
             newControllersContext

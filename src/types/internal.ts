@@ -34,7 +34,8 @@ export interface IControllerClass {
 
 export interface IControllerContext {
     controllers: IControllerInfo[];
-    swagger?: Optional<OpenAPIV3.Document>;
+    isSwaggerUIEnabled: boolean;
+    swagger: OpenAPIV3.Document;
 }
 
 export interface IControllerFile {
