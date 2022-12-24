@@ -90,6 +90,7 @@ export interface IInitControllerMethodSwaggerActionContext {
     apiDocument: OpenAPIV3.Document;
     controller: IHttpController<IHttpServer>;
     controllerClass: Constructor<IHttpController>;
+    resolveOperation: (operation: OpenAPIV3.OperationObject) => any;
 }
 
 export interface IInitControllerParseErrorHandlerActionContext {

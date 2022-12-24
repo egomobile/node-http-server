@@ -75,6 +75,24 @@ export function compareValuesBy<T1, T2>(x: T1, y: T1, selector: (item: T1) => T2
     return 0;
 }
 
+function createWithEntityTooLargeAction({ action, onLimitReached }: ICreateWithEntityTooLargeActionOptions) {
+    return async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
+        try {
+            await action(request, response, next);
+        }
+        catch (error) {
+            if (error instanceof EntityTooLargeError) {
+                await onLimitReached(request, response);
+
+                response.end();
+            }
+            else {
+                throw error;
+            }
+        }
+    };
+}
+
 export function createObjectNameListResolver(names: string[]): ObjectNameListResolver {
     if (names.some((n) => {
         return typeof n !== "string";
@@ -212,6 +230,26 @@ export function limitToBytes(limit?: Nilable<number>): Nilable<number> {
     return limit * 1048576;
 }
 
+export function loadModule<TModule extends any = any>(
+    modulePath: string,
+    allowCached = false
+): TModule {
+    const resolvedPath = require.resolve(modulePath);
+
+    if (!allowCached) {
+        delete require.cache[resolvedPath];
+    }
+
+    const mod = require(resolvedPath);
+
+    if (mod.default) {
+        return mod.default;  // default export
+    }
+    else {
+        return mod;  // module.exports
+    }
+}
+
 export function multiSort<T extends any = any>(
     arr: List<T>,
     ...selectors: ((item: T) => any)[]
@@ -306,6 +344,19 @@ export function readStreamWithLimit(
     });
 }
 
+export function setupObjectProperty<T extends any = any>(obj: T, prop: keyof T, value: any) {
+    if (typeof value === "function") {
+        Object.defineProperty(obj, prop, {
+            "enumerable": true,
+            "configurable": true,
+            "get": value
+        });
+    }
+    else {
+        obj[prop] = value;
+    }
+}
+
 export function sortObjectByKeys<T extends any = any>(obj: T): T {
     if (isNil(obj)) {
         return obj;
@@ -354,7 +405,11 @@ export function urlSearchParamsToObject(params: Nilable<URLSearchParams>): Nilab
     return obj;
 }
 
-export function walkDirSync(dir: string, action: (file: string, stats: fs.Stats) => void) {
+export function walkDirSync(
+    dir: string,
+    action: (file: string, stats: fs.Stats) => void,
+    recursive = true
+) {
     for (const item of fs.readdirSync(dir)) {
         if (item.trimStart().startsWith("_")) {
             continue;  // ignore items with beginning _
@@ -364,7 +419,9 @@ export function walkDirSync(dir: string, action: (file: string, stats: fs.Stats)
         const stats = fs.statSync(fullPath);
 
         if (stats.isDirectory()) {
-            walkDirSync(fullPath, action);
+            if (recursive) {
+                walkDirSync(fullPath, action);
+            }
         }
         else if (stats.isFile()) {
             action(fullPath, stats);
@@ -384,22 +441,4 @@ export function withEntityTooLarge(
         action,
         "onLimitReached": onLimitReached!
     });
-}
-
-function createWithEntityTooLargeAction({ action, onLimitReached }: ICreateWithEntityTooLargeActionOptions) {
-    return async (request: IHttpRequest, response: IHttpResponse, next: NextFunction) => {
-        try {
-            await action(request, response, next);
-        }
-        catch (error) {
-            if (error instanceof EntityTooLargeError) {
-                await onLimitReached(request, response);
-
-                response.end();
-            }
-            else {
-                throw error;
-            }
-        }
-    };
 }

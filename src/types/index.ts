@@ -414,6 +414,10 @@ export interface IControllerInitializedEventArguments {
  */
 export interface IControllerMethodInfo {
     /**
+     * The underlying controller.
+     */
+    controller: IHttpController;
+    /**
      * The underlying base function instance.
      */
     function: Func;
@@ -442,9 +446,17 @@ export interface IControllerMethodInfo {
      */
     path: HttpRequestPath;
     /**
+     * The raw request path as string.
+     */
+    rawPath: string;
+    /**
      * The serializer, if defined.
      */
     serializer: Optional<ResponseSerializer>;
+    /**
+     * Underlying swagger operations.
+     */
+    swaggerOperations: OpenAPIV3.OperationObject[];
 }
 
 /**
@@ -728,6 +740,11 @@ export interface IControllersSwaggerOptions {
      * @default true
      */
     requiresDocumentationEverywhere?: Nilable<boolean>;
+    /**
+     * The path to the resource files / modules.
+     * Relative paths will be mapped to the controller root directory.
+     */
+    resourcePath?: Nilable<string>;
     /**
      * One or more required middleware for the Swagger endpoint(s).
      */
