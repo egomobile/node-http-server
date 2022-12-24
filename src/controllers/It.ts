@@ -245,7 +245,7 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         return {};
     };
     if (!isNil(settings?.expectations?.headers)) {
-        if (typeof settings!.expectations!.status === "object") {
+        if (typeof settings!.expectations!.headers === "object") {
             getExpectedHeaders = async () => {
                 return settings!.expectations!.headers as Record<string, string | RegExp>;
             };
@@ -262,7 +262,7 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         return undefined;
     };
     if (!isNil(settings?.expectations?.body)) {
-        if (typeof settings!.expectations!.headers === "function") {
+        if (typeof settings!.expectations!.body === "function") {
             getExpectedBody = asAsync(settings!.expectations!.body);
         }
         else {
@@ -285,7 +285,7 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
             getParameters = asAsync(settings!.parameters!);
         }
         else {
-            throw new TypeError("settings.getParameters must be of type object or function");
+            throw new TypeError("settings.parameters must be of type object or function");
         }
     }
 
@@ -298,11 +298,11 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
                 return settings!.headers as Record<string, string>;
             };
         }
-        else if (typeof settings!.parameters === "function") {
-            getHeaders = asAsync(settings!.parameters!);
+        else if (typeof settings!.headers === "function") {
+            getHeaders = asAsync(settings!.headers!);
         }
         else {
-            throw new TypeError("settings.getHeaders must be of type object or function");
+            throw new TypeError("settings.headers must be of type object or function");
         }
     }
 
