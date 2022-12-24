@@ -974,11 +974,15 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                     "relativePath": cls.file.relativePath
                 });
 
-                if (!numberOfTests) {
-                    controllerMethodsWithoutTests.push({
-                        "cls": cls,
-                        methods
-                    });
+                if (methods.length) {
+                    // this is a controller method
+
+                    if (!numberOfTests) {
+                        controllerMethodsWithoutTests.push({
+                            "cls": cls,
+                            methods
+                        });
+                    }
                 }
 
                 for (const m of methods) {

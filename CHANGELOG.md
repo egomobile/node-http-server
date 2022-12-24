@@ -1,8 +1,9 @@
 # Change Log (@egomobile/http-server)
 
-## 0.42.0
+## 0.42.2
 
 - add `resourcePath` to [IControllerMethodInfo](https://egomobile.github.io/node-http-server/interfaces/IControllerMethodInfo.html), which can load resources for a Swagger document, organized in a strict structure
+- (bug-)fixes
 
 ## 0.41.0
 
