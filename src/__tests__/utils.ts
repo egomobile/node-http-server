@@ -16,6 +16,7 @@
 import path from "path";
 import type { Response } from "supertest";
 import createHttpServer, { ICreateServerOptions, IHttpServer } from "..";
+import packageJSON from "../../package.json";
 import type { Nilable } from "../types/internal";
 
 export function binaryParser(response: Response, done: (ex: any, data?: Buffer) => any) {
@@ -69,6 +70,15 @@ export function createServerAndInitControllers() {
                     };
                 }
             }
+        },
+        "swagger": {
+            "document": {
+                "info": {
+                    "title": packageJSON.name,
+                    "version": packageJSON.version
+                }
+            },
+            "requiresDocumentationEverywhere": false
         },
         "validateWithDocumentation": false
     });
