@@ -1,5 +1,4 @@
 [![npm](https://img.shields.io/npm/v/@egomobile/http-server.svg)](https://www.npmjs.com/package/@egomobile/http-server)
-[![last build](https://img.shields.io/github/workflow/status/egomobile/node-http-server/Publish)](https://github.com/egomobile/node-http-server/actions?query=workflow%3APublish)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/egomobile/node-http-server/pulls)
 
 # @egomobile/http-server
