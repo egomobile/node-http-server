@@ -735,7 +735,7 @@ export interface IControllersSwaggerOptions {
      */
     document: ControllersSwaggerBaseDocument;
     /**
-     * Tries to load endpoint documentation from `.openapi` files. 
+     * Tries to load endpoint documentation from `.openapi` files.
      *
      * @default true
      */
