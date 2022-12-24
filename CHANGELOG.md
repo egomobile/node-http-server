@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.43.0
+
+- add `loadOpenAPIFiles` to [IControllerMethodInfo](https://egomobile.github.io/node-http-server/interfaces/IControllerMethodInfo.html), which can load resources for a Swagger document, organized in `.openapi` files
+
 ## 0.42.2
 
 - add `resourcePath` to [IControllerMethodInfo](https://egomobile.github.io/node-http-server/interfaces/IControllerMethodInfo.html), which can load resources for a Swagger document, organized in a strict structure

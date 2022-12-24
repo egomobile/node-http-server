@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import type { OpenAPIV3 } from "openapi-types";
 import { normalizeRouterPath } from "../controllers/utils";
 import type { HttpPathValidator } from "../types";
 import type { Nilable } from "../types/internal";
@@ -24,7 +25,7 @@ export function createSwaggerPathValidator(basePath: Nilable<string>): HttpPathV
 
     return (request) => {
         return request.url === basePath ||
-        !!request.url?.startsWith(basePathWithSuffix);
+            !!request.url?.startsWith(basePathWithSuffix);
     };
 }
 
@@ -51,4 +52,16 @@ export function toSwaggerPath(routePath: string): string {
             })
             .join("/")
     );
+}
+
+export function toOperationObject(val: unknown): Nilable<OpenAPIV3.OperationObject> {
+    if (typeof val === "function") {
+        return val();
+    }
+
+    if (typeof val === "object" || isNil(val)) {
+        return val as Nilable<OpenAPIV3.OperationObject>;
+    }
+
+    throw new TypeError("val must be of type function or object");
 }

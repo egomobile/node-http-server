@@ -19,11 +19,18 @@ import type { OpenAPIV3 } from "openapi-types";
 import path from "path";
 import { knownFileMimes } from "../constants";
 import { normalizeRouterPath } from "../controllers/utils";
-import type { IControllerMethodInfo, IControllersSwaggerOptions, IHttpServer } from "../types";
+import type { HttpMethod, IControllerMethodInfo, IControllersSwaggerOptions, IHttpServer } from "../types";
 import type { Nilable } from "../types/internal";
 import { isNil, loadModule, setupObjectProperty, walkDirSync } from "../utils";
 import swaggerInitializerJs from "./resources/swagger-initializer_js";
-import { createSwaggerPathValidator, getSwaggerDocsBasePath, toSwaggerPath } from "./utils";
+import { createSwaggerPathValidator, getSwaggerDocsBasePath, toOperationObject, toSwaggerPath } from "./utils";
+
+export interface IPrepareSwaggerDocumentFromOpenAPIFilesOptions {
+    controllersRootDir: string;
+    document: OpenAPIV3.Document;
+    doesScriptFileMatch: (file: string) => boolean;
+    methods: IControllerMethodInfo[];
+}
 
 export interface IPrepareSwaggerDocumentFromResourcesOptions {
     document: OpenAPIV3.Document;
@@ -36,6 +43,14 @@ export interface ISetupSwaggerUIForServerControllersOptions {
     document: OpenAPIV3.Document;
     options: IControllersSwaggerOptions;
     server: IHttpServer;
+}
+
+interface IUpdateOperationObject {
+    document: OpenAPIV3.Document;
+    httpMethod: HttpMethod;
+    operation: Nilable<OpenAPIV3.OperationObject>;
+    swaggerOperations: OpenAPIV3.OperationObject[];
+    swaggerPath: string;
 }
 
 const componentKeys: (keyof OpenAPIV3.ComponentsObject)[] = [
@@ -56,6 +71,62 @@ const indexHtmlFilePath = path.join(pathToSwaggerUi, "index.html");
 const swaggerInitializerJSFilePath = path.join(pathToSwaggerUi, "swagger-initializer.js");
 
 const { readFile, stat } = fs.promises;
+
+export function prepareSwaggerDocumentFromOpenAPIFiles({
+    controllersRootDir,
+    document,
+    doesScriptFileMatch,
+    methods
+}: IPrepareSwaggerDocumentFromOpenAPIFilesOptions) {
+    walkDirSync(controllersRootDir, (file) => {
+        if (!doesScriptFileMatch(file)) {
+            return;  // this is no file, we can use as script
+        }
+
+        const relativeResourcePath = normalizeRouterPath(
+            path.relative(controllersRootDir, file)
+        );
+
+        const allMatchingMethods = methods.filter(({ controller }) => {
+            return relativeResourcePath === controller.__path;
+        });
+
+        for (const matchingMethod of allMatchingMethods) {
+            const { controller, "method": httpMethod, "name": methodName, rawPath, swaggerOperations } = matchingMethod;
+
+            const controllerDir = path.dirname(controller.__file);
+            const controllerFileExt = path.extname(controller.__file);
+            const controllerBasename = path.basename(controller.__file, controllerFileExt);
+            const controllerOpenAPIFile = path.join(controllerDir, controllerBasename + ".openapi" + controllerFileExt);
+
+            if (!fs.existsSync(controllerOpenAPIFile)) {
+                continue;
+            }
+
+            const stat = fs.statSync(controllerOpenAPIFile);
+            if (!stat.isFile()) {
+                throw new Error(`${controllerOpenAPIFile} is no file`);
+            }
+
+            const controllerOpenApiModule = require(controllerOpenAPIFile);
+
+            // try to find an export, with the exact the same name / key
+            // as the underlying controller method
+            const operationOrGetter = controllerOpenApiModule?.[methodName];
+            const operation = toOperationObject(operationOrGetter);
+
+            const swaggerPath = toSwaggerPath(rawPath);
+
+            updateOperationObject({
+                document,
+                httpMethod,
+                operation,
+                swaggerOperations,
+                swaggerPath
+            });
+        }
+    });
+}
 
 export function prepareSwaggerDocumentFromResources({
     document,
@@ -127,45 +198,20 @@ export function prepareSwaggerDocumentFromResources({
             const { "method": httpMethod, "name": methodName, rawPath, swaggerOperations } = matchingMethod;
             const pathModule = loadModule(file, true);
 
-            const pathObjectOrGetter = pathModule[methodName];
-            if (isNil(pathObjectOrGetter)) {
-                continue;  // no defined
-            }
-
-            let operation: Nilable<OpenAPIV3.OperationObject>;
-            if (typeof pathObjectOrGetter === "function") {
-                operation = pathObjectOrGetter();
-            }
-            else if (typeof pathObjectOrGetter === "object") {
-                operation = pathObjectOrGetter;
-            }
-            else {
-                throw new TypeError(`${methodName} in ${file} must be of type object or function`);
-            }
-
-            if (isNil(operation)) {
-                continue;  // not defined
-            }
-            if (typeof operation !== "object") {
-                throw new TypeError("Swagger path operation must be of type object");
-            }
+            // try to find an export, with the exact the same name / key
+            // as the underlying controller method
+            const operationOrGetter = pathModule?.[methodName];
+            const operation = toOperationObject(operationOrGetter);
 
             const swaggerPath = toSwaggerPath(rawPath);
 
-            let pathObj = document.paths[swaggerPath];
-            if (!pathObj) {
-                document.paths[swaggerPath] = pathObj = {};  // initialize
-            }
-
-            if (!(pathObj as any)[httpMethod]) {
-                // only if not explicitly defined in controller
-                // method decorator
-                (pathObj as any)[httpMethod] = operation;
-
-                if (!swaggerOperations.includes(operation)) {
-                    swaggerOperations.push(operation);
-                }
-            }
+            updateOperationObject({
+                document,
+                httpMethod,
+                operation,
+                swaggerOperations,
+                swaggerPath
+            });
         }
     });
 }
@@ -291,4 +337,29 @@ export function setupSwaggerUIForServerControllers({
             response.write(errorMessage);
         }
     });
+}
+
+function updateOperationObject(options: IUpdateOperationObject) {
+    const { document, httpMethod, operation, swaggerOperations, swaggerPath } = options;
+    if (isNil(operation)) {
+        return;
+    }
+
+    if (typeof operation !== "object") {
+        throw new TypeError("Swagger path operation must be of type object");
+    }
+
+    let pathObj = document.paths[swaggerPath];
+    if (!pathObj) {
+        document.paths[swaggerPath] = pathObj = {};  // initialize
+    }
+
+    if (!(pathObj as any)[httpMethod]) {
+        // only if not alredy defined
+        (pathObj as any)[httpMethod] = operation;
+
+        if (!swaggerOperations.includes(operation)) {
+            swaggerOperations.push(operation);
+        }
+    }
 }
