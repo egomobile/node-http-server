@@ -81,10 +81,8 @@ export function It(name: string, settingsOrValidator?: Nilable<ItSettingsOrValid
 
     let getSettings: (context: IGetSettingsContext) => Promise<Nilable<ITestSettings>>;
     if (isNil(settingsOrValidator)) {
-        const defaultSettings: ITestSettings = {};
-
         getSettings = async () => {
-            return defaultSettings;
+            return settingsOrValidator as Nilable<ITestSettings>;
         };
     }
     else {
