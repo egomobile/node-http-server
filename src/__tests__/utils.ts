@@ -69,7 +69,8 @@ export function createServerAndInitControllers() {
                     };
                 }
             }
-        }
+        },
+        "validateWithDocumentation": false
     });
 
     return server;

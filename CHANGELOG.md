@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.44.0
+
+- **BREAKING CHANGE**: [validateWithDocumentation property](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html#validateWithDocumentation) in [IControllersOptions interface](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html) is `true` by default nor
+
 ## 0.43.4
 
 - add `loadOpenAPIFiles` to [IControllerMethodInfo](https://egomobile.github.io/node-http-server/interfaces/IControllerMethodInfo.html), which can load resources for a Swagger document, organized in `.openapi` files

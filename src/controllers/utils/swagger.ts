@@ -131,9 +131,11 @@ export function setupMiddlewaresBySwaggerDocumentation({
 
     let shouldValidateWithDocumentation = false;
     if (isNil(decoratorOptions.validateWithDocumentation)) {
-        shouldValidateWithDocumentation = !!globalOptions?.validateWithDocumentation;
+        // use global value
+        shouldValidateWithDocumentation = isNil(globalOptions?.validateWithDocumentation) ? true : !!globalOptions?.validateWithDocumentation;
     }
     else {
+        // explicitly defined in decorator
         shouldValidateWithDocumentation = !!decoratorOptions.validateWithDocumentation;
     }
 
