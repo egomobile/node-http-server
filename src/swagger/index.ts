@@ -49,8 +49,8 @@ interface IUpdateOperationObject {
     document: OpenAPIV3.Document;
     httpMethod: HttpMethod;
     operation: Nilable<OpenAPIV3.OperationObject>;
+    rawPath: string;
     swaggerOperations: OpenAPIV3.OperationObject[];
-    swaggerPath: string;
 }
 
 const componentKeys: (keyof OpenAPIV3.ComponentsObject)[] = [
@@ -115,14 +115,12 @@ export function prepareSwaggerDocumentFromOpenAPIFiles({
             const operationOrGetter = controllerOpenApiModule?.[methodName];
             const operation = toOperationObject(operationOrGetter);
 
-            const swaggerPath = toSwaggerPath(rawPath);
-
             updateOperationObject({
                 document,
                 httpMethod,
                 operation,
-                swaggerOperations,
-                swaggerPath
+                rawPath,
+                swaggerOperations
             });
         }
     });
@@ -181,39 +179,41 @@ export function prepareSwaggerDocumentFromResources({
 
     // load path operations
     const pathsDir = path.join(resourcePath, "paths");
-    walkDirSync(pathsDir, (file) => {
-        if (!doesScriptFileMatch(file)) {
-            return;  // this is no file, we can use as script
-        }
+    if (fs.existsSync(pathsDir)) {
+        // load paths, if exist
 
-        const relativeResourcePath = normalizeRouterPath(
-            path.relative(pathsDir, file)
-        );
+        walkDirSync(pathsDir, (file) => {
+            if (!doesScriptFileMatch(file)) {
+                return;  // this is no file, we can use as script
+            }
 
-        const allMatchingMethods = methods.filter(({ controller }) => {
-            return relativeResourcePath === controller.__path;
-        });
+            const relativeResourcePath = normalizeRouterPath(
+                path.relative(pathsDir, file)
+            );
 
-        for (const matchingMethod of allMatchingMethods) {
-            const { "method": httpMethod, "name": methodName, rawPath, swaggerOperations } = matchingMethod;
-            const pathModule = loadModule(file, true);
-
-            // try to find an export, with the exact the same name / key
-            // as the underlying controller method
-            const operationOrGetter = pathModule?.[methodName];
-            const operation = toOperationObject(operationOrGetter);
-
-            const swaggerPath = toSwaggerPath(rawPath);
-
-            updateOperationObject({
-                document,
-                httpMethod,
-                operation,
-                swaggerOperations,
-                swaggerPath
+            const allMatchingMethods = methods.filter(({ controller }) => {
+                return relativeResourcePath === controller.__path;
             });
-        }
-    });
+
+            for (const matchingMethod of allMatchingMethods) {
+                const { "method": httpMethod, "name": methodName, rawPath, swaggerOperations } = matchingMethod;
+                const pathModule = loadModule(file, true);
+
+                // try to find an export, with the exact the same name / key
+                // as the underlying controller method
+                const operationOrGetter = pathModule?.[methodName];
+                const operation = toOperationObject(operationOrGetter);
+
+                updateOperationObject({
+                    document,
+                    httpMethod,
+                    operation,
+                    rawPath,
+                    swaggerOperations
+                });
+            }
+        });
+    }
 }
 
 export function setupSwaggerUIForServerControllers({
@@ -340,7 +340,7 @@ export function setupSwaggerUIForServerControllers({
 }
 
 function updateOperationObject(options: IUpdateOperationObject) {
-    const { document, httpMethod, operation, swaggerOperations, swaggerPath } = options;
+    const { document, httpMethod, operation, swaggerOperations, rawPath } = options;
     if (isNil(operation)) {
         return;
     }
@@ -348,6 +348,8 @@ function updateOperationObject(options: IUpdateOperationObject) {
     if (typeof operation !== "object") {
         throw new TypeError("Swagger path operation must be of type object");
     }
+
+    const swaggerPath = toSwaggerPath(rawPath);
 
     let pathObj = document.paths[swaggerPath];
     if (!pathObj) {
