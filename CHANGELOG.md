@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.42.0
+
+- add `resourcePath` to [IControllerMethodInfo](https://egomobile.github.io/node-http-server/interfaces/IControllerMethodInfo.html), which can load resources for a Swagger document, organized in a strict structure
+
 ## 0.41.0
 
 - **BREAKING CHANGE**: module requires at least [Node 16+](https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V16.md) now

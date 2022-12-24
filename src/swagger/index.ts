@@ -19,9 +19,18 @@ import type { OpenAPIV3 } from "openapi-types";
 import path from "path";
 import { knownFileMimes } from "../constants";
 import { normalizeRouterPath } from "../controllers/utils";
-import type { IControllersSwaggerOptions, IHttpServer } from "../types";
+import type { IControllerMethodInfo, IControllersSwaggerOptions, IHttpServer } from "../types";
+import type { Nilable } from "../types/internal";
+import { isNil, loadModule, setupObjectProperty, walkDirSync } from "../utils";
 import swaggerInitializerJs from "./resources/swagger-initializer_js";
-import { createSwaggerPathValidator, getSwaggerDocsBasePath } from "./utils";
+import { createSwaggerPathValidator, getSwaggerDocsBasePath, toSwaggerPath } from "./utils";
+
+export interface IPrepareSwaggerDocumentFromResourcesOptions {
+    document: OpenAPIV3.Document;
+    doesScriptFileMatch: (file: string) => boolean;
+    methods: IControllerMethodInfo[];
+    resourcePath: string;
+}
 
 export interface ISetupSwaggerUIForServerControllersOptions {
     document: OpenAPIV3.Document;
@@ -29,12 +38,137 @@ export interface ISetupSwaggerUIForServerControllersOptions {
     server: IHttpServer;
 }
 
+const componentKeys: (keyof OpenAPIV3.ComponentsObject)[] = [
+    "callbacks",
+    "examples",
+    "headers",
+    "links",
+    "parameters",
+    "requestBodies",
+    "responses",
+    "schemas",
+    "securitySchemes"
+];
+
 const pathToSwaggerUi: string = require("swagger-ui-dist").absolutePath();
 
 const indexHtmlFilePath = path.join(pathToSwaggerUi, "index.html");
 const swaggerInitializerJSFilePath = path.join(pathToSwaggerUi, "swagger-initializer.js");
 
 const { readFile, stat } = fs.promises;
+
+export function prepareSwaggerDocumentFromResources({
+    document,
+    doesScriptFileMatch,
+    methods,
+    resourcePath
+}: IPrepareSwaggerDocumentFromResourcesOptions) {
+    if (!fs.existsSync(resourcePath)) {
+        throw new Error(`Swagger resource directory ${resourcePath} not found`);
+    }
+
+    // initialize, if needed
+    if (!document.components) {
+        document.components = {};
+    }
+    if (!document.paths) {
+        document.paths = {};
+    }
+
+    // load components
+    const componentsDir = path.join(resourcePath, "components");
+    if (fs.existsSync(componentsDir)) {
+        // load components, if exist
+
+        for (const key of componentKeys) {
+            const componentTypeDir = path.join(componentsDir, key);
+            if (!fs.existsSync(componentTypeDir)) {
+                continue;
+            }
+
+            const fStat = fs.statSync(componentTypeDir);
+            if (!fStat.isDirectory()) {
+                throw new Error(`${componentTypeDir} is not directory`);
+            }
+
+            if (!document.components[key]) {
+                document.components[key] = {};
+            }
+
+            walkDirSync(componentTypeDir, (file) => {
+                if (!doesScriptFileMatch(file)) {
+                    return;  // this is no file, we can use as script
+                }
+
+                const componentName = path.basename(file, path.extname(file));
+                const component = loadModule(file);
+
+                setupObjectProperty<any>(document.components![key], componentName, component);
+            }, false);
+        }
+    }
+
+    // load path operations
+    const pathsDir = path.join(resourcePath, "paths");
+    walkDirSync(pathsDir, (file) => {
+        if (!doesScriptFileMatch(file)) {
+            return;  // this is no file, we can use as script
+        }
+
+        const relativeResourcePath = normalizeRouterPath(
+            path.relative(pathsDir, file)
+        );
+
+        const allMatchingMethods = methods.filter(({ controller }) => {
+            return relativeResourcePath === controller.__path;
+        });
+
+        for (const matchingMethod of allMatchingMethods) {
+            const { "method": httpMethod, "name": methodName, rawPath, swaggerOperations } = matchingMethod;
+            const pathModule = loadModule(file, true);
+
+            const pathObjectOrGetter = pathModule[methodName];
+            if (isNil(pathObjectOrGetter)) {
+                continue;  // no defined
+            }
+
+            let operation: Nilable<OpenAPIV3.OperationObject>;
+            if (typeof pathObjectOrGetter === "function") {
+                operation = pathObjectOrGetter();
+            }
+            else if (typeof pathObjectOrGetter === "object") {
+                operation = pathObjectOrGetter;
+            }
+            else {
+                throw new TypeError(`${methodName} in ${file} must be of type object or function`);
+            }
+
+            if (isNil(operation)) {
+                continue;  // not defined
+            }
+            if (typeof operation !== "object") {
+                throw new TypeError("Swagger path operation must be of type object");
+            }
+
+            const swaggerPath = toSwaggerPath(rawPath);
+
+            let pathObj = document.paths[swaggerPath];
+            if (!pathObj) {
+                document.paths[swaggerPath] = pathObj = {};  // initialize
+            }
+
+            if (!(pathObj as any)[httpMethod]) {
+                // only if not explicitly defined in controller
+                // method decorator
+                (pathObj as any)[httpMethod] = operation;
+
+                if (!swaggerOperations.includes(operation)) {
+                    swaggerOperations.push(operation);
+                }
+            }
+        }
+    });
+}
 
 export function setupSwaggerUIForServerControllers({
     document,

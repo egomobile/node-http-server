@@ -44,8 +44,17 @@ export interface ISetupSwaggerDocumentationOptions {
     middlewares: HttpMiddleware[];
 }
 
-function createInitControllerMethodSwaggerAction({ doc, method, middlewares }: ICreateInitControllerMethodSwaggerActionOptions): InitControllerMethodSwaggerAction {
-    return ({ apiDocument, controller, controllerClass }) => {
+function createInitControllerMethodSwaggerAction({
+    doc,
+    method,
+    middlewares
+}: ICreateInitControllerMethodSwaggerActionOptions): InitControllerMethodSwaggerAction {
+    return ({
+        apiDocument,
+        controller,
+        controllerClass,
+        resolveOperation
+    }) => {
         const hasAuthorize = (controllerClass as any)[INIT_CONTROLLER_AUTHORIZE]?.length > 0;
         // eslint-disable-next-line @typescript-eslint/naming-convention
         const doesValidate = middlewares.some((mw) => {
@@ -98,6 +107,7 @@ function createInitControllerMethodSwaggerAction({ doc, method, middlewares }: I
                     }
 
                     pathObj[httpMethod] = doc;
+                    resolveOperation(doc);
 
                     paths[swaggerPath] = sortObjectByKeys(pathObj);
                 });
