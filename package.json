@@ -1,6 +1,6 @@
 {
     "name": "@egomobile/http-server",
-    "version": "0.42.0",
+    "version": "0.42.1",
     "description": "Very fast alternative HTTP server to Express, with simple routing and middleware support and which is compatible with Node.js 12 or later.",
     "main": "lib/index.js",
     "engines": {
@@ -55,6 +55,9 @@
         "json",
         "yaml",
         "schema",
+        "swagger ui",
+        "openapi",
+        "documentation",
         "ego"
     ],
     "author": "Next.e.GO Mobile SE, Aachen, Germany",
