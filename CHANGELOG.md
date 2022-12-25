@@ -7,6 +7,8 @@
   - by `name` argument of [@Describe() decorator](https://egomobile.github.io/node-http-server/functions/Describe.html) (case-insensitive)
   - by `sortBy` value of [ITestSettings interface](https://egomobile.github.io/node-http-server/interfaces/ITestSettings.html)
   - by `name` argument of [@It() decorator](https://egomobile.github.io/node-http-server/functions/It.html) (case-insensitive)
+- update compiler options to `es2021`
+- deactivate building source maps
 - add `sortBy` prop to [ITestSettings interface](https://egomobile.github.io/node-http-server/interfaces/ITestSettings.html)
 - add `tag` prop to [ITestSettings](https://egomobile.github.io/node-http-server/interfaces/ITestSettings.html) and [ITestEventHandlerContext](https://egomobile.github.io/node-http-server/interfaces/ITestEventHandlerContext.html) interfaces
 - add `groupTag` to [ITestEventHandlerContext interface](https://egomobile.github.io/node-http-server/interfaces/ITestEventHandlerContext.html)

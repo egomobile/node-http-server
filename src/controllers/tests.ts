@@ -14,10 +14,9 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, CancellationError, CancellationReason, ICreateServerOptions, IHttpServer, ITestEventCancellationEventHandlerContext, ITestEventHandlerContext, ITestSettingValueGetterContext, TestEventCancellationEventHandler, TestResponseValidator, TimeoutError } from "..";
-import { compareValues } from "../../lib/utils";
 import { ROUTER_PATHS, TEST_DESCRIPTION, TEST_OPTIONS } from "../constants";
 import type { IRouterPathItem, ITestDescription, ITestOptions, Nilable, Optional, TestOptionsGetter } from "../types/internal";
-import { asAsync, isNil } from "../utils";
+import { asAsync, compareValues, isNil } from "../utils";
 import { getListFromObject } from "./utils";
 
 export interface ISetupHttpServerTestMethodOptions {
@@ -438,6 +437,7 @@ function setupRemainingPropsInTestEventContext(options: ISetupRemainingPropsInTe
             return match;
         });
 
-    context.description = description;
-    context.ref = rawDescription;
+    // readonly is only for the interface declaration
+    (context as any).description = description;
+    (context as any).ref = rawDescription;
 }
