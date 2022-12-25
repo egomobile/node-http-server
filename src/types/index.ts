@@ -1607,9 +1607,9 @@ export interface ITestEventCancellationEventHandlerContext {
  */
 export interface ITestEventHandlerContext {
     /**
-     * The body.
+     * The (request) body.
      */
-    body: any;
+    readonly body: any;
     /**
      * A reason for cancellation.
      */
@@ -1621,47 +1621,51 @@ export interface ITestEventHandlerContext {
     /**
      * The context, where the test is running in.
      */
-    context: "controller";
+    readonly context: "controller";
     /**
      * The description of the specific test.
      */
-    description: string;
+    readonly description: string;
     /**
      * Read-to-use path of the route with injected / replaced and escaped parameter values.
      */
-    escapedRoute: string;
+    readonly escapedRoute: string;
     /**
      * Expectations for the response.
      */
-    expectations: ITestEventHandlerContextExpectations;
+    readonly expectations: ITestEventHandlerContextExpectations;
     /**
      * The full path of the underlying file.
      */
-    file: string;
+    readonly file: string;
     /**
      * The test group / category.
      */
-    group: string;
+    readonly group: string;
     /**
      * The zero-based index of the current test, inside the `group`.
      */
-    groupIndex: number;
+    readonly groupIndex: number;
+    /**
+     * Some value, change with the group.
+     */
+    readonly groupTag: any;
     /**
      * HTTP request headers.
      */
-    headers: Record<string, string>;
+    readonly headers: Record<string, string>;
     /**
      * The HTTP method.
      */
-    httpMethod: HttpMethod;
+    readonly httpMethod: HttpMethod;
     /**
      * The zero-based index of the current test.
      */
-    index: number;
+    readonly index: number;
     /**
-     * The nam / key of the underlying method.
+     * The name / key of the underlying method.
      */
-    methodName: string | symbol;
+    readonly methodName: string | symbol;
     /**
      * Gets or sets a function, which listens for a cancellation event.
      */
@@ -1669,27 +1673,31 @@ export interface ITestEventHandlerContext {
     /**
      * A reference value.
      */
-    ref: any;
+    readonly ref: any;
     /**
      * The path of the route with possible parameters.
      */
-    route: string;
+    readonly route: string;
     /**
      * URL parameters to use.
      */
-    parameters: Record<string, string>;
+    readonly parameters: Record<string, string>;
     /**
      * The underlying server instance.
      */
-    server: IHttpServer;
+    readonly server: IHttpServer;
+    /**
+     * Some value for this event (operation).
+     */
+    readonly tag: any;
     /**
      * The total number of tests.
      */
-    totalCount: number;
+    readonly totalCount: number;
     /**
      * A custom validator function.
      */
-    validate?: (context: ITestResponseValidatorContext) => Promise<any>;
+    readonly validate?: (context: ITestResponseValidatorContext) => Promise<any>;
 }
 
 /**
@@ -1755,6 +1763,14 @@ export interface ITestSettings {
      * declared by things like `@It()` decorator.
      */
     ref?: any;
+    /**
+     * A custom sort order, inside the group.
+     */
+    sortOrder?: any;
+    /**
+     * Something optional, that should submitted to a test event / operation.
+     */
+    tag?: any;
     /**
      * Custom timeout value in ms.
      */

@@ -16,13 +16,28 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { TEST_DESCRIPTION } from "../constants";
-import type { ITestDescription } from "../types/internal";
+import type { ITestDescription, Nilable } from "../types/internal";
 import { isClass } from "../utils";
+
+/**
+ * Custom options for `@Describe()` decorator.
+ */
+export interface IDescribeOptions {
+    /**
+     * Something, that should be shared with the group.
+     */
+    tag?: any;
+    /**
+     * A sort order inside the groups.
+     */
+    sortOrder?: any;
+}
 
 /**
  * Marks a (controller) class to use in an environment with (unit-)tests, e.g.
  *
  * @param {string} name A description / name for the controller / class.
+ * @param {Nilable<IDescribeOptions>} [options] Custom options.
  *
  * @example
  * ```
@@ -41,7 +56,7 @@ import { isClass } from "../utils";
  *
  * @returns {ClassDecorator} The class decorator.
  */
-export function Describe(name: string): ClassDecorator {
+export function Describe(name: string, options?: Nilable<IDescribeOptions>): ClassDecorator {
     if (typeof name !== "string") {
         throw new TypeError("name must be of type string");
     }
@@ -52,7 +67,9 @@ export function Describe(name: string): ClassDecorator {
         }
 
         const description: ITestDescription = {
-            name
+            name,
+            "sortOrder": options?.sortOrder,
+            "tag": options?.tag
         };
 
         (classFunction.prototype as any)[TEST_DESCRIPTION] = description;

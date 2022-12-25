@@ -14,6 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, CancellationError, CancellationReason, ICreateServerOptions, IHttpServer, ITestEventCancellationEventHandlerContext, ITestEventHandlerContext, ITestSettingValueGetterContext, TestEventCancellationEventHandler, TestResponseValidator, TimeoutError } from "..";
+import { compareValues } from "../../lib/utils";
 import { ROUTER_PATHS, TEST_DESCRIPTION, TEST_OPTIONS } from "../constants";
 import type { IRouterPathItem, ITestDescription, ITestOptions, Nilable, Optional, TestOptionsGetter } from "../types/internal";
 import { asAsync, isNil } from "../utils";
@@ -36,6 +37,7 @@ interface ITestRunnerActionContext {
 
 interface ITestRunnerItem {
     action: TestRunnerAction;
+    sortBy: any[];
 }
 
 type TestRunnerAction = (rc: ITestRunnerActionContext) => Promise<void>;
@@ -94,10 +96,11 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                     "index": groupIndex,
                     "name": ref,
                     method,
-                    methodName
+                    methodName,
+                    settings
                 } = options;
-                const validator = typeof options.settings.validator === "function" ?
-                    asAsync<TestResponseValidator>(options.settings.validator) :
+                const validator = typeof settings.validator === "function" ?
+                    asAsync<TestResponseValidator>(settings.validator) :
                     undefined;
 
                 const description: ITestDescription = (controller as any)[TEST_DESCRIPTION];
@@ -207,6 +210,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                         "file": controller.__file,
                                         "group": description.name,
                                         groupIndex,
+                                        "groupTag": description.tag,
                                         headers,
                                         httpMethod,
                                         "index": runnerContext.index,
@@ -216,6 +220,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                         ref,
                                         route,
                                         server,
+                                        "tag": settings.tag,
                                         "totalCount": runnerContext.totalCount,
                                         "validate": validator
                                     };
@@ -274,11 +279,37 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                     done(error);
                                 }
                             });
-                        }
+                        },
+                        "sortBy": [
+                            // first by group
+                            isNil(description.sortOrder) ? 0 : description.sortOrder,
+                            description.name.toLowerCase().trim(),
+
+                            // then by tests
+                            isNil(settings.sortOrder) ? 0 : settings.sortOrder,
+                            ref.toLowerCase().trim()
+                        ]
                     });
                 });
             })(await getOptions());
         }
+
+        // sort items recursive, using their
+        // values in `sortBy` props
+        allRunners.sort((x, y) => {
+            // `x` and `y` have the same number of
+            // items in their `sortBy` array (s. above)
+            const sortByItemLen = x.sortBy.length;
+
+            for (let i = 0; i < sortByItemLen; i++) {
+                const compVal = compareValues(x.sortBy[i], y.sortBy[i]);
+                if (compVal !== 0) {
+                    return compVal;
+                }
+            }
+
+            return 0;
+        });
 
         const totalCount = allRunners.length;
         let globalError: any;
