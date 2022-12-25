@@ -25,12 +25,21 @@ import { getListFromObject, getMethodOrThrow } from "./utils";
 
 interface IGetSettingsContext {
     controller: IHttpController<IHttpServer>;
+    index: number;
     methodName: string | symbol;
+}
+
+interface IToSettingsOptions {
+    index: number;
+    name: string;
+    noArrayCheck?: boolean;
+    value: any;
 }
 
 interface IToTestOptionsOptions {
     shouldAllowEmptySettings: boolean;
     controller: IHttpController<IHttpServer>;
+    index: number;
     method: Function;
     methodName: string | symbol;
     name: string;
@@ -105,7 +114,7 @@ export function It(name: string, settingsOrValidator?: Nilable<ItSettingsOrValid
         else if (typeof settingsOrValidator === "string") {
             const pathToModule = settingsOrValidator;
 
-            getSettings = async ({ controller, methodName }) => {
+            getSettings = async ({ controller, index, methodName }) => {
                 const controllerFileExt = path.extname(controller.__file);
 
                 let moduleFile = pathToModule;
@@ -132,7 +141,11 @@ export function It(name: string, settingsOrValidator?: Nilable<ItSettingsOrValid
 
                 // try to find an export, with the exact the same name / key
                 // as the underlying controller method
-                return toSettings(controllerSpecModule?.[methodName]);
+                return toSettings({
+                    index,
+                    name,
+                    "value": controllerSpecModule?.[methodName]
+                });
             };
         }
         else {
@@ -144,16 +157,18 @@ export function It(name: string, settingsOrValidator?: Nilable<ItSettingsOrValid
         const method = getMethodOrThrow(descriptor);
 
         getListFromObject<InitControllerMethodTestAction>(method, ADD_CONTROLLER_METHOD_TEST_ACTION).push(
-            ({ controller, server, shouldAllowEmptySettings, shouldUseModuleAsDefault, timeout }) => {
+            ({ controller, index, server, shouldAllowEmptySettings, shouldUseModuleAsDefault, timeout }) => {
                 getListFromObject<TestOptionsGetter>(server, TEST_OPTIONS).push(
                     async () => {
                         return toTestOptions({
                             controller,
+                            index,
                             method,
                             methodName,
                             name,
                             "settings": await getSettings({
                                 controller,
+                                index,
                                 methodName
                             }),
                             shouldAllowEmptySettings,
@@ -167,22 +182,67 @@ export function It(name: string, settingsOrValidator?: Nilable<ItSettingsOrValid
     };
 }
 
-function toSettings(val: unknown): Nilable<ITestSettings> {
-    if (typeof val === "function") {
+function toSettings(options: IToSettingsOptions): Nilable<ITestSettings> {
+    const { index, name, noArrayCheck, value } = options;
+
+    if (isNil(value)) {
+        return value as Nilable<ITestSettings>;
+    }
+
+    if (!noArrayCheck) {
+        if (Array.isArray(value)) {
+            // map items to `ITestSettings`
+            const settings = value.map((item) => {
+                return toSettings({
+                    ...options,
+
+                    "value": item,
+                    "noArrayCheck": true
+                });
+            });
+
+            // first try to find an `ITestSettings`
+            // with a `ref` prop, which has the same value
+            // as the one submitted to `name` property of
+            // `@It()` decorator
+            let matchingSettings = settings.find((item) => {
+                return typeof item === "object" &&
+                    item?.ref === name;
+            });
+            if (matchingSettings) {
+                return matchingSettings;
+            }
+            else {
+                // now try by index
+                return settings[index];
+            }
+        }
+    }
+
+    if (typeof value === "function") {
         return {
-            "validator": asAsync<TestResponseValidator>(val)
+            "validator": asAsync<TestResponseValidator>(value)
         };
     }
 
-    if (typeof val === "object" || isNil(val)) {
-        return val as Nilable<ITestSettings>;
+    if (typeof value === "object") {
+        return value as Nilable<ITestSettings>;
     }
 
-    throw new TypeError("val must be of type function or object");
+    throw new TypeError("options.value must be of type function or object");
 }
 
 async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptions> {
-    const { controller, method, methodName, name, shouldAllowEmptySettings, shouldUseModuleAsDefault, timeout } = options;
+    const {
+        controller,
+        index,
+        method,
+        methodName,
+        name,
+        shouldAllowEmptySettings,
+        shouldUseModuleAsDefault,
+        timeout
+    } = options;
     let { settings } = options;
 
     if (isNil(settings)) {
@@ -203,7 +263,11 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
 
             // try to find an export, with the exact the same name / key
             // as the underlying controller method
-            settings = toSettings(controllerSpecModule?.[methodName]);
+            settings = toSettings({
+                index,
+                name,
+                "value": controllerSpecModule?.[methodName]
+            });
         }
         else {
             if (shouldUseModuleAsDefault) {
@@ -349,6 +413,7 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         getHeaders,
         getParameters,
         getTimeout,
+        index,
         method,
         methodName,
         name,

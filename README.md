@@ -223,15 +223,18 @@ import {
 @Describe("My controller")
 export default class MyController extends ControllerBase {
   @GET("/foo/:bar")
-  @It("should return BUZZ in code with status 202", {
-    expectations: {
-      body: "BUZZ",
-      status: 202,
-    },
-    parameters: {
-      bar: "buzz",
-    },
-  })
+  @It(
+    "should return '{{body}}' in body with status {{status}} when submitting parameter {{parameter:bar}}",
+    {
+      expectations: {
+        body: "BUZZ",
+        status: 202,
+      },
+      parameters: {
+        bar: "buzz",
+      },
+    }
+  )
   async index(request: IHttpRequest, response: IHttpResponse) {
     response.writeHead(202);
     response.write(request.params!.bar.toUpperCase());

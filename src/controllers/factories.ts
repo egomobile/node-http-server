@@ -1002,15 +1002,16 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
 
                 // (unit-)tests
                 getListFromObject<InitControllerMethodTestAction>(propValue, ADD_CONTROLLER_METHOD_TEST_ACTION).forEach((action) => {
+                    const index = numberOfTests++;
+
                     action({
                         controller,
+                        index,
                         server,
                         "shouldAllowEmptySettings": !!options?.allowEmptyTestSettings,
                         "shouldUseModuleAsDefault": shouldUseTestModuleAsDefault,
                         "timeout": testTimeout
                     });
-
-                    ++numberOfTests;
                 });
 
                 // tell, that controller method has been initialized
