@@ -296,7 +296,18 @@ function toSettings(options: IToSettingsOptions): Nilable<ITestSettings> {
     }
 
     if (typeof value === "object") {
-        return value as Nilable<ITestSettings>;
+        const settings = value as Nilable<ITestSettings>;
+        if (!isNil(ref)) {
+            // required matching `ref` values
+            if (settings?.ref === ref) {
+                return settings;
+            }
+            else {
+                return undefined;  // not found
+            }
+        }
+
+        return settings;
     }
 
     throw new TypeError("options.value must be of type function or object");
