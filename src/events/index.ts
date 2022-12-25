@@ -14,7 +14,6 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { IHttpServer, ITestEventHandlerContext, TestEventHandler } from "..";
-import type { Optional } from "../types/internal";
 import { asAsync } from "../utils";
 
 export function setupEventMethods(server: IHttpServer) {
@@ -30,9 +29,8 @@ export function setupEventMethods(server: IHttpServer) {
 
             return new Promise<void>(async (resolve, reject) => {
                 try {
-                    let handler: Optional<TestEventHandler>;
-                    while (handler = testHandlers.shift()) {
-                        await handler(context);
+                    for (const handler of testHandlers) {
+                        handler(context);
                     }
 
                     resolve();
@@ -47,8 +45,8 @@ export function setupEventMethods(server: IHttpServer) {
         }
     };
 
-    // once
-    server.once = (event: string, ...args: any[]): any => {
+    // on
+    server.on = (event: string, ...args: any[]): any => {
         if (event === "test") {
             const handler = args[0] as TestEventHandler;
             if (typeof handler !== "function") {

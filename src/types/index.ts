@@ -1157,12 +1157,12 @@ export interface IHttpServer {
     readonly notFoundHandler: HttpNotFoundHandler;
 
     /**
-     * Registers an event handler, which should be executed once.
+     * Registers an event handler.
      *
      * @param {string} event The name of the event.
      * @param {TestEventHandler} handler The handler to execute.
      */
-    once(event: "test", handler: TestEventHandler): this;
+    on(event: "test", handler: TestEventHandler): this;
 
     /**
      * Registers a route for a OPTIONS request.

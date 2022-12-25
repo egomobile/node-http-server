@@ -1,6 +1,12 @@
 # Change Log (@egomobile/http-server)
 
-## 0.47.1
+## 0.48.0
+
+- **BREAKING CHANGE**: replace `once()` method with `on` in [IHttpServer interface](https://egomobile.github.io/node-http-server/interfaces/IHttpServer.html)
+- **BREAKING CHANGE**: `ItSettingsOrValidator` type has been replaced with `ItArgument2`
+- improve [@It() decorator](https://egomobile.github.io/node-http-server/functions/It.html) with additional arguments and type definitions.
+
+## 0.47.2
 
 - add following placeholders for `name` argument of [@It() decorator](https://egomobile.github.io/node-http-server/functions/It.html):
   - `{{parameters}}`: list of comma-separated parameter list, example: `"param1" = "param1 value", "param2" = "param2 value"`

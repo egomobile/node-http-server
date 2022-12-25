@@ -118,7 +118,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                 };
 
                                 let cancellationReason: Optional<CancellationReason>;
-                                let isFinished = true;
+                                let isFinished = false;
                                 let isTimedOut = false;
                                 let onCancellationRequested: Nilable<TestEventCancellationEventHandler>;
                                 const timeout = await getTimeout(valueGetterContext);

@@ -23,16 +23,39 @@ import type { InitControllerMethodTestAction, ITestOptions, Nilable, TestOptions
 import { asAsync, isNil } from "../utils";
 import { getListFromObject, getMethodOrThrow } from "./utils";
 
+type GetTestSettingsFunc =
+    (context: IGetSettingsContext) => Promise<Nilable<ITestSettings>>;
+
 interface IGetSettingsContext {
     controller: IHttpController<IHttpServer>;
     index: number;
     methodName: string | symbol;
 }
 
+/**
+ * Possible value for second value of `@It()` decorator.
+ */
+export type ItArgument2 =
+    ItSettingsValue |
+    ItRefValue;
+
+/**
+ * Possible value for 3rd value of `@It()` decorator.
+ */
+export type ItArgument3 =
+    ItSettingsValue;
+
+interface IToGetTestSettingsFuncOptions {
+    arg2: any;
+    arg3?: any;
+    noRefCheck?: boolean;
+    ref: any;
+}
+
 interface IToSettingsOptions {
     index: number;
-    name: string;
     noArrayCheck?: boolean;
+    ref: any;
     value: any;
 }
 
@@ -49,13 +72,17 @@ interface IToTestOptionsOptions {
 }
 
 /**
- * Possible value for second value of `@It()` decorator.
- *
- * - `object` => use as settings object
- * - `function` => use custom validator
- * - `string` => path to a module, relative paths will be mapped to the directory of the underlying controller (file)
+ * A possible value for a reference in `@It()` decorator.
  */
-export type ItSettingsOrValidator =
+export type ItRefValue =
+    bigint |
+    number |
+    symbol;
+
+/**
+ * A possible value for settings.
+ */
+export type ItSettingsValue =
     ITestSettings |
     TestResponseValidator |
     string;
@@ -64,7 +91,11 @@ export type ItSettingsOrValidator =
  * Sets up a request method for use in (unit-)tests.
  *
  * @param {string} name A description / name for the controller / class.
- * @param {Nilable<ItSettingsOrValidator>} [settingsOrValidator] Custom settings or a function, which validates a response.
+ * @param {bigint|number|symbol} ref The custom reference value.
+ * @param {string} script The path to the script, which should be used to import settings.
+ *                        Relative paths will be mapped to the controller's directory.
+ * @param {ITestSettings} settings The settings.
+ * @param {TestResponseValidator} validator The response validator.
  *
  * @example
  * ```
@@ -83,75 +114,22 @@ export type ItSettingsOrValidator =
  *
  * @returns {MethodDecorator} The method decorator.
  */
-export function It(name: string, settingsOrValidator?: Nilable<ItSettingsOrValidator>): MethodDecorator {
+
+export function It(name: string): MethodDecorator;
+export function It(name: string, settings: ITestSettings): MethodDecorator;
+export function It(name: string, validator: TestResponseValidator): MethodDecorator;
+export function It(name: string, script: string): MethodDecorator;
+export function It(name: string, ref: bigint | number | symbol, arg3?: Nilable<ItArgument3>): MethodDecorator;
+export function It(name: string, arg2?: Nilable<ItArgument2>, arg3?: Nilable<ItArgument3>): MethodDecorator {
     if (typeof name !== "string") {
         throw new TypeError("name must be of type string");
     }
 
-    let getSettings: (context: IGetSettingsContext) => Promise<Nilable<ITestSettings>>;
-    if (isNil(settingsOrValidator)) {
-        getSettings = async () => {
-            return settingsOrValidator as Nilable<ITestSettings>;
-        };
-    }
-    else {
-        if (typeof settingsOrValidator === "object") {
-            const settings = settingsOrValidator as ITestSettings;
-
-            getSettings = async () => {
-                return settings;
-            };
-        }
-        else if (typeof settingsOrValidator === "function") {
-            const validator = asAsync<TestResponseValidator>(settingsOrValidator);
-
-            getSettings = async () => {
-                return {
-                    validator
-                };
-            };
-        }
-        else if (typeof settingsOrValidator === "string") {
-            const pathToModule = settingsOrValidator;
-
-            getSettings = async ({ controller, index, methodName }) => {
-                const controllerFileExt = path.extname(controller.__file);
-
-                let moduleFile = pathToModule;
-                if (!moduleFile.endsWith(controllerFileExt)) {
-                    moduleFile += controllerFileExt;
-                }
-
-                if (!path.isAbsolute(moduleFile)) {
-                    const controllerDir = path.dirname(controller.__file);
-
-                    moduleFile = path.join(controllerDir, moduleFile);
-                }
-
-                if (!fs.existsSync(moduleFile)) {
-                    throw new Error(`${moduleFile} not found`);
-                }
-
-                const stat = await fs.promises.stat(moduleFile);
-                if (!stat.isFile()) {
-                    throw new Error(`${moduleFile} is no file`);
-                }
-
-                const controllerSpecModule = require(moduleFile);
-
-                // try to find an export, with the exact the same name / key
-                // as the underlying controller method
-                return toSettings({
-                    index,
-                    name,
-                    "value": controllerSpecModule?.[methodName]
-                });
-            };
-        }
-        else {
-            throw new TypeError("settingsOrGetter must be of type object, string or function");
-        }
-    }
+    const getSettings = toGetTestSettingsFunc({
+        arg2,
+        arg3,
+        "ref": name
+    });
 
     return function (target, methodName, descriptor) {
         const method = getMethodOrThrow(descriptor);
@@ -182,8 +160,99 @@ export function It(name: string, settingsOrValidator?: Nilable<ItSettingsOrValid
     };
 }
 
+function toGetTestSettingsFunc(options: IToGetTestSettingsFuncOptions): GetTestSettingsFunc {
+    const { arg2, arg3, noRefCheck, ref } = options;
+
+    if (isNil(arg2)) {
+        // default
+
+        return async () => {
+            return arg2 as Nilable<ITestSettings>;
+        };
+    }
+
+    if (typeof arg2 === "object") {
+        // test settings
+
+        return async () => {
+            return arg2! as ITestSettings;
+        };
+    }
+
+    if (typeof arg2 === "function") {
+        // response validator
+
+        return async () => {
+            return {
+                ref,
+                "validator": arg2 as TestResponseValidator
+            };
+        };
+    }
+
+    if (typeof arg2 === "string") {
+        // custom script file
+
+        return async ({ controller, index, methodName }) => {
+            const controllerFileExt = path.extname(controller.__file);
+
+            let moduleFile = arg2 as string;
+            if (!moduleFile.endsWith(controllerFileExt)) {
+                moduleFile += controllerFileExt;
+            }
+
+            if (!path.isAbsolute(moduleFile)) {
+                const controllerDir = path.dirname(controller.__file);
+
+                moduleFile = path.join(controllerDir, moduleFile);
+            }
+
+            if (!fs.existsSync(moduleFile)) {
+                throw new Error(`${moduleFile} not found`);
+            }
+
+            const stat = await fs.promises.stat(moduleFile);
+            if (!stat.isFile()) {
+                throw new Error(`${moduleFile} is no file`);
+            }
+
+            const controllerSpecModule = require(moduleFile);
+
+            // try to find an export, with the exact the same name / key
+            // as the underlying controller method
+            return toSettings({
+                index,
+                ref,
+                "value": controllerSpecModule?.[methodName]
+            });
+        };
+    }
+
+    if (!noRefCheck) {
+        if (["number", "symbol", "bigint"].includes(typeof arg2)) {
+            // custom `ref`
+
+            const getSettings = toGetTestSettingsFunc({
+                "arg2": arg3, // `arg3` is now used to create a `getSettings()` function from ...
+                "noRefCheck": true, // ... but not handled as custom `ref` value
+                "ref": arg2  // custom ref
+            });
+
+            return async (settingsContext) => {
+                return {
+                    ...(await getSettings(settingsContext) ?? {}),
+
+                    "ref": arg2
+                };
+            };
+        }
+    }
+
+    throw new TypeError("options.value must be of type object, string, number, bigint, symbol or function");
+}
+
 function toSettings(options: IToSettingsOptions): Nilable<ITestSettings> {
-    const { index, name, noArrayCheck, value } = options;
+    const { index, noArrayCheck, ref, value } = options;
 
     if (isNil(value)) {
         return value as Nilable<ITestSettings>;
@@ -207,7 +276,8 @@ function toSettings(options: IToSettingsOptions): Nilable<ITestSettings> {
             // `@It()` decorator
             let matchingSettings = settings.find((item) => {
                 return typeof item === "object" &&
-                    item?.ref === name;
+                    !isNil(item?.ref) &&
+                    String(item!.ref) === String(ref);
             });
             if (matchingSettings) {
                 return matchingSettings;
@@ -265,7 +335,7 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
             // as the underlying controller method
             settings = toSettings({
                 index,
-                name,
+                "ref": name,
                 "value": controllerSpecModule?.[methodName]
             });
         }
