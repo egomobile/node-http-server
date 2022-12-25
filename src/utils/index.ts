@@ -27,6 +27,14 @@ interface ICreateWithEntityTooLargeActionOptions {
     onLimitReached: HttpRequestHandler;
 }
 
+export interface IInvokeMiddlewareOptions {
+    middleware: HttpMiddleware;
+    next: NextFunction;
+    nextOnError?: Nilable<NextFunction>;
+    request: IHttpRequest;
+    response: IHttpResponse;
+}
+
 const propSepChar = String.fromCharCode(0);
 const truthyValues = ["true", "1", "yes", "y"];
 
@@ -210,6 +218,21 @@ export function getUrlWithoutQuery(url: Optional<string>): Optional<string> {
     }
 
     return url;
+}
+
+export function invokeMiddleware(options: IInvokeMiddlewareOptions) {
+    const {
+        middleware,
+        next,
+        request,
+        response
+    } = options;
+
+    const nextOnError = options.nextOnError ?? next;
+
+    middleware(request, response, next).catch((error: any) => {
+        nextOnError(error);
+    });
 }
 
 export function isClass<T extends any = any>(maybeClass: any): maybeClass is Constructor<T> {

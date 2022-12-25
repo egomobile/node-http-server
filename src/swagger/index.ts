@@ -20,7 +20,7 @@ import path from "path";
 import { knownFileMimes } from "../constants";
 import { normalizeRouterPath } from "../controllers/utils";
 import type { HttpMethod, IControllerMethodInfo, IControllersSwaggerOptions, IHttpServer } from "../types";
-import type { Nilable } from "../types/internal";
+import type { Nilable, ResolveSwaggerOperationObject } from "../types/internal";
 import { isNil, loadModule, setupObjectProperty, walkDirSync } from "../utils";
 import swaggerInitializerJs from "./resources/swagger-initializer_js";
 import { createSwaggerPathValidator, getSwaggerDocsBasePath, toOperationObject, toSwaggerPath } from "./utils";
@@ -30,12 +30,14 @@ export interface IPrepareSwaggerDocumentFromOpenAPIFilesOptions {
     document: OpenAPIV3.Document;
     doesScriptFileMatch: (file: string) => boolean;
     methods: IControllerMethodInfo[];
+    resolveOperation: ResolveSwaggerOperationObject;
 }
 
 export interface IPrepareSwaggerDocumentFromResourcesOptions {
     document: OpenAPIV3.Document;
     doesScriptFileMatch: (file: string) => boolean;
     methods: IControllerMethodInfo[];
+    resolveOperation: ResolveSwaggerOperationObject;
     resourcePath: string;
 }
 
@@ -50,7 +52,7 @@ interface IUpdateOperationObject {
     httpMethod: HttpMethod;
     operation: Nilable<OpenAPIV3.OperationObject>;
     rawPath: string;
-    swaggerOperations: OpenAPIV3.OperationObject[];
+    resolveOperation: ResolveSwaggerOperationObject;
 }
 
 const componentKeys: (keyof OpenAPIV3.ComponentsObject)[] = [
@@ -76,7 +78,8 @@ export function prepareSwaggerDocumentFromOpenAPIFiles({
     controllersRootDir,
     document,
     doesScriptFileMatch,
-    methods
+    methods,
+    resolveOperation
 }: IPrepareSwaggerDocumentFromOpenAPIFilesOptions) {
     walkDirSync(controllersRootDir, (file) => {
         if (!doesScriptFileMatch(file)) {
@@ -92,7 +95,13 @@ export function prepareSwaggerDocumentFromOpenAPIFiles({
         });
 
         for (const matchingMethod of allMatchingMethods) {
-            const { controller, "method": httpMethod, "name": methodName, rawPath, swaggerOperations } = matchingMethod;
+            const {
+                controller,
+                "method": httpMethod,
+                "name":
+                methodName,
+                rawPath
+            } = matchingMethod;
 
             const controllerDir = path.dirname(controller.__file);
             const controllerFileExt = path.extname(controller.__file);
@@ -120,7 +129,7 @@ export function prepareSwaggerDocumentFromOpenAPIFiles({
                 httpMethod,
                 operation,
                 rawPath,
-                swaggerOperations
+                resolveOperation
             });
         }
     });
@@ -130,6 +139,7 @@ export function prepareSwaggerDocumentFromResources({
     document,
     doesScriptFileMatch,
     methods,
+    resolveOperation,
     resourcePath
 }: IPrepareSwaggerDocumentFromResourcesOptions) {
     if (!fs.existsSync(resourcePath)) {
@@ -196,7 +206,11 @@ export function prepareSwaggerDocumentFromResources({
             });
 
             for (const matchingMethod of allMatchingMethods) {
-                const { "method": httpMethod, "name": methodName, rawPath, swaggerOperations } = matchingMethod;
+                const {
+                    "method": httpMethod,
+                    "name": methodName,
+                    rawPath
+                } = matchingMethod;
                 const pathModule = loadModule(file, true);
 
                 // try to find an export, with the exact the same name / key
@@ -209,7 +223,7 @@ export function prepareSwaggerDocumentFromResources({
                     httpMethod,
                     operation,
                     rawPath,
-                    swaggerOperations
+                    resolveOperation
                 });
             }
         });
@@ -340,7 +354,13 @@ export function setupSwaggerUIForServerControllers({
 }
 
 function updateOperationObject(options: IUpdateOperationObject) {
-    const { document, httpMethod, operation, swaggerOperations, rawPath } = options;
+    const {
+        document,
+        httpMethod,
+        operation,
+        rawPath,
+        resolveOperation
+    } = options;
     if (isNil(operation)) {
         return;
     }
@@ -360,8 +380,8 @@ function updateOperationObject(options: IUpdateOperationObject) {
         // only if not alredy defined
         (pathObj as any)[httpMethod] = operation;
 
-        if (!swaggerOperations.includes(operation)) {
-            swaggerOperations.push(operation);
-        }
+        resolveOperation({
+            operation
+        });
     }
 }

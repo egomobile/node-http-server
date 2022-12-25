@@ -1,6 +1,21 @@
 # Change Log (@egomobile/http-server)
 
-## 0.48.2
+## 0.49.0
+
+- **BREAKING CHANGE**: tests are sorted now the following way:
+  - by `sortBy` value of [@Describe() decorator](https://egomobile.github.io/node-http-server/functions/Describe.html)
+  - by `name` argument of [@Describe() decorator](https://egomobile.github.io/node-http-server/functions/Describe.html) (case-insensitive)
+  - by `sortBy` value of [ITestSettings interface](https://egomobile.github.io/node-http-server/interfaces/ITestSettings.html)
+  - by `name` argument of [@It() decorator](https://egomobile.github.io/node-http-server/functions/It.html) (case-insensitive)
+- update compiler options to `es2021`
+- deactivate building source maps
+- add `sortBy` prop to [ITestSettings interface](https://egomobile.github.io/node-http-server/interfaces/ITestSettings.html)
+- add `tag` prop to [ITestSettings](https://egomobile.github.io/node-http-server/interfaces/ITestSettings.html) and [ITestEventHandlerContext](https://egomobile.github.io/node-http-server/interfaces/ITestEventHandlerContext.html) interfaces
+- add `groupTag` to [ITestEventHandlerContext interface](https://egomobile.github.io/node-http-server/interfaces/ITestEventHandlerContext.html)
+- [@Describe() decorator](https://egomobile.github.io/node-http-server/functions/Describe.html) now supports custom settings, represented by new `IDescribeOptions` interface
+- (bug-)fixes
+
+## 0.48.3
 
 - **BREAKING CHANGE**: replace `once()` method with `on` in [IHttpServer interface](https://egomobile.github.io/node-http-server/interfaces/IHttpServer.html)
 - **BREAKING CHANGE**: `ItSettingsOrValidator` type has been replaced with `ItArgument2`

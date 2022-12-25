@@ -24,7 +24,7 @@ import { SwaggerValidationError } from "../errors";
 import { buffer, query } from "../middlewares";
 import { prepareSwaggerDocumentFromOpenAPIFiles, prepareSwaggerDocumentFromResources, setupSwaggerUIForServerControllers } from "../swagger";
 import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRouteWithBodyOptions, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ParameterOptions, ResponseSerializer } from "../types";
-import type { Func, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerMethodTestAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, IRouterPathItem, Nilable, Optional, PrepareControllerMethodAction } from "../types/internal";
+import type { Func, GetSwaggerDocumentationsFunc, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerMethodTestAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, IRouterPathItem, Nilable, Optional, PrepareControllerMethodAction, ResolveSwaggerOperationObject } from "../types/internal";
 import { asAsync, canHttpMethodHandleBodies, getAllClassProps, getFunctionParamNames, isClass, isNil, limitToBytes, walkDirSync } from "../utils";
 import { params } from "../validators/params";
 import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath, setupMiddlewaresBySchema, setupMiddlewaresBySwaggerDocumentation, setupSwaggerDocumentation, toParameterValueUpdaters } from "./utils";
@@ -84,8 +84,10 @@ export interface ISetupHttpServerControllerMethodOptions {
 
 interface IUpdateMiddlewaresOptions {
     controller: IHttpController<IHttpServer>;
+    getOperationObjects: GetSwaggerDocumentationsFunc;
     globalOptions: Nilable<IControllersOptions>;
     middlewares: HttpMiddleware[];
+    rawPath: string;
 }
 
 function compileRouteHandler({ controller, method }: ICompileRouteHandlerOptions): HttpRequestHandler {
@@ -360,7 +362,13 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                         (controller as any)[ERROR_HANDLER] ||
                         server.errorHandler;
                 },
-                "updateMiddlewares": ({ controller, globalOptions, middlewares }) => {
+                "updateMiddlewares": ({
+                    controller,
+                    getOperationObjects,
+                    globalOptions,
+                    middlewares,
+                    rawPath
+                }) => {
                     // use query() middleware?
                     let shouldAddQueryMiddleware = true;
                     if (isNil(decoratorOptions?.noQueryParams)) {
@@ -382,6 +390,13 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                     // Swagger documentation
                     setupMiddlewaresBySwaggerDocumentation({
                         decoratorOptions,
+                        "getOperationObjects": () => {
+                            return getOperationObjects({
+                                "httpMethod": options.name,
+                                "methodFunction": method,
+                                "rawRouterPath": rawPath
+                            });
+                        },
                         globalOptions,
                         middlewares,
                         throwIfOptionsIncompatibleWithHTTPMethod
@@ -415,7 +430,16 @@ function createInitControllerMethodAction({
     const controllerRouterPath = decoratorOptions?.path;
     const serializer = decoratorOptions?.serializer;
 
-    return ({ controller, controllerClass, relativeFilePath, method, server, globalOptions, resolveInfo }) => {
+    return ({
+        controller,
+        controllerClass,
+        relativeFilePath,
+        method,
+        server,
+        getOperationObjects,
+        globalOptions,
+        resolveInfo
+    }) => {
         const dir = path.dirname(relativeFilePath);
         const fileName = path.basename(relativeFilePath, path.extname(relativeFilePath));
 
@@ -477,7 +501,19 @@ function createInitControllerMethodAction({
         updateMiddlewares({
             controller,
             middlewares,
-            globalOptions
+            "getOperationObjects": () => {
+                if (decoratorOptions?.documentation) {
+                    return [decoratorOptions.documentation];
+                }
+
+                return getOperationObjects({
+                    httpMethod,
+                    "methodFunction": method,
+                    rawRouterPath
+                });
+            },
+            globalOptions,
+            "rawPath": rawRouterPath
         });
 
         if (controllerClass.prototype[CONTROLLER_MIDDLEWARES]) {
@@ -878,7 +914,34 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                 delete (propValue as any)[CONTROLLER_METHOD_PARAMETERS];
 
                 const methods: IControllerMethodInfo[] = [];
+
                 const swaggerOperations: OpenAPIV3.OperationObject[] = [];
+                const resolveOperation: ResolveSwaggerOperationObject = ({
+                    operation
+                }) => {
+                    if (!swaggerOperations.includes(operation)) {
+                        swaggerOperations.push(operation);
+                    }
+                };
+
+                const getOperationObjects: GetSwaggerDocumentationsFunc =
+                    ({
+                        httpMethod,
+                        methodFunction,
+                        rawRouterPath
+                    }) => {
+                        const matchingMethodInfo = methods.find((mi) => {
+                            return mi.method === httpMethod &&
+                                mi.rawPath === rawRouterPath &&
+                                mi.function === methodFunction;
+                        });
+
+                        if (matchingMethodInfo) {
+                            return [...matchingMethodInfo.swaggerOperations];
+                        }
+
+                        return [];
+                    };
 
                 // (pre) controller methods
                 getListFromObject<PrepareControllerMethodAction>(propValue, PREPARE_CONTROLLER_METHOD_ACTIONS).forEach(action => {
@@ -906,6 +969,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                         controller,
                         "controllerClass": cls["class"],
                         "fullFilePath": cls.file.fullPath,
+                        getOperationObjects,
                         "method": propValue,
                         "relativeFilePath": cls.file.relativePath,
                         server,
@@ -962,7 +1026,8 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                                     return minimatch(relativeFilePath, p, minimatchOpts);
                                 });
                             },
-                            methods
+                            methods,
+                            resolveOperation
                         });
                     }
 
@@ -982,6 +1047,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                                 });
                             },
                             methods,
+                            resolveOperation,
                             "resourcePath": swaggerResourcePath
                         });
                     }
@@ -991,11 +1057,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                             "apiDocument": swaggerDoc,
                             controller,
                             "controllerClass": cls["class"],
-                            "resolveOperation": (operation) => {
-                                if (!swaggerOperations.includes(operation)) {
-                                    swaggerOperations.push(operation);
-                                }
-                            }
+                            resolveOperation
                         });
                     }, true);
                 }

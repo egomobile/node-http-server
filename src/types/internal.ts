@@ -21,6 +21,9 @@ export type Constructor<T extends any = any> = (new (...args: any[]) => T);
 
 export type Func = (...args: any[]) => any;
 
+export type GetSwaggerDocumentationsFunc =
+    (context: IGetSwaggerDocumentationsFuncContext) => OpenAPIV3.OperationObject[];
+
 export type GetterFunc<TValue extends any = any> = () => TValue;
 
 export type GroupedHttpRequestHandlers = {
@@ -55,6 +58,12 @@ export interface IControllerMethodParameter {
     options: ParameterOptions;
 }
 
+export interface IGetSwaggerDocumentationsFuncContext {
+    httpMethod: HttpMethod;
+    methodFunction: Function;
+    rawRouterPath: string;
+}
+
 export interface IInitControllerAuthorizeActionContext {
     globalOptions: Nilable<IControllersOptions>;
     middlewares: HttpMiddleware[];
@@ -64,6 +73,7 @@ export interface IInitControllerMethodActionContext {
     controller: IHttpController;
     controllerClass: Constructor<IHttpController>;
     fullFilePath: string;
+    getOperationObjects: GetSwaggerDocumentationsFunc;
     globalOptions: Nilable<IControllersOptions>;
     method: Function;
     relativeFilePath: string;
@@ -91,7 +101,7 @@ export interface IInitControllerMethodSwaggerActionContext {
     apiDocument: OpenAPIV3.Document;
     controller: IHttpController<IHttpServer>;
     controllerClass: Constructor<IHttpController>;
-    resolveOperation: (operation: OpenAPIV3.OperationObject) => any;
+    resolveOperation: ResolveSwaggerOperationObject;
 }
 
 export interface IInitControllerParseErrorHandlerActionContext {
@@ -154,6 +164,10 @@ export interface IRequestHandlerContext {
     middlewares?: Nilable<HttpMiddleware[]>;
 }
 
+export interface IResolveSwaggerOperationObjectContext {
+    operation: OpenAPIV3.OperationObject;
+}
+
 export interface IRouterPathItem {
     httpMethod: HttpMethod;
     routerPath: string;
@@ -166,6 +180,8 @@ export interface ISwaggerMethodInfo {
 
 export interface ITestDescription {
     name: string;
+    sortOrder: any;
+    tag: any;
 }
 
 export interface ITestOptions {
@@ -202,5 +218,7 @@ export type Optional<T extends any = any> = T | undefined;
 export type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>;
 
 export type ResolveControllerMethodInfo = (info: IControllerMethodInfo) => any;
+
+export type ResolveSwaggerOperationObject = (context: IResolveSwaggerOperationObjectContext) => any;
 
 export type TestOptionsGetter = () => Promise<ITestOptions>;

@@ -15,13 +15,13 @@
 
 import type { OpenAPIV3 } from "openapi-types";
 import { getListFromObject } from ".";
-import { middleware } from "../..";
+import { JsonSchemaValidationFailedHandler, middleware } from "../..";
 import { DOCUMENTATION_UPDATER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, ROUTER_PATHS, SWAGGER_METHOD_INFO } from "../../constants";
 import { validateMiddleware, validateQueryMiddleware, validateWithSwagger } from "../../middlewares";
 import { toSwaggerPath } from "../../swagger/utils";
 import type { ControllerRouteWithBodyOptions, DocumentationUpdaterHandler, HttpMethod, HttpMiddleware, IControllersOptions } from "../../types";
-import type { InitControllerMethodSwaggerAction, IRouterPathItem, ISwaggerMethodInfo, Nilable } from "../../types/internal";
-import { isNil, sortObjectByKeys } from "../../utils";
+import type { GetterFunc, InitControllerMethodSwaggerAction, IRouterPathItem, ISwaggerMethodInfo, Nilable } from "../../types/internal";
+import { asAsync, invokeMiddleware, isNil, sortObjectByKeys } from "../../utils";
 
 interface ICreateInitControllerMethodSwaggerActionOptions {
     doc: OpenAPIV3.OperationObject;
@@ -32,6 +32,7 @@ interface ICreateInitControllerMethodSwaggerActionOptions {
 
 export interface ISetupMiddlewaresBySwaggerDocumentationOptions {
     decoratorOptions: Nilable<ControllerRouteWithBodyOptions>;
+    getOperationObjects: GetterFunc<OpenAPIV3.OperationObject[]>;
     globalOptions: Nilable<IControllersOptions>;
     middlewares: HttpMiddleware[];
     throwIfOptionsIncompatibleWithHTTPMethod: () => any;
@@ -42,6 +43,11 @@ export interface ISetupSwaggerDocumentationOptions {
     method: Function;
     methodName: string | symbol;
     middlewares: HttpMiddleware[];
+}
+
+interface IValidateWithDynamicSwaggerDocumentationOptions {
+    getOperationObjects: GetterFunc<OpenAPIV3.OperationObject[]>;
+    onValidationFailed: Nilable<JsonSchemaValidationFailedHandler>;
 }
 
 function createInitControllerMethodSwaggerAction({
@@ -107,7 +113,9 @@ function createInitControllerMethodSwaggerAction({
                     }
 
                     pathObj[httpMethod] = doc;
-                    resolveOperation(doc);
+                    resolveOperation({
+                        "operation": doc
+                    });
 
                     paths[swaggerPath] = sortObjectByKeys(pathObj);
                 });
@@ -120,41 +128,41 @@ function createInitControllerMethodSwaggerAction({
 
 export function setupMiddlewaresBySwaggerDocumentation({
     decoratorOptions,
+    getOperationObjects,
     globalOptions,
     middlewares,
     throwIfOptionsIncompatibleWithHTTPMethod
 }: ISetupMiddlewaresBySwaggerDocumentationOptions) {
     const documentation = decoratorOptions?.documentation;
-    if (!documentation) {
-        return;
-    }
 
     let shouldValidateWithDocumentation = false;
-    if (isNil(decoratorOptions.validateWithDocumentation)) {
+    if (isNil(decoratorOptions?.validateWithDocumentation)) {
         // use global value
         shouldValidateWithDocumentation = isNil(globalOptions?.validateWithDocumentation) ? true : !!globalOptions?.validateWithDocumentation;
     }
     else {
         // explicitly defined in decorator
-        shouldValidateWithDocumentation = !!decoratorOptions.validateWithDocumentation;
+        shouldValidateWithDocumentation = !!decoratorOptions?.validateWithDocumentation;
     }
 
     if (!shouldValidateWithDocumentation) {
         return;
     }
 
-    if ((documentation.requestBody as OpenAPIV3.RequestBodyObject)?.required) {
+    if ((documentation?.requestBody as OpenAPIV3.RequestBodyObject)?.required) {
         throwIfOptionsIncompatibleWithHTTPMethod();
     }
 
-    const onValidationFailed = decoratorOptions.onValidationWithDocumentationFailed ||
+    const onValidationFailed = decoratorOptions?.onValidationWithDocumentationFailed ||
         globalOptions?.onValidationWithDocumentationFailed;
 
     // first add 'validateWithSwagger()' middleware
-    middlewares.push(validateWithSwagger({
-        documentation,
-        onValidationFailed
-    }));
+    middlewares.push(
+        validateWithDynamicSwaggerDocumentation({
+            getOperationObjects,
+            onValidationFailed
+        })
+    );
 }
 
 export function setupSwaggerDocumentation({
@@ -177,4 +185,40 @@ export function setupSwaggerDocumentation({
             middlewares
         })
     );
+}
+
+function validateWithDynamicSwaggerDocumentation({
+    getOperationObjects,
+    onValidationFailed
+}: IValidateWithDynamicSwaggerDocumentationOptions): HttpMiddleware {
+    return async (request, response, next) => {
+        const allDocumentations = getOperationObjects();
+
+        let index = -1;
+        const validateNextDocumentation = () => {
+            const documentation = allDocumentations[++index];
+
+            if (documentation) {
+                invokeMiddleware({
+                    "middleware": asAsync<HttpMiddleware>(
+                        validateWithSwagger({
+                            documentation,
+                            onValidationFailed
+                        })
+                    ),
+                    "next": validateNextDocumentation,
+                    "nextOnError": next,
+                    request,
+                    response
+                });
+            }
+            else {
+                // we are finished here
+                next();
+            }
+        };
+
+        // begin
+        validateNextDocumentation();
+    };
 }
