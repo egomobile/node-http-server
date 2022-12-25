@@ -48,6 +48,9 @@ export type ItArgument3 =
 interface IToGetTestSettingsFuncOptions {
     arg2: any;
     arg3?: any;
+    controller: IHttpController;
+    index: number;
+    moduleKey: string | symbol;
     noRefCheck?: boolean;
     ref: any;
 }
@@ -66,6 +69,7 @@ interface IToTestOptionsOptions {
     method: Function;
     methodName: string | symbol;
     name: string;
+    ref: any;
     settings: Nilable<ITestSettings>;
     shouldUseModuleAsDefault: boolean;
     timeout: number;
@@ -78,6 +82,20 @@ export type ItRefValue =
     bigint |
     number |
     symbol;
+
+interface ITryFindTestSettingsByControllerOptions {
+    controller: IHttpController;
+    customSpecFile?: Nilable<string>;
+    index: number;
+    moduleKey: string | symbol;
+    ref: any;
+    settings: Nilable<ITestSettings>;
+}
+
+interface ITryFindTestSettingsByControllerResult {
+    isFileForControllerExisting: boolean;
+    preferredSettings: Nilable<ITestSettings>;
+}
 
 /**
  * A possible value for settings.
@@ -125,17 +143,20 @@ export function It(name: string, arg2?: Nilable<ItArgument2>, arg3?: Nilable<ItA
         throw new TypeError("name must be of type string");
     }
 
-    const getSettings = toGetTestSettingsFunc({
-        arg2,
-        arg3,
-        "ref": name
-    });
-
     return function (target, methodName, descriptor) {
         const method = getMethodOrThrow(descriptor);
 
         getListFromObject<InitControllerMethodTestAction>(method, ADD_CONTROLLER_METHOD_TEST_ACTION).push(
             ({ controller, index, server, shouldAllowEmptySettings, shouldUseModuleAsDefault, timeout }) => {
+                const getSettings = toGetTestSettingsFunc({
+                    controller,
+                    arg2,
+                    arg3,
+                    index,
+                    "moduleKey": methodName,
+                    "ref": name
+                });
+
                 getListFromObject<TestOptionsGetter>(server, TEST_OPTIONS).push(
                     async () => {
                         return toTestOptions({
@@ -144,6 +165,7 @@ export function It(name: string, arg2?: Nilable<ItArgument2>, arg3?: Nilable<ItA
                             method,
                             methodName,
                             name,
+                            "ref": name,
                             "settings": await getSettings({
                                 controller,
                                 index,
@@ -161,13 +183,31 @@ export function It(name: string, arg2?: Nilable<ItArgument2>, arg3?: Nilable<ItA
 }
 
 function toGetTestSettingsFunc(options: IToGetTestSettingsFuncOptions): GetTestSettingsFunc {
-    const { arg2, arg3, noRefCheck, ref } = options;
+    const {
+        arg2,
+        arg3,
+        controller,
+        index,
+        moduleKey,
+        noRefCheck,
+        ref
+    } = options;
 
     if (isNil(arg2)) {
         // default
 
         return async () => {
-            return arg2 as Nilable<ITestSettings>;
+            const {
+                preferredSettings
+            } = await tryFindTestSettingsByController({
+                controller,
+                index,
+                moduleKey,
+                ref,
+                "settings": arg2
+            });
+
+            return preferredSettings;
         };
     }
 
@@ -194,37 +234,18 @@ function toGetTestSettingsFunc(options: IToGetTestSettingsFuncOptions): GetTestS
         // custom script file
 
         return async ({ controller, index, methodName }) => {
-            const controllerFileExt = path.extname(controller.__file);
-
-            let moduleFile = arg2 as string;
-            if (!moduleFile.endsWith(controllerFileExt)) {
-                moduleFile += controllerFileExt;
-            }
-
-            if (!path.isAbsolute(moduleFile)) {
-                const controllerDir = path.dirname(controller.__file);
-
-                moduleFile = path.join(controllerDir, moduleFile);
-            }
-
-            if (!fs.existsSync(moduleFile)) {
-                throw new Error(`${moduleFile} not found`);
-            }
-
-            const stat = await fs.promises.stat(moduleFile);
-            if (!stat.isFile()) {
-                throw new Error(`${moduleFile} is no file`);
-            }
-
-            const controllerSpecModule = require(moduleFile);
-
-            // try to find an export, with the exact the same name / key
-            // as the underlying controller method
-            return toSettings({
+            const {
+                preferredSettings
+            } = await tryFindTestSettingsByController({
+                controller,
+                "customSpecFile": arg2 as string,
                 index,
+                "moduleKey": methodName,
                 ref,
-                "value": controllerSpecModule?.[methodName]
+                "settings": undefined
             });
+
+            return preferredSettings;
         };
     }
 
@@ -233,9 +254,12 @@ function toGetTestSettingsFunc(options: IToGetTestSettingsFuncOptions): GetTestS
             // custom `ref`
 
             const getSettings = toGetTestSettingsFunc({
-                "arg2": arg3, // `arg3` is now used to create a `getSettings()` function from ...
-                "noRefCheck": true, // ... but not handled as custom `ref` value
-                "ref": arg2  // custom ref
+                "arg2": arg3,
+                controller,
+                index,
+                moduleKey,
+                "noRefCheck": true,
+                "ref": arg2
             });
 
             return async (settingsContext) => {
@@ -298,7 +322,7 @@ function toSettings(options: IToSettingsOptions): Nilable<ITestSettings> {
     if (typeof value === "object") {
         const settings = value as Nilable<ITestSettings>;
         if (!isNil(ref) && !isNil(settings?.ref)) {
-            // required matching `ref` values
+            // requires matching `ref` values
             if (areRefsEqual(settings!.ref, ref)) {
                 return settings;
             }
@@ -329,32 +353,22 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
     if (isNil(settings)) {
         // try load from `.spec.??` file
 
-        const controllerDir = path.dirname(controller.__file);
-        const controllerFileExt = path.extname(controller.__file);
-        const controllerBasename = path.basename(controller.__file, controllerFileExt);
-        const controllerSpecFile = path.join(controllerDir, controllerBasename + ".spec" + controllerFileExt);
+        const {
+            isFileForControllerExisting,
+            preferredSettings
+        } = await tryFindTestSettingsByController({
+            controller,
+            index,
+            "moduleKey": methodName,
+            "ref": name,
+            settings
+        });
 
-        if (fs.existsSync(controllerSpecFile)) {
-            const stat = await fs.promises.stat(controllerSpecFile);
-            if (!stat.isFile()) {
-                throw new Error(`${controllerSpecFile} is no file`);
-            }
+        settings = preferredSettings;
 
-            const controllerSpecModule = require(controllerSpecFile);
-
-            // try to find an export, with the exact the same name / key
-            // as the underlying controller method
-            settings = toSettings({
-                index,
-                "ref": name,
-                "value": controllerSpecModule?.[methodName]
-            });
-        }
-        else {
-            if (shouldUseModuleAsDefault) {
-                // required
-                throw new Error(`${controllerSpecFile} required but not found`);
-            }
+        if (shouldUseModuleAsDefault && !isFileForControllerExisting) {
+            // required
+            throw new Error(`No .spec file for controller in ${controller.__file} found`);
         }
     }
 
@@ -499,5 +513,67 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         methodName,
         name,
         "settings": settings || {}
+    };
+}
+
+async function tryFindTestSettingsByController(options: ITryFindTestSettingsByControllerOptions): Promise<ITryFindTestSettingsByControllerResult> {
+    const {
+        controller,
+        customSpecFile,
+        index,
+        moduleKey,
+        ref,
+        settings
+    } = options;
+
+    let isFileForControllerExisting = false;
+
+    const controllerDir = path.dirname(controller.__file);
+    const controllerFileExt = path.extname(controller.__file);
+
+    let controllerSpecFile: string;
+    if (typeof customSpecFile === "string") {
+        controllerSpecFile = customSpecFile;
+    }
+    else {
+        const controllerBasename = path.basename(controller.__file, controllerFileExt);
+
+        controllerSpecFile = path.join(controllerDir, controllerBasename + ".spec" + controllerFileExt);
+    }
+
+    if (!controllerSpecFile.endsWith(controllerFileExt)) {
+        controllerSpecFile += controllerFileExt;
+    }
+
+    if (!path.isAbsolute(controllerSpecFile)) {
+        controllerSpecFile = path.join(controllerDir, controllerSpecFile);
+    }
+
+    let loadedSettings: Nilable<ITestSettings>;
+
+    if (fs.existsSync(controllerSpecFile)) {
+        const stat = await fs.promises.stat(controllerSpecFile);
+        if (!stat.isFile()) {
+            throw new Error(`${controllerSpecFile} is no file`);
+        }
+
+        isFileForControllerExisting = true;
+
+        const controllerSpecModule = require(controllerSpecFile);
+
+        // try to find an export, with the exact the same name / key
+        // as the underlying controller method
+        loadedSettings = toSettings({
+            index,
+            ref,
+            "value": controllerSpecModule?.[moduleKey]
+        });
+    }
+
+    return {
+        isFileForControllerExisting,
+        "preferredSettings": isFileForControllerExisting ?
+            loadedSettings :
+            settings
     };
 }
