@@ -1,8 +1,13 @@
 # Change Log (@egomobile/http-server)
 
+## 0.47.0
+
+- add following placeholders for `name` argument of [@It() decorator](https://egomobile.github.io/node-http-server/functions/It.html):
+  - `{{parameters}}`: list of comma-separated parameter list, example: `"param1" = "param1 value", "param2" = "param2 value"`
+
 ## 0.46.0
 
-- `name` on [@It() decorator](https://egomobile.github.io/node-http-server/functions/It.html) now supports templating with the following placeholders:
+- `name` argument of [@It() decorator](https://egomobile.github.io/node-http-server/functions/It.html) now supports templating with the following placeholders:
   - `{{body}}`: expected body
   - `{{header:my-header}}`: expected value for header `my-header`
   - `{{parameter:myParameter}}`: submitted value of URL parameter `myParameter`

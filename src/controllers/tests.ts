@@ -391,6 +391,15 @@ function setupRemainingPropsInTestEventContext(options: ISetupRemainingPropsInTe
                     }
                     break;
 
+                // {{parameters}}
+                case "parameters":
+                    // example: "param1" = "param1 value", "param2" = "param2 value"
+                    return Object.entries(parameters)
+                        .map(([parameterName, parameterValue]) => {
+                            return `"${parameterName}" = "${parameterValue}"`;
+                        })
+                        .join(", ");
+
                 // {{status}}
                 case "status":
                     return String(expectations.status);
