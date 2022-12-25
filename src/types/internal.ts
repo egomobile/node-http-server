@@ -100,6 +100,7 @@ export interface IInitControllerParseErrorHandlerActionContext {
 
 export interface IInitControllerMethodTestActionContext {
     controller: IHttpController<IHttpServer>;
+    index: number;
     server: IHttpServer;
     shouldAllowEmptySettings: boolean;
     shouldUseModuleAsDefault: boolean;
@@ -176,6 +177,7 @@ export interface ITestOptions {
     getHeaders: (context: ITestSettingValueGetterContext) => Promise<Record<string, any>>;
     getParameters: (context: ITestSettingValueGetterContext) => Promise<Record<string, string>>;
     getTimeout: (context: ITestSettingValueGetterContext) => Promise<number>;
+    index: number;
     method: Function;
     methodName: string | symbol;
     name: string;

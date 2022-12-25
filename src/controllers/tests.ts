@@ -24,6 +24,11 @@ export interface ISetupHttpServerTestMethodOptions {
     server: IHttpServer;
 }
 
+interface ISetupRemainingPropsInTestEventContextOptions {
+    context: ITestEventHandlerContext;
+    rawDescription: string;
+}
+
 interface ITestRunnerActionContext {
     index: number;
     totalCount: number;
@@ -34,6 +39,22 @@ interface ITestRunnerItem {
 }
 
 type TestRunnerAction = (rc: ITestRunnerActionContext) => Promise<void>;
+
+function bodyToString(body: any): string {
+    if (typeof body === "string") {
+        return body;
+    }
+
+    if (Buffer.isBuffer(body)) {
+        return body.toString("utf8");
+    }
+
+    if (isNil(body)) {
+        return "";
+    }
+
+    return JSON.stringify(body);
+}
 
 export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMethodOptions) {
     const { server } = setupOptions;
@@ -61,7 +82,20 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
         // count and provide possibility to implement progress
         for (const getOptions of allTestOptionGetters) {
             ((options: ITestOptions) => {
-                const { controller, getBody, getExpectedBody, getExpectedHeaders, getExpectedStatus, getHeaders, getParameters, getTimeout, method, methodName } = options;
+                const {
+                    controller,
+                    getBody,
+                    getExpectedBody,
+                    getExpectedHeaders,
+                    getExpectedStatus,
+                    getHeaders,
+                    getParameters,
+                    getTimeout,
+                    "index": groupIndex,
+                    "name": ref,
+                    method,
+                    methodName
+                } = options;
                 const validator = typeof options.settings.validator === "function" ?
                     asAsync<TestResponseValidator>(options.settings.validator) :
                     undefined;
@@ -163,7 +197,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                         "cancellationReason": undefined!,
                                         "cancellationRequested": undefined!,
                                         "context": "controller",
-                                        "description": options.name,
+                                        "description": undefined!,
                                         escapedRoute,
                                         "expectations": {
                                             body,
@@ -172,12 +206,14 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                         },
                                         "file": controller.__file,
                                         "group": description.name,
+                                        groupIndex,
                                         headers,
                                         httpMethod,
                                         "index": runnerContext.index,
                                         methodName,
                                         "onCancellationRequested": undefined,
                                         parameters,
+                                        ref,
                                         route,
                                         server,
                                         "totalCount": runnerContext.totalCount,
@@ -211,6 +247,13 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
 
                                             return onCancellationRequested = asAsync<TestEventCancellationEventHandler>(newValue);
                                         }
+                                    });
+
+                                    // setup the rest of the missing
+                                    // props
+                                    setupRemainingPropsInTestEventContext({
+                                        "context": testContext,
+                                        "rawDescription": ref
                                     });
 
                                     // setup timeout ...
@@ -288,4 +331,74 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
             });
         }
     };
+}
+
+function setupRemainingPropsInTestEventContext(options: ISetupRemainingPropsInTestEventContextOptions) {
+    const { context, rawDescription } = options;
+    const { expectations, parameters } = context;
+
+    let description = rawDescription;
+
+    // replace placeholders with format `{{name(:value)}}`
+    description = description.replace(
+        /{{([^:|^}]+)(:)?([^}]*)}}/gm,
+        (match: string, name: string, separator: string, value: string) => {
+            name = String(name ?? "").toLowerCase().trim();
+            value = String(value ?? "");
+
+            switch (name) {
+                // {{body}}
+                case "body":
+                    return bodyToString(expectations.body);
+
+                // {{header:name}}
+                case "header":
+                    {
+                        const headerName = value.toLowerCase().trim();
+
+                        const matchingHeaderEntry = Object.entries(expectations.headers)
+                            .find(([key]) => {
+                                return key.toLowerCase().trim() === headerName;
+                            });
+
+                        if (matchingHeaderEntry) {
+                            const expectedHeaderValue = matchingHeaderEntry[1];
+
+                            if (expectedHeaderValue instanceof RegExp) {
+                                return expectedHeaderValue.source;
+                            }
+                            else {
+                                return expectedHeaderValue;
+                            }
+                        }
+                    }
+                    break;
+
+                // {{parameter:name}}
+                case "parameter":
+                    {
+                        const parameterName = value.toLowerCase().trim();
+
+                        const matchingParameterEntry = Object.entries(parameters)
+                            .find(([key]) => {
+                                return key.toLowerCase().trim() === parameterName;
+                            });
+
+                        const matchingParameterValue = matchingParameterEntry?.[1];
+                        if (typeof matchingParameterValue === "string") {
+                            return matchingParameterValue;
+                        }
+                    }
+                    break;
+
+                // {{status}}
+                case "status":
+                    return String(expectations.status);
+            }
+
+            return match;
+        });
+
+    context.description = description;
+    context.ref = rawDescription;
 }

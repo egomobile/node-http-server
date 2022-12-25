@@ -1643,6 +1643,10 @@ export interface ITestEventHandlerContext {
      */
     group: string;
     /**
+     * The zero-based index of the current test, inside the `group`.
+     */
+    groupIndex: number;
+    /**
      * HTTP request headers.
      */
     headers: Record<string, string>;
@@ -1662,6 +1666,10 @@ export interface ITestEventHandlerContext {
      * Gets or sets a function, which listens for a cancellation event.
      */
     onCancellationRequested: Nilable<TestEventCancellationEventHandler>;
+    /**
+     * A reference value.
+     */
+    ref: any;
     /**
      * The path of the route with possible parameters.
      */
@@ -1742,6 +1750,11 @@ export interface ITestSettings {
      * URL parameters.
      */
     parameters?: Nilable<TestSettingValueOrGetter<Record<string, string>>>;
+    /**
+     * This is an explicit reference to the underlying test,
+     * declared by things like `@It()` decorator.
+     */
+    ref?: any;
     /**
      * Custom timeout value in ms.
      */

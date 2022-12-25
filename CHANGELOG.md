@@ -1,5 +1,16 @@
 # Change Log (@egomobile/http-server)
 
+## 0.46.0
+
+- `name` on [@It() decorator](https://egomobile.github.io/node-http-server/functions/It.html) now supports templating with the following placeholders:
+  - `{{body}}`: expected body
+  - `{{header:my-header}}`: expected value for header `my-header`
+  - `{{parameter:myParameter}}`: submitted value of URL parameter `myParameter`
+  - `{{status}}`: expected HTTP status code
+- can implement / declare multiple tests / test settings in `.spec` files now
+- add `groupIndex` and `ref` props to [ITestEventHandlerContext interface](https://egomobile.github.io/node-http-server/interfaces/ITestEventHandlerContext.html)
+- add `ref` prop to [ITestSettings interface](https://egomobile.github.io/node-http-server/interfaces/ITestSettings.html)
+
 ## 0.45.0
 
 - add `isUIEnabled` property to [ISwaggerInitializedEventArguments interface](https://egomobile.github.io/node-http-server/interfaces/ISwaggerInitializedEventArguments.html)
