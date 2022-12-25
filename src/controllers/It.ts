@@ -20,7 +20,7 @@ import path from "path";
 import type { IHttpController, IHttpServer, ITestSettings, TestResponseValidator } from "..";
 import { ADD_CONTROLLER_METHOD_TEST_ACTION, TEST_OPTIONS } from "../constants";
 import type { InitControllerMethodTestAction, ITestOptions, Nilable, TestOptionsGetter } from "../types/internal";
-import { asAsync, isNil } from "../utils";
+import { areRefsEqual, asAsync, isNil } from "../utils";
 import { getListFromObject, getMethodOrThrow } from "./utils";
 
 type GetTestSettingsFunc =
@@ -277,7 +277,7 @@ function toSettings(options: IToSettingsOptions): Nilable<ITestSettings> {
             let matchingSettings = settings.find((item) => {
                 return typeof item === "object" &&
                     !isNil(item?.ref) &&
-                    String(item!.ref) === String(ref);
+                    areRefsEqual(item!.ref, ref);
             });
             if (matchingSettings) {
                 return matchingSettings;
@@ -297,9 +297,9 @@ function toSettings(options: IToSettingsOptions): Nilable<ITestSettings> {
 
     if (typeof value === "object") {
         const settings = value as Nilable<ITestSettings>;
-        if (!isNil(ref)) {
+        if (!isNil(ref) && !isNil(settings?.ref)) {
             // required matching `ref` values
-            if (settings?.ref === ref) {
+            if (areRefsEqual(settings!.ref, ref)) {
                 return settings;
             }
             else {

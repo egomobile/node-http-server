@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-server)
 
-## 0.48.1
+## 0.48.2
 
 - **BREAKING CHANGE**: replace `once()` method with `on` in [IHttpServer interface](https://egomobile.github.io/node-http-server/interfaces/IHttpServer.html)
 - **BREAKING CHANGE**: `ItSettingsOrValidator` type has been replaced with `ItArgument2`

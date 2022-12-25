@@ -30,6 +30,10 @@ interface ICreateWithEntityTooLargeActionOptions {
 const propSepChar = String.fromCharCode(0);
 const truthyValues = ["true", "1", "yes", "y"];
 
+export function areRefsEqual(ref1: any, ref2: any): boolean {
+    return String(ref1) === String(ref2);
+}
+
 export function asAsync<TFunc extends Function = Function>(func: Function): TFunc {
     if (func.constructor.name === "AsyncFunction") {
         return func as TFunc;
