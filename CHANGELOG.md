@@ -1,9 +1,10 @@
 # Change Log (@egomobile/http-server)
 
-## 0.47.0
+## 0.47.1
 
 - add following placeholders for `name` argument of [@It() decorator](https://egomobile.github.io/node-http-server/functions/It.html):
   - `{{parameters}}`: list of comma-separated parameter list, example: `"param1" = "param1 value", "param2" = "param2 value"`
+- (bug-)fixes
 
 ## 0.46.0
 

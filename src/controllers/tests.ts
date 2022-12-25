@@ -384,9 +384,8 @@ function setupRemainingPropsInTestEventContext(options: ISetupRemainingPropsInTe
                                 return key.toLowerCase().trim() === parameterName;
                             });
 
-                        const matchingParameterValue = matchingParameterEntry?.[1];
-                        if (typeof matchingParameterValue === "string") {
-                            return matchingParameterValue;
+                        if (matchingParameterEntry) {
+                            return String(matchingParameterEntry[1]);
                         }
                     }
                     break;
