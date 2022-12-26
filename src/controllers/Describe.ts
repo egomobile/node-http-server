@@ -17,7 +17,22 @@
 
 import { TEST_DESCRIPTION } from "../constants";
 import type { ITestDescription, Nilable } from "../types/internal";
-import { isClass } from "../utils";
+import { isClass, isNil } from "../utils";
+
+/**
+ * Possible value for first argument of
+ * `@Describe()` decorator.
+ */
+export type DescribeArgument1 =
+    string |
+    IDescribeOptions;
+
+/**
+ * Possible value for 2nd argument of
+ * `@Describe()` decorator.
+ */
+export type DescribeArgument2 =
+    IDescribeOptions;
 
 /**
  * Custom options for `@Describe()` decorator.
@@ -36,7 +51,8 @@ export interface IDescribeOptions {
 /**
  * Marks a (controller) class to use in an environment with (unit-)tests, e.g.
  *
- * @param {string} name A description / name for the controller / class.
+ * @param {Nilable<string>} [name] A custom description / name for the controller / class.
+ *                                 If not defined, the name of the class will be used.
  * @param {Nilable<IDescribeOptions>} [options] Custom options.
  *
  * @example
@@ -56,9 +72,47 @@ export interface IDescribeOptions {
  *
  * @returns {ClassDecorator} The class decorator.
  */
-export function Describe(name: string, options?: Nilable<IDescribeOptions>): ClassDecorator {
-    if (typeof name !== "string") {
-        throw new TypeError("name must be of type string");
+export function Describe(): ClassDecorator;
+export function Describe(name: string, options?: Nilable<IDescribeOptions>): ClassDecorator;
+export function Describe(options: IDescribeOptions): ClassDecorator;
+export function Describe(arg1?: Nilable<DescribeArgument1>, arg2?: Nilable<DescribeArgument2>): ClassDecorator {
+    let name: Nilable<string>;
+    let options: Nilable<IDescribeOptions>;
+
+    if (isNil(arg1)) {
+        // defaults
+
+        name = arg1 as Nilable<string>;
+        options = arg2 as Nilable<IDescribeOptions>;
+    }
+    else {
+        if (typeof arg1 === "string") {
+            // [arg1] => name
+            // [arg2] => options?
+
+            name = arg1 as string;
+            options = arg2 as Nilable<IDescribeOptions>;
+        }
+        else if (typeof arg1 === "object") {
+            // [arg1] => options
+
+            options = arg1 as Nilable<IDescribeOptions>;
+        }
+        else {
+            throw new TypeError("options must be of type object or string");
+        }
+    }
+
+    if (!isNil(name)) {
+        if (typeof name !== "string") {
+            throw new TypeError("name must be of type string");
+        }
+    }
+
+    if (!isNil(options)) {
+        if (typeof options !== "object") {
+            throw new TypeError("options must be of type object");
+        }
     }
 
     return function (classFunction: Function) {
@@ -66,12 +120,19 @@ export function Describe(name: string, options?: Nilable<IDescribeOptions>): Cla
             throw new TypeError("classFunction must be of type class");
         }
 
+        const classPrototype: any = classFunction.prototype;
+
         const description: ITestDescription = {
-            name,
+            "name": name || classFunction.name,
             "sortOrder": options?.sortOrder,
             "tag": options?.tag
         };
 
-        (classFunction.prototype as any)[TEST_DESCRIPTION] = description;
+        if (isNil(classPrototype[TEST_DESCRIPTION])) {
+            classPrototype[TEST_DESCRIPTION] = description;
+        }
+        else {
+            throw new Error("Can use Describe decorator only once");
+        }
     };
 }
