@@ -6,7 +6,7 @@
 
 ## 0.50.2
 
-- **BREAKING CHANGE**: [@Describe() decorator][https://egomobile.github.io/node-http-server/functions/describe.html] will throw an exception, if it is tried to be used more than once in a controller class
+- **BREAKING CHANGE**: [@Describe() decorator](https://egomobile.github.io/node-http-server/functions/describe.html) will throw an exception, if it is tried to be used more than once in a controller class
 - improve constructor arguments of [@Describe() decorator][https://egomobile.github.io/node-http-server/functions/describe.html]
 - (bug-)fixes
 
@@ -14,9 +14,9 @@
 
 - **BREAKING CHANGE**: tests are sorted now the following way:
   - by `sortBy` value of [@Describe() decorator](https://egomobile.github.io/node-http-server/functions/Describe.html)
-  - by `name` argument of [@Describe() decorator](https://egomobile.github.io/node-http-server/functions/Describe.html) (case-insensitive)
-  - by `sortBy` value of [ITestSettings interface](https://egomobile.github.io/node-http-server/interfaces/ITestSettings.html)
-  - by `name` argument of [@It() decorator](https://egomobile.github.io/node-http-server/functions/It.html) (case-insensitive)
+  - then: by `name` argument of [@Describe() decorator](https://egomobile.github.io/node-http-server/functions/Describe.html) (case-insensitive)
+  - then: by `sortBy` value of [ITestSettings interface](https://egomobile.github.io/node-http-server/interfaces/ITestSettings.html)
+  - then: by `name` argument of [@It() decorator](https://egomobile.github.io/node-http-server/functions/It.html) (case-insensitive)
 - update compiler options to `es2021`
 - deactivate building source maps
 - add `sortBy` prop to [ITestSettings interface](https://egomobile.github.io/node-http-server/interfaces/ITestSettings.html)
