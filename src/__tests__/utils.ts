@@ -76,9 +76,9 @@ export function createServerAndInitControllers() {
                     "title": "e.GO HTTP Server Tests",
                     "version": "0.0.0"
                 }
-            },
-            "requiresDocumentationEverywhere": false
+            }
         },
+        "requiresDocumentationEverywhere": false,
         "validateWithDocumentation": false
     });
 

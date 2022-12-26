@@ -680,6 +680,16 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
             shouldUseTestModuleAsDefault = !!options.requiresTestModuleAsDefault;  // custom
         }
 
+        const shouldLoadOpenAPIFiles = isNil(options.loadOpenAPIFiles) ?
+            true :
+            !!options.loadOpenAPIFiles;
+
+        const shouldHaveDocumentationEverywhere = isNil(options.requiresDocumentationEverywhere) ?
+            true :
+            !!options.requiresDocumentationEverywhere;
+
+        const shouldAllowEmptyTestSettings = !!options.allowEmptyTestSettings;
+
         let testTimeout: number;
         if (isNil(options.testTimeout)) {
             testTimeout = setupOptions.testTimeout;  // default
@@ -794,7 +804,6 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
             throw new TypeError("All elements of options.patterns must be of type string");
         }
 
-        let shouldLoadOpenAPIFiles = true;
         let swaggerResourcePath: Optional<string>;
         if (!isNil(swagger)) {
             if (!isNil(swagger.resourcePath)) {
@@ -806,10 +815,6 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                 if (!path.isAbsolute(swaggerResourcePath)) {
                     swaggerResourcePath = path.join(rootDir, swaggerResourcePath);
                 }
-            }
-
-            if (!isNil(swagger.loadOpenAPIFiles)) {
-                shouldLoadOpenAPIFiles = !!swagger.loadOpenAPIFiles;
             }
         }
 
@@ -1070,7 +1075,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                         controller,
                         index,
                         server,
-                        "shouldAllowEmptySettings": !!options?.allowEmptyTestSettings,
+                        "shouldAllowEmptySettings": shouldAllowEmptyTestSettings,
                         "shouldUseModuleAsDefault": shouldUseTestModuleAsDefault,
                         "timeout": testTimeout
                     });
@@ -1142,7 +1147,6 @@ ${missingTestsText}`
 
         // swagger
         {
-            const shouldHaveDocumentationEverywhere = isNil(swagger?.requiresDocumentationEverywhere) ? true : !!swagger?.requiresDocumentationEverywhere;
             if (shouldHaveDocumentationEverywhere) {
                 // check if at least one method have no documentation
 

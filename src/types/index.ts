@@ -651,6 +651,12 @@ export interface IControllersOptions {
      */
     imports?: Nilable<ImportValues>;
     /**
+     * Tries to load endpoint documentation from `.openapi` files.
+     *
+     * @default true
+     */
+    loadOpenAPIFiles?: Nilable<boolean>;
+    /**
      * Default value, that indicates, that query parameters should NOT be parsed.
      */
     noQueryParams?: Nilable<boolean>;
@@ -687,6 +693,12 @@ export interface IControllersOptions {
      * @see https://www.npmjs.com/package/minimatch
      */
     patterns?: Nilable<string | string[]>;
+    /**
+     * Value, which indicates, if all endpoints should have documentation or not.
+     *
+     * @default true
+     */
+    requiresDocumentationEverywhere?: Nilable<boolean>;
     /**
      * Custom value, which indicates, that, if no settings are specified, a module file with it is required.
      */
@@ -734,18 +746,6 @@ export interface IControllersSwaggerOptions {
      * The base document.
      */
     document: ControllersSwaggerBaseDocument;
-    /**
-     * Tries to load endpoint documentation from `.openapi` files.
-     *
-     * @default true
-     */
-    loadOpenAPIFiles?: Nilable<boolean>;
-    /**
-     * Value, which indicates, if all endpoints should have documentation or not.
-     *
-     * @default true
-     */
-    requiresDocumentationEverywhere?: Nilable<boolean>;
     /**
      * The path to the resource files / modules.
      * Relative paths will be mapped to the controller root directory.
