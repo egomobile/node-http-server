@@ -110,7 +110,7 @@ export type ItSettingsValue =
  * Sets up a request method for use in (unit-)tests.
  *
  * @param {string} name A description / name for the controller / class.
- * @param {bigint|number|symbol} ref The custom reference value.
+ * @param {ItRefValue} ref The custom reference value.
  * @param {string} script The path to the script, which should be used to import settings.
  *                        Relative paths will be mapped to the controller's directory.
  * @param {ITestSettings} settings The settings.
@@ -138,7 +138,7 @@ export function It(name: string): MethodDecorator;
 export function It(name: string, settings: ITestSettings): MethodDecorator;
 export function It(name: string, validator: TestResponseValidator): MethodDecorator;
 export function It(name: string, script: string): MethodDecorator;
-export function It(name: string, ref: bigint | number | symbol, arg3?: Nilable<ItArgument3>): MethodDecorator;
+export function It(name: string, ref: ItRefValue, arg3?: Nilable<ItArgument3>): MethodDecorator;
 export function It(name: string, arg2?: Nilable<ItArgument2>, arg3?: Nilable<ItArgument3>): MethodDecorator {
     if (typeof name !== "string") {
         throw new TypeError("name must be of type string");

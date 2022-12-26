@@ -1,5 +1,12 @@
 # Change Log (@egomobile/http-server)
 
+## 0.53.0
+
+- `name` argument of [@It() decorator](https://egomobile.github.io/node-http-server/functions/It.html) now also supports the following placeholders:
+  - `{{query}}`: list of query parameters
+  - `{{query-parameter:myQueryParameter}}`: submitted value of query parameter `myQueryParameter`
+- code cleanups and improvements
+
 ## 0.52.0
 
 - add support for query parameters in tests

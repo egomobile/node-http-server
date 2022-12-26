@@ -378,7 +378,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
 
 function setupRemainingPropsInTestEventContext(options: ISetupRemainingPropsInTestEventContextOptions) {
     const { context, rawDescription } = options;
-    const { expectations, parameters } = context;
+    const { expectations, parameters, query } = context;
 
     let description = rawDescription;
 
@@ -441,6 +441,31 @@ function setupRemainingPropsInTestEventContext(options: ISetupRemainingPropsInTe
                             return `"${parameterName}" = "${parameterValue}"`;
                         })
                         .join(", ");
+
+                // {{query}}
+                case "query":
+                    // example: "queryParam1" = "queryParam1 value", "queryParam2" = "queryParam2 value"
+                    return Object.entries(query)
+                        .map(([queryName, queryValue]) => {
+                            return `"${queryName}" = "${queryValue}"`;
+                        })
+                        .join(", ");
+
+                // {{query-parameter:name}}
+                case "query-parameter":
+                    {
+                        const queryParameterName = value.toLowerCase().trim();
+
+                        const matchingQueryParameterEntry = Object.entries(query)
+                            .find(([key]) => {
+                                return key.toLowerCase().trim() === queryParameterName;
+                            });
+
+                        if (matchingQueryParameterEntry) {
+                            return String(matchingQueryParameterEntry[1]);
+                        }
+                    }
+                    break;
 
                 // {{status}}
                 case "status":
