@@ -204,7 +204,7 @@ A possible result could be:
 
 With decorators [@Describe()](https://egomobile.github.io/node-http-server/functions/Describe.html) and [@It()](https://egomobile.github.io/node-http-server/functions/It.html), you can write automatic (unit-)tests, realized by any framework you want.
 
-This example shows, how to implement tests with [SuperTest](https://github.com/ladjs/supertest):
+This example shows, how to implement tests with [SuperTest](https://github.com/ladjs/supertest) (if you want to see a more detailed description of this feature, you can visit the [wiki page](https://github.com/egomobile/node-http-server/wiki/Testing)):
 
 ### Controller [<a href="#testing">↑</a>]
 
@@ -242,9 +242,6 @@ export default class MyController extends ControllerBase {
 }
 ```
 
-[The wiki page](https://github.com/egomobile/node-http-server/wiki/Testing)
-describes anything is more details.
-
 ### Initialization [<a href="#testing">↑</a>]
 
 ```typescript
@@ -255,7 +252,7 @@ import { createServer } from "@egomobile/http-server";
 const app = createServer();
 
 // event, that is executed, if a test is requested
-app.once("test", async (context) => {
+app.on("test", async (context) => {
   const {
     body,
     description,
