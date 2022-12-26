@@ -1,12 +1,13 @@
 # Change Log (@egomobile/http-server)
 
-## 0.51.0
+## 0.51.2
 
 - **BREAKING CHANGE**: move `loadOpenAPIFiles` and `requiresDocumentationEverywhere` props from [IControllersSwaggerOptions](https://egomobile.github.io/node-http-server/interfaces/IControllersSwaggerOptions.html) to [IControllersOptions](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html)
+- (bug-)fixes
 
 ## 0.50.2
 
-- **BREAKING CHANGE**: [@Describe() decorator](https://egomobile.github.io/node-http-server/functions/describe.html) will throw an exception, if it is tried to be used more than once in a controller class
+- **BREAKING CHANGE**: [@Describe() decorator](https://egomobile.github.io/node-http-server/functions/Describe.html) will throw an exception, if it is tried to be used more than once in a controller class
 - improve constructor arguments of [@Describe() decorator][https://egomobile.github.io/node-http-server/functions/describe.html]
 - (bug-)fixes
 
