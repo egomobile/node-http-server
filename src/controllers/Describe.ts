@@ -122,17 +122,17 @@ export function Describe(arg1?: Nilable<DescribeArgument1>, arg2?: Nilable<Descr
 
         const classPrototype: any = classFunction.prototype;
 
-        const description: ITestDescription = {
-            "name": name || classFunction.name,
-            "sortOrder": options?.sortOrder,
-            "tag": options?.tag
-        };
-
         if (isNil(classPrototype[TEST_DESCRIPTION])) {
+            const description: ITestDescription = {
+                "name": name || classFunction.name,
+                "sortOrder": options?.sortOrder,
+                "tag": options?.tag
+            };
+
             classPrototype[TEST_DESCRIPTION] = description;
         }
         else {
-            throw new Error("Can use Describe decorator only once");
+            throw new Error(`Can use Describe decorator in ${classFunction.name} only once`);
         }
     };
 }
