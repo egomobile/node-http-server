@@ -23,8 +23,8 @@ import { ADD_CONTROLLER_METHOD_TEST_ACTION, CONTROLLERS_CONTEXES, CONTROLLER_MET
 import { SwaggerValidationError } from "../errors";
 import { buffer, query } from "../middlewares";
 import { prepareSwaggerDocumentFromOpenAPIFiles, prepareSwaggerDocumentFromResources, setupSwaggerUIForServerControllers } from "../swagger";
-import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRouteWithBodyOptions, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ParameterOptions, ResponseSerializer } from "../types";
-import type { Func, GetSwaggerDocumentationsFunc, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerMethodTestAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, IRouterPathItem, Nilable, Optional, PrepareControllerMethodAction, ResolveSwaggerOperationObject } from "../types/internal";
+import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRouteWithBodyOptions, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ITestSettings, ParameterOptions, ResponseSerializer } from "../types";
+import type { Func, GetSwaggerDocumentationsFunc, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerMethodTestAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, IRouterPathItem, Nilable, Optional, PrepareControllerMethodAction, ResolveSwaggerOperationObject, ResolveTestSettings } from "../types/internal";
 import { asAsync, canHttpMethodHandleBodies, getAllClassProps, getFunctionParamNames, isClass, isNil, limitToBytes, walkDirSync } from "../utils";
 import { params } from "../validators/params";
 import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath, setupMiddlewaresBySchema, setupMiddlewaresBySwaggerDocumentation, setupSwaggerDocumentation, toParameterValueUpdaters } from "./utils";
@@ -569,7 +569,8 @@ function createInitControllerMethodAction({
             "options": decoratorOptions ?? undefined,
             "path": routerPath,
             "rawPath": rawRouterPath,
-            "serializer": routeSerializer ?? undefined
+            "serializer": routeSerializer ?? undefined,
+            "tests": []
         });
     };
 }
@@ -929,6 +930,15 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                     }
                 };
 
+                const tests: ITestSettings[] = [];
+                const resolveTest: ResolveTestSettings = ({
+                    settings
+                }) => {
+                    if (!tests.includes(settings)) {
+                        tests.push(settings);
+                    }
+                };
+
                 const getOperationObjects: GetSwaggerDocumentationsFunc =
                     ({
                         httpMethod,
@@ -1074,6 +1084,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                     action({
                         controller,
                         index,
+                        resolveTest,
                         server,
                         "shouldAllowEmptySettings": shouldAllowEmptyTestSettings,
                         "shouldUseModuleAsDefault": shouldUseTestModuleAsDefault,
@@ -1104,8 +1115,10 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                     }
                 }
 
+                // update properties
                 for (const m of methods) {
                     m.swaggerOperations.push(...swaggerOperations);
+                    m.tests.push(...tests);
                 }
             });
 
@@ -1210,6 +1223,11 @@ ${missingDocsText}`
             newControllersContext
         );
 
-        return server;
+        return {
+            "app": server,
+            "documentation": swaggerDoc,
+            "isSwaggerUIEnabled": newControllersContext.isSwaggerUIEnabled,
+            "methods": allMethods
+        };
     };
 }

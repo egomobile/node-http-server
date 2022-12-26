@@ -1,5 +1,10 @@
 # Change Log (@egomobile/http-server)
 
+## 0.54.0
+
+- **BREAKING CHANGE**: [controllers() method](https://egomobile.github.io/node-http-server/interfaces/IHttpServer.html#controllers) now returns an `IControllersResult` object instead of the service instance itself
+- add `tests` prop to [IControllerMethodInfo interface](https://egomobile.github.io/node-http-server/interfaces/IControllerMethodInfo.html)
+
 ## 0.53.0
 
 - `name` argument of [@It() decorator](https://egomobile.github.io/node-http-server/functions/It.html) now also supports the following placeholders:

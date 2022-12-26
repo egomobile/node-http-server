@@ -111,6 +111,7 @@ export interface IInitControllerParseErrorHandlerActionContext {
 export interface IInitControllerMethodTestActionContext {
     controller: IHttpController<IHttpServer>;
     index: number;
+    resolveTest: ResolveTestSettings;
     server: IHttpServer;
     shouldAllowEmptySettings: boolean;
     shouldUseModuleAsDefault: boolean;
@@ -168,6 +169,10 @@ export interface IResolveSwaggerOperationObjectContext {
     operation: OpenAPIV3.OperationObject;
 }
 
+export interface IResolveTestSettingsContext {
+    settings: ITestSettings;
+}
+
 export interface IRouterPathItem {
     httpMethod: HttpMethod;
     routerPath: string;
@@ -221,5 +226,7 @@ export type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T,
 export type ResolveControllerMethodInfo = (info: IControllerMethodInfo) => any;
 
 export type ResolveSwaggerOperationObject = (context: IResolveSwaggerOperationObjectContext) => any;
+
+export type ResolveTestSettings = (context: IResolveTestSettingsContext) => any;
 
 export type TestOptionsGetter = () => Promise<ITestOptions>;

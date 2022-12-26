@@ -457,6 +457,10 @@ export interface IControllerMethodInfo {
      * Underlying swagger operations.
      */
     swaggerOperations: OpenAPIV3.OperationObject[];
+    /**
+     * Tests, represented by their settings.
+     */
+    tests: ITestSettings[];
 }
 
 /**
@@ -730,6 +734,28 @@ export interface IControllersOptions {
      * @default false
      */
     validateWithDocumentation?: Nilable<boolean>;
+}
+
+/**
+ * Result of an `IHttpServer.controllers()` call.
+ */
+export interface IControllersResult {
+    /**
+     * The underlying app / server.
+     */
+    app: IHttpServer;
+    /**
+     * The swagger documentation.
+     */
+    documentation: OpenAPIV3.Document;
+    /**
+     * Indicates if Swagger UI is enabled or not.
+     */
+    isSwaggerUIEnabled: boolean;
+    /**
+     * Controller methods.
+     */
+    methods: IControllerMethodInfo[];
 }
 
 /**
@@ -1019,10 +1045,12 @@ export interface IHttpServer {
      * @param {Nilable<string>} [rootDir] The custom root directory.
      * @param {Nilable<ImportValues>} [imports] Values to import.
      * @param {Nilable<IControllersOptions>} [options] Custom options.
+     *
+     * @returns {IControllersResult} The result of the invocation with call data of the setup.
      */
-    controllers(): this;
-    controllers(rootDir: Nilable<string>, imports?: Nilable<ImportValues>): this;
-    controllers(options: Nilable<IControllersOptions>): this;
+    controllers(): IControllersResult;
+    controllers(rootDir: Nilable<string>, imports?: Nilable<ImportValues>): IControllersResult;
+    controllers(options: Nilable<IControllersOptions>): IControllersResult;
 
     /**
      * Registers a route for a DELETE request.
