@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-server)
 
-## 0.49.0
+## 0.49.1
 
 - **BREAKING CHANGE**: tests are sorted now the following way:
   - by `sortBy` value of [@Describe() decorator](https://egomobile.github.io/node-http-server/functions/Describe.html)

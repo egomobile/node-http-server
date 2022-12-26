@@ -90,6 +90,7 @@ interface ITryFindTestSettingsByControllerOptions {
     moduleKey: string | symbol;
     ref: any;
     settings: Nilable<ITestSettings>;
+    throwIfFileDoesNotExist?: Nilable<boolean>;
 }
 
 interface ITryFindTestSettingsByControllerResult {
@@ -242,7 +243,8 @@ function toGetTestSettingsFunc(options: IToGetTestSettingsFuncOptions): GetTestS
                 index,
                 "moduleKey": methodName,
                 ref,
-                "settings": undefined
+                "settings": undefined,
+                "throwIfFileDoesNotExist": true
             });
 
             return preferredSettings;
@@ -523,7 +525,8 @@ async function tryFindTestSettingsByController(options: ITryFindTestSettingsByCo
         index,
         moduleKey,
         ref,
-        settings
+        settings,
+        throwIfFileDoesNotExist
     } = options;
 
     let isFileForControllerExisting = false;
@@ -568,6 +571,11 @@ async function tryFindTestSettingsByController(options: ITryFindTestSettingsByCo
             ref,
             "value": controllerSpecModule?.[moduleKey]
         });
+    }
+    else {
+        if (throwIfFileDoesNotExist) {
+            throw new Error(`Required spec file ${controllerSpecFile} not found`);
+        }
     }
 
     return {
