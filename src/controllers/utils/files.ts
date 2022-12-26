@@ -20,7 +20,7 @@ import { multiSort } from "../../utils";
 const safePathSep = "/";
 
 function getSafePath(input: string): string {
-    return input.split(path.sep).join(safePathSep);
+    return input.replaceAll(path.sep, safePathSep);
 }
 
 function getSortValueByItemName(itemName: Nilable<string>): number {

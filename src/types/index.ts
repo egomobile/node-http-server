@@ -1627,6 +1627,10 @@ export interface ITestEventHandlerContext {
      */
     readonly description: string;
     /**
+     * Value of `query` as escaped string
+     */
+    readonly escapedQuery: string;
+    /**
      * Read-to-use path of the route with injected / replaced and escaped parameter values.
      */
     readonly escapedRoute: string;
@@ -1671,6 +1675,14 @@ export interface ITestEventHandlerContext {
      */
     onCancellationRequested: Nilable<TestEventCancellationEventHandler>;
     /**
+     * URL parameters to use.
+     */
+    readonly parameters: Record<string, string>;
+    /**
+     * Query parameters.
+     */
+    readonly query: Record<string, string>;
+    /**
      * A reference value.
      */
     readonly ref: any;
@@ -1678,10 +1690,6 @@ export interface ITestEventHandlerContext {
      * The path of the route with possible parameters.
      */
     readonly route: string;
-    /**
-     * URL parameters to use.
-     */
-    readonly parameters: Record<string, string>;
     /**
      * The underlying server instance.
      */
@@ -1759,6 +1767,10 @@ export interface ITestSettings {
      */
     parameters?: Nilable<TestSettingValueOrGetter<Record<string, string>>>;
     /**
+     * Query parameters.
+     */
+    query?: Nilable<TestSettingValueOrGetter<Record<string, string>>>;
+    /**
      * This is an explicit reference to the underlying test,
      * declared by things like `@It()` decorator.
      */
@@ -1785,6 +1797,26 @@ export interface ITestSettings {
  * Context for a test setting value getter.
  */
 export interface ITestSettingValueGetterContext {
+    /**
+     * The full path to the underlying file.
+     */
+    file: string;
+    /**
+     * The HTTP method.
+     */
+    method: HttpMethod;
+    /**
+     * The name of the underlying test.
+     */
+    name: string;
+    /**
+     * The raw endpoint route.
+     */
+    route: string;
+    /**
+     * The underlying settings.
+     */
+    settings: ITestSettings;
 }
 
 /**
@@ -1964,6 +1996,13 @@ export type TestResponseValidator = (context: ITestResponseValidatorContext) => 
  */
 export type TestSettingValueOrGetter<T extends any = any> =
     T | ((context: ITestSettingValueGetterContext) => T) | ((context: ITestSettingValueGetterContext) => PromiseLike<T>);
+
+/**
+ * A possible value for a value / item in a `.spec` file.
+ */
+export type TestSpecItem =
+    ITestSettings |
+    TestResponseValidator;
 
 /**
  * An unique middleware.

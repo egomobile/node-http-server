@@ -325,6 +325,7 @@ function toSettings(options: IToSettingsOptions): Nilable<ITestSettings> {
         const settings = value as Nilable<ITestSettings>;
         if (!isNil(ref) && !isNil(settings?.ref)) {
             // requires matching `ref` values
+
             if (areRefsEqual(settings!.ref, ref)) {
                 return settings;
             }
@@ -385,6 +386,7 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         }
     }
 
+    // expected status
     let getExpectedStatus = async () => {
         return 200;
     };
@@ -402,6 +404,7 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         }
     }
 
+    // expected headers
     let getExpectedHeaders = async (): Promise<Record<string, string | RegExp>> => {
         return {};
     };
@@ -419,6 +422,7 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         }
     }
 
+    // expected body
     let getExpectedBody = async (): Promise<any> => {
         return undefined;
     };
@@ -433,6 +437,25 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         }
     }
 
+    // Query parameters to submit
+    let getQuery = async (): Promise<Record<string, string>> => {
+        return {};
+    };
+    if (!isNil(settings?.query)) {
+        if (typeof settings!.query === "object") {
+            getQuery = async () => {
+                return settings!.query as Record<string, string>;
+            };
+        }
+        else if (typeof settings!.query === "function") {
+            getQuery = asAsync(settings!.query!);
+        }
+        else {
+            throw new TypeError("settings.query must be of type object or function");
+        }
+    }
+
+    // URL parameters to submit
     let getParameters = async (): Promise<Record<string, string>> => {
         return {};
     };
@@ -450,6 +473,7 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         }
     }
 
+    // request headers to submit
     let getHeaders = async (): Promise<Record<string, string>> => {
         return {};
     };
@@ -467,6 +491,7 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         }
     }
 
+    // request body
     let getBody: () => Promise<any>;
     if (typeof settings!.body === "function") {
         getBody = asAsync(settings!.body!);
@@ -479,6 +504,7 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         };
     }
 
+    // custom timeout value
     let getTimeout: () => Promise<number>;
     if (isNil(settings?.timeout)) {
         getTimeout = async () => {
@@ -509,6 +535,7 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         getExpectedStatus,
         getHeaders,
         getParameters,
+        getQuery,
         getTimeout,
         index,
         method,

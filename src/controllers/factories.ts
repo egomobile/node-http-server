@@ -458,7 +458,7 @@ function createInitControllerMethodAction({
         }
 
         routerPath = normalizeRouterPath(routerPath);
-        routerPath = routerPath.split("/@").join("/:");
+        routerPath = routerPath.replaceAll("/@", "/:");
 
         let allRouterPaths: Nilable<IRouterPathItem[]> = (method as any)[ROUTER_PATHS];
         if (!allRouterPaths) {

@@ -1,5 +1,12 @@
 # Change Log (@egomobile/http-server)
 
+## 0.52.0
+
+- add support for query parameters in tests
+- fix use of [ITestEventHandlerContext interface](https://egomobile.github.io/node-http-server/interfaces/ITestEventHandlerContext.html)
+- extend [ITestSettingValueGetterContext interface](https://egomobile.github.io/node-http-server/interfaces/ITestSettingValueGetterContext.html)
+- replace all `.split().join()` workarrounds with [replaceAll()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replaceAll)
+
 ## 0.51.3
 
 - **BREAKING CHANGE**: move `loadOpenAPIFiles` and `requiresDocumentationEverywhere` props from [IControllersSwaggerOptions](https://egomobile.github.io/node-http-server/interfaces/IControllersSwaggerOptions.html) to [IControllersOptions](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html)

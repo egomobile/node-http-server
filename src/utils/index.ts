@@ -190,13 +190,13 @@ export function getFunctionParamNames(func: Function): string[] {
 
 export function getProp(val: any, prop: string): any {
     // first replace escaped dots with temp char
-    const escapedProp = prop.split("\\.").join(propSepChar);
+    const escapedProp = prop.replaceAll("\\.", propSepChar);
 
     // now prepare path and replace temp char
     // in parts
     const propPath = escapedProp.split(".")
         .map(p => {
-            return p.split(propSepChar).join(".");
+            return p.replaceAll(propSepChar, ".");
         });
 
     let result = val;

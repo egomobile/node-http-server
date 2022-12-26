@@ -91,9 +91,10 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                     getExpectedStatus,
                     getHeaders,
                     getParameters,
+                    getQuery,
                     getTimeout,
                     "index": groupIndex,
-                    "name": ref,
+                    "name": testName,
                     method,
                     methodName,
                     settings
@@ -117,6 +118,11 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                         "action": (runnerContext) => {
                             return new Promise<void>(async (resolve, reject) => {
                                 const valueGetterContext: ITestSettingValueGetterContext = {
+                                    "file": controller.__file,
+                                    "method": httpMethod,
+                                    "name": testName,
+                                    route,
+                                    settings
                                 };
 
                                 let cancellationReason: Optional<CancellationReason>;
@@ -186,13 +192,18 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                     const body = await getExpectedBody(valueGetterContext);
 
                                     const parameters = await getParameters(valueGetterContext);
+                                    const query = await getQuery(valueGetterContext);
 
                                     let escapedRoute = route;
                                     for (const [paramName, paramValue] of Object.entries(parameters)) {
                                         escapedRoute = escapedRoute
-                                            .split(`:${paramName}`)
-                                            .join(encodeURIComponent(paramValue));
+                                            .replaceAll(`:${paramName}`, encodeURIComponent(paramValue));
                                     }
+
+                                    const escapedQuery = Object.entries(query)
+                                        .map(([queryName, queryValue]) => {
+                                            return `${encodeURIComponent(queryName)}=${encodeURIComponent(queryValue)}`;
+                                        }).join("&");
 
                                     const testContext: ITestEventHandlerContext = {
                                         "body": await getBody(valueGetterContext),
@@ -200,6 +211,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                         "cancellationRequested": undefined!,
                                         "context": "controller",
                                         "description": undefined!,
+                                        escapedQuery,
                                         escapedRoute,
                                         "expectations": {
                                             body,
@@ -216,7 +228,8 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                         methodName,
                                         "onCancellationRequested": undefined,
                                         parameters,
-                                        ref,
+                                        query,
+                                        "ref": settings.ref,
                                         route,
                                         server,
                                         "tag": settings.tag,
@@ -257,7 +270,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                     // props
                                     setupRemainingPropsInTestEventContext({
                                         "context": testContext,
-                                        "rawDescription": ref
+                                        "rawDescription": testName
                                     });
 
                                     // setup timeout ...
@@ -286,7 +299,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
 
                             // then by tests
                             isNil(settings.sortOrder) ? 0 : settings.sortOrder,
-                            ref.toLowerCase().trim()
+                            testName.toLowerCase().trim()
                         ]
                     });
                 });
@@ -439,5 +452,4 @@ function setupRemainingPropsInTestEventContext(options: ISetupRemainingPropsInTe
 
     // readonly is only for the interface declaration
     (context as any).description = description;
-    (context as any).ref = rawDescription;
 }
