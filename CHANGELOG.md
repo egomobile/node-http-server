@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-server)
 
-## 0.51.2
+## 0.51.3
 
 - **BREAKING CHANGE**: move `loadOpenAPIFiles` and `requiresDocumentationEverywhere` props from [IControllersSwaggerOptions](https://egomobile.github.io/node-http-server/interfaces/IControllersSwaggerOptions.html) to [IControllersOptions](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html)
 - (bug-)fixes
