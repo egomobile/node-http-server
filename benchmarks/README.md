@@ -21,7 +21,7 @@ Comparison:
 
 | &nbsp;                   | `Express` | `fastify` | `polka` | `@egomobile/http-server` |
 | ------------------------ | :-------: | :-------: | :-----: | :----------------------: |
-| `Express`                |     -     |   104%    |  37.5%  |           34%            |
+| `Express`                |     -     |   104%    |   38%   |           34%            |
 | `fastify`                |    96%    |     -     |   36%   |           32%            |
 | `polka`                  |   267%    |   277%    |    -    |           91%            |
 | `@egomobile/http-server` |   293%    |   304%    |  110%   |            -             |
