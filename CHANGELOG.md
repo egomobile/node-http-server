@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.55.0
+
+- **BREAKING CHANGE**: remove `validate` prop from [IControllersSwaggerOptions interface](https://egomobile.github.io/node-http-server/interfaces/IControllersSwaggerOptions.html) and `SwaggerValidationError` class
+
 ## 0.54.0
 
 - **BREAKING CHANGE**: [controllers() method](https://egomobile.github.io/node-http-server/interfaces/IHttpServer.html#controllers) now returns an `IControllersResult` object instead of the service instance itself

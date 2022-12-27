@@ -1,6 +1,6 @@
 {
     "name": "@egomobile/http-server",
-    "version": "0.54.0",
+    "version": "0.55.0",
     "description": "Very fast alternative HTTP server to Express, with simple routing and middleware support and which is compatible with Node.js 12 or later.",
     "main": "lib/index.js",
     "engines": {
@@ -80,7 +80,6 @@
         "js-yaml": "4.1.0",
         "minimatch": "5.1.2",
         "openapi-request-validator": "12.1.0",
-        "openapi-schema-validator": "12.1.0",
         "openapi-types": "12.1.0",
         "swagger-ui-dist": "4.15.5"
     },

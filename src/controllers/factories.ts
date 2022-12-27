@@ -16,11 +16,9 @@
 import fs from "fs";
 import { isSchema } from "joi";
 import minimatch from "minimatch";
-import OpenAPISchemaValidator from "openapi-schema-validator";
 import { OpenAPIV3 } from "openapi-types";
 import path from "path";
 import { ADD_CONTROLLER_METHOD_TEST_ACTION, CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER } from "../constants";
-import { SwaggerValidationError } from "../errors";
 import { buffer, query } from "../middlewares";
 import { prepareSwaggerDocumentFromOpenAPIFiles, prepareSwaggerDocumentFromResources, setupSwaggerUIForServerControllers } from "../swagger";
 import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRouteWithBodyOptions, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ITestSettings, ParameterOptions, ResponseSerializer } from "../types";
@@ -1177,24 +1175,6 @@ ${missingTestsText}`
                         `The following controller methods have no documentation defined:
     
 ${missingDocsText}`
-                    );
-                }
-            }
-
-            const shouldValidateDocumentation = isNil(swagger?.validate) ? true : !!swagger?.validate;
-            if (shouldValidateDocumentation) {
-                const validationResult = new OpenAPISchemaValidator({
-                    "version": 3
-                }).validate(swaggerDoc);
-
-                if (validationResult.errors?.length) {
-                    const message = validationResult.errors.map((error) => {
-                        return `[${error.instancePath}] '${error.message}'`;
-                    }).join("\n");
-
-                    throw new SwaggerValidationError(
-                        message,
-                        validationResult.errors
                     );
                 }
             }

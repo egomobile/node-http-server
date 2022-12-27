@@ -781,12 +781,6 @@ export interface IControllersSwaggerOptions {
      * One or more required middleware for the Swagger endpoint(s).
      */
     use?: Nilable<HttpMiddleware[]>;
-    /**
-     * Validate output document or not.
-     *
-     * @default true
-     */
-    validate?: Nilable<boolean>;
 }
 
 /**
