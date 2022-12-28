@@ -295,6 +295,10 @@ export interface IAfterAllTestsContext {
      */
     error?: any;
     /**
+     * The number of failed tests.
+     */
+    failCount: number;
+    /**
      * The total number of tests.
      */
     totalCount: number;
@@ -1362,8 +1366,10 @@ export interface IHttpServer {
      * Runs tests.
      *
      * @param {Nilable<IHttpServerTestOptions>} [options] Custom options.
+     *
+     * @returns {Promise<IHttpServerTestResult>} The promise with the result.
      */
-    test(options?: Nilable<IHttpServerTestOptions>): Promise<void>;
+    test(options?: Nilable<IHttpServerTestOptions>): Promise<IHttpServerTestResult>;
 
     /**
      * Registers a route for a TRACE request.
@@ -1428,9 +1434,29 @@ export interface IHttpServerTestOptions {
     /**
      * Custom value for the exit code, which should be used
      * if process should be exited automatically after
-     * tests run.
+     * tests run successfully.
      */
     exitCode?: Nilable<ExitWithCodeValue>;
+    /**
+     * Custom value for the exit code, which should be used
+     * if process should be exited automatically after
+     * tests run with errors.
+     */
+    exitCodeOnFail?: Nilable<ExitWithCodeValue>;
+}
+
+/**
+ * Result of `IHttpServer.test()` method.
+ */
+export interface IHttpServerTestResult {
+    /**
+     * If occurred, the global error.
+     */
+    error?: any;
+    /**
+     * The total number of failed tests.
+     */
+    failCount: number;
 }
 
 /**
@@ -1665,6 +1691,10 @@ export interface ITestEventHandlerContext {
      * The context, where the test is running in.
      */
     readonly context: "controller";
+    /**
+     * Can be executed from the listener to handle a failed test.
+     */
+    readonly countFailure: () => Promise<void>;
     /**
      * The description of the specific test.
      */

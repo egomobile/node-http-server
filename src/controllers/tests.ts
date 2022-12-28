@@ -64,6 +64,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
     } = setupOptions;
 
     const defaultExitWithCode = getExitWithCodeValue(serverOptions?.tests?.exitCode);
+    const defaultExitWithCodeOnFail = getExitWithCodeValue(serverOptions?.tests?.exitCodeOnFail);
 
     const afterAll = asAsync<AfterAllTestsFunc>(
         setupOptions.options?.tests?.afterAll || (async () => { })
@@ -79,7 +80,10 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
     );
 
     server.test = async (testOptions?: Nilable<IHttpServerTestOptions>) => {
+        let failCount = 0;
+
         const exitWithCode = getExitWithCodeValue(testOptions?.exitCode, defaultExitWithCode);
+        const exitWithCodeOnFail = getExitWithCodeValue(testOptions?.exitCodeOnFail, defaultExitWithCodeOnFail);
 
         const allRunners: ITestRunnerItem[] = [];
 
@@ -217,6 +221,9 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                         "cancellationReason": undefined!,
                                         "cancellationRequested": undefined!,
                                         "context": "controller",
+                                        "countFailure": async () => {
+                                            ++failCount;
+                                        },
                                         "description": undefined!,
                                         escapedQuery,
                                         escapedRoute,
@@ -369,10 +376,6 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                     });
                 }
             }
-
-            if (exitWithCode !== false) {
-                process.exit(exitWithCode);
-            }
         }
         catch (error) {
             globalError = error;
@@ -381,9 +384,26 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
             // global cleanups
             await afterAll({
                 "error": globalError,
+                failCount,
                 totalCount
             });
         }
+
+        if (failCount) {
+            if (exitWithCodeOnFail !== false) {
+                process.exit(exitWithCodeOnFail);
+            }
+        }
+        else {
+            if (exitWithCode !== false) {
+                process.exit(exitWithCode);
+            }
+        }
+
+        return {
+            "error": globalError,
+            failCount
+        };
     };
 }
 

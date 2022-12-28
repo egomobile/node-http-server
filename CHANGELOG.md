@@ -1,8 +1,13 @@
 # Change Log (@egomobile/http-server)
 
+## 0.57.0
+
+- **BREAKING CHANGE**: running tests will now execute `process.exit(1)` by default now on error
+- [IHttpServer.test() method](https://egomobile.github.io/node-http-server/interfaces/IHttpServer.html#test) will now return a result value now
+
 ## 0.56.2
 
-- **BREAKING CHANGE**: running tests will now execute `process.exit(0)` by default now
+- **BREAKING CHANGE**: running tests will now execute `process.exit(0)` by default now on success
 - (bug-)fixes
 
 ## 0.55.0

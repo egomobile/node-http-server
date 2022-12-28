@@ -71,6 +71,13 @@ export interface IServerTestOptions {
      */
     exitCode?: Nilable<ExitWithCodeValue>;
     /**
+     * The exit code, which should be used to exit the process automatically, after the tests ran with errors,
+     * while `false` indicates NOT to exit the process automatically.
+     *
+     * @default 1
+     */
+    exitCodeOnFail?: Nilable<ExitWithCodeValue>;
+    /**
      * If no settings are specified, a module file with it is required.
      *
      * @default true
