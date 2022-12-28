@@ -16,7 +16,7 @@
 import fs from "fs";
 import path from "path";
 import type { URLSearchParams } from "url";
-import { middleware } from "..";
+import { ExitWithCodeValue, middleware } from "..";
 import { httpMethodsWithBodies } from "../constants";
 import { EntityTooLargeError } from "../errors";
 import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, UniqueHttpMiddleware } from "../types";
@@ -168,6 +168,22 @@ export function getBufferEncoding(encoding: Nilable<BufferEncoding>): BufferEnco
     }
 
     throw new TypeError("encoding must be of type string");
+}
+
+export function getExitWithCodeValue(val: any, defaultValue: ExitWithCodeValue = 0): ExitWithCodeValue {
+    let exitWithCode = defaultValue;
+    if (!isNil(val)) {
+        if (!(
+            val === false ||
+            typeof val === "number"
+        )) {
+            throw new TypeError("val must be of type number or must represent the value false");
+        }
+
+        exitWithCode = val;
+    }
+
+    return exitWithCode;
 }
 
 // s. https://stackoverflow.com/questions/1007981/how-to-get-function-parameter-names-values-dynamically

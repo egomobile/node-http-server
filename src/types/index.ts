@@ -179,6 +179,13 @@ export type ControllersSwaggerOptionsValue = IControllersSwaggerOptions | false;
 export type DocumentationUpdaterHandler = (context: IDocumentationUpdaterContext) => any;
 
 /**
+ * A possible value, indicating, with what code a process should be exited.
+ *
+ * `false` indicate NOT to exit the process.
+ */
+export type ExitWithCodeValue = number | false;
+
+/**
  * Returns a status code from an error object.
  *
  * @param {any} error The error object.
@@ -1353,8 +1360,10 @@ export interface IHttpServer {
 
     /**
      * Runs tests.
+     *
+     * @param {Nilable<IHttpServerTestOptions>} [options] Custom options.
      */
-    test(): Promise<void>;
+    test(options?: Nilable<IHttpServerTestOptions>): Promise<void>;
 
     /**
      * Registers a route for a TRACE request.
@@ -1410,6 +1419,18 @@ export interface IHttpServer {
      * ```
      */
     use(...middlewares: HttpMiddleware[]): this;
+}
+
+/**
+ * Custom options for `IHttpServer.test()` method.
+ */
+export interface IHttpServerTestOptions {
+    /**
+     * Custom value for the exit code, which should be used
+     * if process should be exited automatically after
+     * tests run.
+     */
+    exitCode?: Nilable<ExitWithCodeValue>;
 }
 
 /**

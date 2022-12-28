@@ -13,10 +13,10 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, CancellationError, CancellationReason, ICreateServerOptions, IHttpServer, ITestEventCancellationEventHandlerContext, ITestEventHandlerContext, ITestSettingValueGetterContext, TestEventCancellationEventHandler, TestResponseValidator, TimeoutError } from "..";
+import { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, CancellationError, CancellationReason, ICreateServerOptions, IHttpServer, IHttpServerTestOptions, ITestEventCancellationEventHandlerContext, ITestEventHandlerContext, ITestSettingValueGetterContext, TestEventCancellationEventHandler, TestResponseValidator, TimeoutError } from "..";
 import { ROUTER_PATHS, TEST_DESCRIPTION, TEST_OPTIONS } from "../constants";
 import type { IRouterPathItem, ITestDescription, ITestOptions, Nilable, Optional, TestOptionsGetter } from "../types/internal";
-import { asAsync, compareValues, isNil } from "../utils";
+import { asAsync, compareValues, getExitWithCodeValue, isNil } from "../utils";
 import { getListFromObject } from "./utils";
 
 export interface ISetupHttpServerTestMethodOptions {
@@ -57,8 +57,15 @@ function bodyToString(body: any): string {
     return JSON.stringify(body);
 }
 
+
+
 export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMethodOptions) {
-    const { server } = setupOptions;
+    const {
+        "options": serverOptions,
+        server
+    } = setupOptions;
+
+    const defaultExitWithCode = getExitWithCodeValue(serverOptions?.tests?.exitCode);
 
     const afterAll = asAsync<AfterAllTestsFunc>(
         setupOptions.options?.tests?.afterAll || (async () => { })
@@ -73,7 +80,9 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
         setupOptions.options?.tests?.beforeEach || (async () => { })
     );
 
-    server.test = async () => {
+    server.test = async (testOptions?: Nilable<IHttpServerTestOptions>) => {
+        const exitWithCode = getExitWithCodeValue(testOptions?.exitCode, defaultExitWithCode);
+
         const allRunners: ITestRunnerItem[] = [];
 
         const allTestOptionGetters = getListFromObject<TestOptionsGetter>(server, TEST_OPTIONS, true, true);
@@ -361,6 +370,10 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                         totalCount
                     });
                 }
+            }
+
+            if (exitWithCode !== false) {
+                process.exit(exitWithCode);
             }
         }
         catch (error) {

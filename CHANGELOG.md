@@ -1,5 +1,10 @@
 # Change Log (@egomobile/http-server)
 
+## 0.56.0
+
+- **BREAKING CHANGE**: running tests will now execute `process.exit(0)` by default now
+- (bug-)fixes
+
 ## 0.55.0
 
 - **BREAKING CHANGE**: remove `validate` prop from [IControllersSwaggerOptions interface](https://egomobile.github.io/node-http-server/interfaces/IControllersSwaggerOptions.html) and `SwaggerValidationError` class

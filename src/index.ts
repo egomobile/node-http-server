@@ -23,7 +23,7 @@ import joi from "joi";
 import { setupHttpServerControllerMethod } from "./controllers/factories";
 import { setupHttpServerTestMethod } from "./controllers/tests";
 import { setupEventMethods } from "./events";
-import type { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction, UniqueHttpMiddleware } from "./types";
+import type { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, ExitWithCodeValue, HttpErrorHandler, HttpMiddleware, HttpNotFoundHandler, HttpOptionsOrMiddlewares, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, NextFunction, UniqueHttpMiddleware } from "./types";
 import type { GroupedHttpRequestHandlers, IRequestHandlerContext, Nilable, Optional } from "./types/internal";
 import { asAsync, getUrlWithoutQuery, isNil, isTruthy } from "./utils";
 
@@ -63,6 +63,13 @@ export interface IServerTestOptions {
      * A custom function, which should be executed BEFORE EACH tests.
      */
     beforeEach?: Nilable<BeforeEachTestFunc>;
+    /**
+     * The exit code, which should be used to exit the process automatically, after the tests ran successfully,
+     * while `false` indicates NOT to exit the process automatically.
+     *
+     * @default 0
+     */
+    exitCode?: Nilable<ExitWithCodeValue>;
     /**
      * If no settings are specified, a module file with it is required.
      *
