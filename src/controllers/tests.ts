@@ -57,8 +57,6 @@ function bodyToString(body: any): string {
     return JSON.stringify(body);
 }
 
-
-
 export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMethodOptions) {
     const {
         "options": serverOptions,

@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-server)
 
-## 0.56.1
+## 0.56.2
 
 - **BREAKING CHANGE**: running tests will now execute `process.exit(0)` by default now
 - (bug-)fixes
