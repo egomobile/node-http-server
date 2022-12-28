@@ -454,7 +454,9 @@ export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHt
                 finalize();
 
                 server.test()
-                    .then(resolve)
+                    .then(() => {
+                        resolve();
+                    })
                     .catch(reject);
             }
             else {
