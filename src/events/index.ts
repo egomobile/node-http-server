@@ -30,7 +30,7 @@ export function setupEventMethods(server: IHttpServer) {
             return new Promise<void>(async (resolve, reject) => {
                 try {
                     for (const handler of testHandlers) {
-                        handler(context);
+                        await handler(context);
                     }
 
                     resolve();
