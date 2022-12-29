@@ -1862,6 +1862,14 @@ export interface ITestSettingExpectations {
  */
 export interface ITestSettings {
     /**
+     * An additional function, which is executed AFTER the underlying test.
+     */
+    after?: Nilable<AfterEachTestFunc>;
+    /**
+     * An additional function, which is executed before the underlying test.
+     */
+    before?: Nilable<BeforeEachTestFunc>;
+    /**
      * Request body.
      */
     body?: Nilable<TestSettingValueOrGetter<any>>;

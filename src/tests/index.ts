@@ -14,11 +14,11 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import crypto from "crypto";
-import { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, CancellationError, CancellationReason, ICreateServerOptions, IHttpServer, IHttpServerTestOptions, ITestEventCancellationEventHandlerContext, ITestEventHandlerContext, ITestSession, ITestSettingValueGetterContext, TestEventCancellationEventHandler, TestResponseValidator, TimeoutError } from "..";
+import { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, CancellationError, CancellationReason, IAfterEachTestContext, IBeforeEachTestContext, ICreateServerOptions, IHttpServer, IHttpServerTestOptions, ITestEventCancellationEventHandlerContext, ITestEventHandlerContext, ITestSession, ITestSettingValueGetterContext, TestEventCancellationEventHandler, TestResponseValidator, TimeoutError } from "..";
 import { ROUTER_PATHS, TEST_DESCRIPTION, TEST_OPTIONS } from "../constants";
+import { getListFromObject } from "../controllers/utils";
 import type { IRouterPathItem, ITestDescription, ITestOptions, Nilable, Optional, TestOptionsGetter } from "../types/internal";
 import { asAsync, compareValues, getExitWithCodeValue, isNil } from "../utils";
-import { getListFromObject } from "./utils";
 
 export interface ISetupHttpServerTestMethodOptions {
     options: Nilable<ICreateServerOptions>;
@@ -38,6 +38,10 @@ interface ITestRunnerActionContext {
 
 interface ITestRunnerItem {
     action: TestRunnerAction;
+    after: AfterEachTestFunc;
+    afterEachOfGroup: AfterEachTestFunc;
+    before: BeforeEachTestFunc;
+    beforeEachOfGroup: BeforeEachTestFunc;
     sortBy: any[];
 }
 
@@ -89,7 +93,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
 
         const allRunners: ITestRunnerItem[] = [];
 
-        const allTestOptionGetters = getListFromObject<TestOptionsGetter>(server, TEST_OPTIONS, true, true);
+        const allTestOptionGetters = getListFromObject<TestOptionsGetter>(server, TEST_OPTIONS, false, true);
 
         // we will organize all tests into
         // flat and separate list of runners (`allRunners`), so we can better
@@ -125,6 +129,23 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                 if (!allRouterPaths?.length) {
                     throw new Error(`Method ${String(methodName)} in controller ${controller.__file} is no request handler`);
                 }
+
+                if (!isNil(settings.after)) {
+                    if (typeof settings.after !== "function") {
+                        throw new TypeError("settings.after must be of type function");
+                    }
+                }
+
+                if (!isNil(settings.before)) {
+                    if (typeof settings.before !== "function") {
+                        throw new TypeError("settings.before must be of type function");
+                    }
+                }
+
+                const after = asAsync<AfterEachTestFunc>(settings.after ?? (async () => { }));
+                const afterEachOfGroup = asAsync<AfterEachTestFunc>(options.afterEach ?? (async () => { }));
+                const before = asAsync<BeforeEachTestFunc>(settings.after ?? (async () => { }));
+                const beforeEachOfGroup = asAsync<BeforeEachTestFunc>(options.afterEach ?? (async () => { }));
 
                 allRouterPaths.forEach(({ httpMethod, "routerPath": route }) => {
                     allRunners.push({
@@ -309,6 +330,10 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                 }
                             });
                         },
+                        after,
+                        afterEachOfGroup,
+                        before,
+                        beforeEachOfGroup,
                         "sortBy": [
                             // first by group
                             isNil(description.sortOrder) ? 0 : description.sortOrder,
@@ -363,16 +388,28 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
             for (let i = 0; i < totalCount; i++) {
                 let testError: any;
 
+                const runner = allRunners[i];
+
+                const {
+                    action,
+                    after,
+                    afterEachOfGroup,
+                    before,
+                    beforeEachOfGroup
+                } = runner;
+
                 try {
-                    // test preparations
-                    await beforeEach({
+                    const beforeEachContext: IBeforeEachTestContext = {
                         "index": i,
                         session,
                         totalCount
-                    });
+                    };
 
-                    const runner = allRunners[i];
-                    const { action } = runner;
+                    // test preparations
+                    // global => group => test
+                    await beforeEach(beforeEachContext);
+                    await beforeEachOfGroup(beforeEachContext);
+                    await before(beforeEachContext);
 
                     await action({
                         "index": i,
@@ -384,13 +421,18 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                     testError = error;
                 }
                 finally {
-                    // test cleanups
-                    await afterEach({
+                    const afterEachContext: IAfterEachTestContext = {
                         "error": testError,
                         "index": i,
                         session,
                         totalCount
-                    });
+                    };
+
+                    // test cleanups
+                    // test => group => global
+                    await after(afterEachContext);
+                    await afterEachOfGroup(afterEachContext);
+                    await afterEach(afterEachContext);
                 }
             }
 

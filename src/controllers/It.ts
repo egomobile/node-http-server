@@ -17,19 +17,24 @@
 
 import fs from "fs";
 import path from "path";
-import type { IHttpController, IHttpServer, ITestSettings, TestResponseValidator } from "..";
+import type { AfterEachTestFunc, BeforeEachTestFunc, IHttpController, IHttpServer, ITestSettings, TestResponseValidator } from "..";
 import { ADD_CONTROLLER_METHOD_TEST_ACTION, TEST_OPTIONS } from "../constants";
 import type { InitControllerMethodTestAction, ITestOptions, Nilable, TestOptionsGetter } from "../types/internal";
 import { areRefsEqual, asAsync, isNil } from "../utils";
 import { getListFromObject, getMethodOrThrow } from "./utils";
 
-type GetTestSettingsFunc =
-    (context: IGetSettingsContext) => Promise<Nilable<ITestSettings>>;
+type GetTestOptionsPropsFunc = (context: IGetTestOptionsPropsFuncContext) => Promise<IGetTestSettingsResult>;
 
-interface IGetSettingsContext {
+interface IGetTestOptionsPropsFuncContext {
     controller: IHttpController<IHttpServer>;
     index: number;
     methodName: string | symbol;
+}
+
+interface IGetTestSettingsResult {
+    afterEach: Nilable<AfterEachTestFunc>;
+    beforeEach: Nilable<BeforeEachTestFunc>;
+    settings: Nilable<ITestSettings>;
 }
 
 /**
@@ -63,7 +68,8 @@ interface IToSettingsOptions {
 }
 
 interface IToTestOptionsOptions {
-    shouldAllowEmptySettings: boolean;
+    afterEach: Nilable<AfterEachTestFunc>;
+    beforeEach: Nilable<BeforeEachTestFunc>;
     controller: IHttpController<IHttpServer>;
     index: number;
     method: Function;
@@ -71,6 +77,7 @@ interface IToTestOptionsOptions {
     name: string;
     ref: any;
     settings: Nilable<ITestSettings>;
+    shouldAllowEmptySettings: boolean;
     shouldUseModuleAsDefault: boolean;
     timeout: number;
 }
@@ -94,6 +101,8 @@ interface ITryFindTestSettingsByControllerOptions {
 }
 
 interface ITryFindTestSettingsByControllerResult {
+    afterEach: Nilable<AfterEachTestFunc>;
+    beforeEach: Nilable<BeforeEachTestFunc>;
     isFileForControllerExisting: boolean;
     preferredSettings: Nilable<ITestSettings>;
 }
@@ -149,7 +158,7 @@ export function It(name: string, arg2?: Nilable<ItArgument2>, arg3?: Nilable<ItA
 
         getListFromObject<InitControllerMethodTestAction>(method, ADD_CONTROLLER_METHOD_TEST_ACTION).push(
             ({ controller, index, server, shouldAllowEmptySettings, shouldUseModuleAsDefault, timeout }) => {
-                const getSettings = toGetTestSettingsFunc({
+                const getTestOptionsProps = toGetTestOptionsPropsFunc({
                     controller,
                     arg2,
                     arg3,
@@ -160,18 +169,26 @@ export function It(name: string, arg2?: Nilable<ItArgument2>, arg3?: Nilable<ItA
 
                 getListFromObject<TestOptionsGetter>(server, TEST_OPTIONS).push(
                     async () => {
+                        const {
+                            afterEach,
+                            beforeEach,
+                            settings
+                        } = await getTestOptionsProps({
+                            controller,
+                            index,
+                            methodName
+                        });
+
                         return toTestOptions({
+                            afterEach,
+                            beforeEach,
                             controller,
                             index,
                             method,
                             methodName,
                             name,
                             "ref": name,
-                            "settings": await getSettings({
-                                controller,
-                                index,
-                                methodName
-                            }),
+                            settings,
                             shouldAllowEmptySettings,
                             shouldUseModuleAsDefault,
                             timeout
@@ -183,7 +200,7 @@ export function It(name: string, arg2?: Nilable<ItArgument2>, arg3?: Nilable<ItA
     };
 }
 
-function toGetTestSettingsFunc(options: IToGetTestSettingsFuncOptions): GetTestSettingsFunc {
+function toGetTestOptionsPropsFunc(options: IToGetTestSettingsFuncOptions): GetTestOptionsPropsFunc {
     const {
         arg2,
         arg3,
@@ -199,6 +216,8 @@ function toGetTestSettingsFunc(options: IToGetTestSettingsFuncOptions): GetTestS
 
         return async () => {
             const {
+                afterEach,
+                beforeEach,
                 preferredSettings
             } = await tryFindTestSettingsByController({
                 controller,
@@ -208,7 +227,11 @@ function toGetTestSettingsFunc(options: IToGetTestSettingsFuncOptions): GetTestS
                 "settings": arg2
             });
 
-            return preferredSettings;
+            return {
+                afterEach,
+                beforeEach,
+                "settings": preferredSettings
+            };
         };
     }
 
@@ -216,7 +239,11 @@ function toGetTestSettingsFunc(options: IToGetTestSettingsFuncOptions): GetTestS
         // test settings
 
         return async () => {
-            return arg2! as ITestSettings;
+            return {
+                "afterEach": undefined,
+                "beforeEach": undefined,
+                "settings": arg2! as ITestSettings
+            };
         };
     }
 
@@ -225,8 +252,12 @@ function toGetTestSettingsFunc(options: IToGetTestSettingsFuncOptions): GetTestS
 
         return async () => {
             return {
-                ref,
-                "validator": arg2 as TestResponseValidator
+                "afterEach": undefined,
+                "beforeEach": undefined,
+                "settings": {
+                    ref,
+                    "validator": arg2 as TestResponseValidator
+                }
             };
         };
     }
@@ -236,6 +267,8 @@ function toGetTestSettingsFunc(options: IToGetTestSettingsFuncOptions): GetTestS
 
         return async ({ controller, index, methodName }) => {
             const {
+                afterEach,
+                beforeEach,
                 preferredSettings
             } = await tryFindTestSettingsByController({
                 controller,
@@ -247,7 +280,11 @@ function toGetTestSettingsFunc(options: IToGetTestSettingsFuncOptions): GetTestS
                 "throwIfFileDoesNotExist": true
             });
 
-            return preferredSettings;
+            return {
+                afterEach,
+                beforeEach,
+                "settings": preferredSettings
+            };
         };
     }
 
@@ -255,7 +292,7 @@ function toGetTestSettingsFunc(options: IToGetTestSettingsFuncOptions): GetTestS
         if (["number", "symbol", "bigint"].includes(typeof arg2)) {
             // custom `ref`
 
-            const getSettings = toGetTestSettingsFunc({
+            const getSettings = toGetTestOptionsPropsFunc({
                 "arg2": arg3,
                 controller,
                 index,
@@ -278,7 +315,12 @@ function toGetTestSettingsFunc(options: IToGetTestSettingsFuncOptions): GetTestS
 }
 
 function toSettings(options: IToSettingsOptions): Nilable<ITestSettings> {
-    const { index, noArrayCheck, ref, value } = options;
+    const {
+        index,
+        noArrayCheck,
+        ref,
+        value
+    } = options;
 
     if (isNil(value)) {
         return value as Nilable<ITestSettings>;
@@ -351,12 +393,18 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         shouldUseModuleAsDefault,
         timeout
     } = options;
-    let { settings } = options;
+    let {
+        afterEach,
+        beforeEach,
+        settings
+    } = options;
 
     if (isNil(settings)) {
         // try load from `.spec.??` file
 
         const {
+            "afterEach": afterEachFromSpecFile,
+            "beforeEach": beforeEachFromSpecFile,
             isFileForControllerExisting,
             preferredSettings
         } = await tryFindTestSettingsByController({
@@ -372,6 +420,15 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
         if (shouldUseModuleAsDefault && !isFileForControllerExisting) {
             // required
             throw new Error(`No .spec file for controller in ${controller.__file} found`);
+        }
+
+        // maybe overwrite with
+        // items from `tryFindTestSettingsByController() result`
+        if (afterEachFromSpecFile) {
+            afterEach = afterEachFromSpecFile;
+        }
+        if (beforeEachFromSpecFile) {
+            beforeEach = beforeEachFromSpecFile;
         }
     }
 
@@ -528,6 +585,8 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
     }
 
     return {
+        afterEach,
+        beforeEach,
         controller,
         getBody,
         getExpectedBody,
@@ -556,6 +615,8 @@ async function tryFindTestSettingsByController(options: ITryFindTestSettingsByCo
         throwIfFileDoesNotExist
     } = options;
 
+    let afterEach: Nilable<AfterEachTestFunc>;
+    let beforeEach: Nilable<BeforeEachTestFunc>;
     let isFileForControllerExisting = false;
 
     const controllerDir = path.dirname(controller.__file);
@@ -591,6 +652,15 @@ async function tryFindTestSettingsByController(options: ITryFindTestSettingsByCo
 
         const controllerSpecModule = require(controllerSpecFile);
 
+        // may overwrite `afterEach` and/or `beforeEach`
+        // from controller module
+        if (controllerSpecModule?.afterEach) {
+            afterEach = controllerSpecModule.afterEach;
+        }
+        if (controllerSpecModule?.beforeEach) {
+            beforeEach = controllerSpecModule.beforeEach;
+        }
+
         // try to find an export, with the exact the same name / key
         // as the underlying controller method
         loadedSettings = toSettings({
@@ -605,7 +675,21 @@ async function tryFindTestSettingsByController(options: ITryFindTestSettingsByCo
         }
     }
 
+    if (!isNil(afterEach)) {
+        if (typeof afterEach !== "function") {
+            throw new TypeError("afterEach must be of type function");
+        }
+    }
+
+    if (!isNil(beforeEach)) {
+        if (typeof beforeEach !== "function") {
+            throw new TypeError("beforeEach must be of type function");
+        }
+    }
+
     return {
+        afterEach,
+        beforeEach,
         isFileForControllerExisting,
         "preferredSettings": isFileForControllerExisting ?
             loadedSettings :
