@@ -1,5 +1,10 @@
 # Change Log (@egomobile/http-server)
 
+## 0.58.0
+
+- **BREAKING CHANGE**: props of [IAfterAllTestsContext](https://egomobile.github.io/node-http-server/interfaces/IAfterAllTestsContext.html), [IAfterEachTestContext](https://egomobile.github.io/node-http-server/interfaces/IAfterEachTestContext.html), [IBeforeAllTestsContext](https://egomobile.github.io/node-http-server/interfaces/IBeforeAllTestsContext.html) and [IBeforeEachTestContext](https://egomobile.github.io/node-http-server/interfaces/IBeforeEachTestContext.html) interfaces are marked as `readonly` now
+- add `session` prop to [IAfterAllTestsContext](https://egomobile.github.io/node-http-server/interfaces/IAfterAllTestsContext.html), [IAfterEachTestContext](https://egomobile.github.io/node-http-server/interfaces/IAfterEachTestContext.html), [IBeforeAllTestsContext](https://egomobile.github.io/node-http-server/interfaces/IBeforeAllTestsContext.html), [IBeforeEachTestContext](https://egomobile.github.io/node-http-server/interfaces/IBeforeEachTestContext.html) and [ITestEventHandlerContext](https://egomobile.github.io/node-http-server/interfaces/ITestEventHandlerContext.html) interfaces
+
 ## 0.57.0
 
 - **BREAKING CHANGE**: running tests will now execute `process.exit(1)` by default now on error

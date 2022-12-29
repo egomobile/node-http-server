@@ -293,15 +293,19 @@ export interface IAfterAllTestsContext {
     /**
      * The global error, if occurred.
      */
-    error?: any;
+    readonly error?: any;
     /**
      * The number of failed tests.
      */
-    failCount: number;
+    readonly failCount: number;
+    /**
+     * The underlying session.
+     */
+    readonly session: Readonly<ITestSession>;
     /**
      * The total number of tests.
      */
-    totalCount: number;
+    readonly totalCount: number;
 }
 
 /**
@@ -311,15 +315,19 @@ export interface IAfterEachTestContext {
     /**
      * The error by single test, if occurred.
      */
-    error?: any;
+    readonly error?: any;
     /**
      * The current zero-based index.
      */
-    index: number;
+    readonly index: number;
+    /**
+     * The underlying session.
+     */
+    readonly session: Readonly<ITestSession>;
     /**
      * The total number of tests.
      */
-    totalCount: number;
+    readonly totalCount: number;
 }
 
 /**
@@ -375,9 +383,13 @@ export interface IAuthorizeValidatorContext {
  */
 export interface IBeforeAllTestsContext {
     /**
+     * The underlying session.
+     */
+    readonly session: Readonly<ITestSession>;
+    /**
      * The total number of tests.
      */
-    totalCount: number;
+    readonly totalCount: number;
 }
 
 /**
@@ -387,11 +399,15 @@ export interface IBeforeEachTestContext {
     /**
      * The current zero-based index.
      */
-    index: number;
+    readonly index: number;
+    /**
+     * The underlying session.
+     */
+    readonly session: Readonly<ITestSession>;
     /**
      * The total number of tests.
      */
-    totalCount: number;
+    readonly totalCount: number;
 }
 
 /**
@@ -1768,6 +1784,10 @@ export interface ITestEventHandlerContext {
      */
     readonly server: IHttpServer;
     /**
+     * The current test session.
+     */
+    readonly session: Readonly<ITestSession>;
+    /**
      * Some value for this event (operation).
      */
     readonly tag: any;
@@ -1797,6 +1817,24 @@ export interface ITestEventHandlerContextExpectations {
      * The status code.
      */
     status: number;
+}
+
+/**
+ * Data of a test session.
+ */
+export interface ITestSession {
+    /**
+     * The start time.
+     */
+    end?: Date;
+    /**
+     * The ID.
+     */
+    id: string;
+    /**
+     * The start time.
+     */
+    start: Date;
 }
 
 /**

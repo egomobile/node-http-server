@@ -13,7 +13,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, CancellationError, CancellationReason, ICreateServerOptions, IHttpServer, IHttpServerTestOptions, ITestEventCancellationEventHandlerContext, ITestEventHandlerContext, ITestSettingValueGetterContext, TestEventCancellationEventHandler, TestResponseValidator, TimeoutError } from "..";
+import crypto from "crypto";
+import { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, CancellationError, CancellationReason, ICreateServerOptions, IHttpServer, IHttpServerTestOptions, ITestEventCancellationEventHandlerContext, ITestEventHandlerContext, ITestSession, ITestSettingValueGetterContext, TestEventCancellationEventHandler, TestResponseValidator, TimeoutError } from "..";
 import { ROUTER_PATHS, TEST_DESCRIPTION, TEST_OPTIONS } from "../constants";
 import type { IRouterPathItem, ITestDescription, ITestOptions, Nilable, Optional, TestOptionsGetter } from "../types/internal";
 import { asAsync, compareValues, getExitWithCodeValue, isNil } from "../utils";
@@ -31,6 +32,7 @@ interface ISetupRemainingPropsInTestEventContextOptions {
 
 interface ITestRunnerActionContext {
     index: number;
+    session: ITestSession;
     totalCount: number;
 }
 
@@ -246,6 +248,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                         "ref": settings.ref,
                                         route,
                                         server,
+                                        "session": runnerContext.session,
                                         "tag": settings.tag,
                                         "totalCount": runnerContext.totalCount,
                                         "validate": validator
@@ -340,8 +343,17 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
         const totalCount = allRunners.length;
         let globalError: any;
 
+        const sessionStart = new Date();
+        const sessionId = `${sessionStart.valueOf()}_${crypto.randomUUID()}`;
+        const session: Readonly<ITestSession> = {
+            "id": sessionId,
+            "start": sessionStart
+        };
+        let sessionEnd!: Date;
+
         // global preparations
         await beforeAll({
+            session,
             totalCount
         });
         try {
@@ -353,6 +365,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                     // test preparations
                     await beforeEach({
                         "index": i,
+                        session,
                         totalCount
                     });
 
@@ -361,6 +374,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
 
                     await action({
                         "index": i,
+                        session,
                         totalCount
                     });
                 }
@@ -372,12 +386,17 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                     await afterEach({
                         "error": testError,
                         "index": i,
+                        session,
                         totalCount
                     });
                 }
             }
+
+            sessionEnd = new Date();
         }
         catch (error) {
+            sessionEnd = new Date();
+
             globalError = error;
         }
         finally {
@@ -385,6 +404,11 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
             await afterAll({
                 "error": globalError,
                 failCount,
+                "session": {
+                    ...session,
+
+                    "end": sessionEnd
+                },
                 totalCount
             });
         }
