@@ -38,7 +38,9 @@ interface ITestRunnerActionContext {
 
 interface ITestRunnerItem {
     action: TestRunnerAction;
+    after: Nilable<AfterEachTestFunc>;
     afterEachOfGroup: Nilable<AfterEachTestFunc>;
+    before: Nilable<BeforeEachTestFunc>;
     beforeEachOfGroup: Nilable<BeforeEachTestFunc>;
     sortBy: any[];
 }
@@ -128,6 +130,24 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                 const allRouterPaths: Nilable<IRouterPathItem[]> = (method as any)[ROUTER_PATHS];
                 if (!allRouterPaths?.length) {
                     throw new Error(`Method ${String(methodName)} in controller ${controller.__file} is no request handler`);
+                }
+
+                let after: Nilable<AfterEachTestFunc>;
+                if (!isNil(settings.after)) {
+                    if (typeof settings.after !== "function") {
+                        throw new TypeError("settings.after must be of type function");
+                    }
+
+                    after = asAsync<AfterEachTestFunc>(settings.after);
+                }
+
+                let before: Nilable<BeforeEachTestFunc>;
+                if (!isNil(settings.before)) {
+                    if (typeof settings.before !== "function") {
+                        throw new TypeError("settings.before must be of type function");
+                    }
+
+                    before = asAsync<BeforeEachTestFunc>(settings.before);
                 }
 
                 allRouterPaths.forEach(({ httpMethod, "routerPath": route }) => {
@@ -313,9 +333,11 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                 }
                             });
                         },
+                        after,
                         "afterEachOfGroup": isNil(afterEachOfGroup) ?
                             afterEachOfGroup :
                             asAsync<AfterEachTestFunc>(afterEachOfGroup),
+                        before,
                         "beforeEachOfGroup": isNil(beforeEachOfGroup) ?
                             beforeEachOfGroup :
                             asAsync<BeforeEachTestFunc>(beforeEachOfGroup),
@@ -377,7 +399,9 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
 
                 const {
                     action,
+                    after,
                     afterEachOfGroup,
+                    before,
                     beforeEachOfGroup
                 } = runner;
 
@@ -389,8 +413,10 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                     };
 
                     // test preparations
+                    // global => group => test
                     await beforeEach(beforeEachContext);
                     await beforeEachOfGroup?.(beforeEachContext);
+                    await before?.(beforeEachContext);
 
                     await action({
                         "index": i,
@@ -410,6 +436,8 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                     };
 
                     // test cleanups
+                    // test => group => global
+                    await after?.(afterEachContext);
                     await afterEachOfGroup?.(afterEachContext);
                     await afterEach(afterEachContext);
                 }
