@@ -1,5 +1,16 @@
 # Change Log (@egomobile/http-server)
 
+## 0.59.0
+
+- **BREAKING CHANGE**: tests are sorted now the following way:
+  - by `sortBy` value of [@Describe() decorator](https://egomobile.github.io/node-http-server/functions/Describe.html)
+  - then: by `name` argument of [@Describe() decorator](https://egomobile.github.io/node-http-server/functions/Describe.html) (case-insensitive)
+  - then: by `sortBy` value of [ITestSettings interface](https://egomobile.github.io/node-http-server/interfaces/ITestSettings.html)
+  - then: by unescaped route path (case-insensitive)
+  - then: by HTTP method (case-insensitive)
+  - then: by `name` argument of [@It() decorator](https://egomobile.github.io/node-http-server/functions/It.html) (case-insensitive)
+- (bug-)fixes
+
 ## 0.58.0
 
 - **BREAKING CHANGE**: props of [IAfterAllTestsContext](https://egomobile.github.io/node-http-server/interfaces/IAfterAllTestsContext.html), [IAfterEachTestContext](https://egomobile.github.io/node-http-server/interfaces/IAfterEachTestContext.html), [IBeforeAllTestsContext](https://egomobile.github.io/node-http-server/interfaces/IBeforeAllTestsContext.html) and [IBeforeEachTestContext](https://egomobile.github.io/node-http-server/interfaces/IBeforeEachTestContext.html) interfaces are marked as `readonly` now

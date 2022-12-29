@@ -1720,7 +1720,7 @@ export interface ITestEventHandlerContext {
      */
     readonly escapedQuery: string;
     /**
-     * Read-to-use path of the route with injected / replaced and escaped parameter values.
+     * Ready-to-use path of the route with injected / replaced and escaped parameter values.
      */
     readonly escapedRoute: string;
     /**

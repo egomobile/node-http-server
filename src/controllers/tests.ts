@@ -316,6 +316,8 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
 
                             // then by tests
                             isNil(settings.sortOrder) ? 0 : settings.sortOrder,
+                            route.toLowerCase().trim(),
+                            httpMethod,
                             testName.toLowerCase().trim()
                         ]
                     });
