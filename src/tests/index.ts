@@ -38,10 +38,10 @@ interface ITestRunnerActionContext {
 
 interface ITestRunnerItem {
     action: TestRunnerAction;
-    after: Nilable<AfterEachTestFunc>;
-    afterEachOfGroup: Nilable<AfterEachTestFunc>;
-    before: Nilable<BeforeEachTestFunc>;
-    beforeEachOfGroup: Nilable<BeforeEachTestFunc>;
+    after: AfterEachTestFunc;
+    afterEachOfGroup: AfterEachTestFunc;
+    before: BeforeEachTestFunc;
+    beforeEachOfGroup: BeforeEachTestFunc;
     sortBy: any[];
 }
 
@@ -101,8 +101,6 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
         for (const getOptions of allTestOptionGetters) {
             ((options: ITestOptions) => {
                 const {
-                    "afterEach": afterEachOfGroup,
-                    "beforeEach": beforeEachOfGroup,
                     controller,
                     getBody,
                     getExpectedBody,
@@ -132,23 +130,22 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                     throw new Error(`Method ${String(methodName)} in controller ${controller.__file} is no request handler`);
                 }
 
-                let after: Nilable<AfterEachTestFunc>;
                 if (!isNil(settings.after)) {
                     if (typeof settings.after !== "function") {
                         throw new TypeError("settings.after must be of type function");
                     }
-
-                    after = asAsync<AfterEachTestFunc>(settings.after);
                 }
 
-                let before: Nilable<BeforeEachTestFunc>;
                 if (!isNil(settings.before)) {
                     if (typeof settings.before !== "function") {
                         throw new TypeError("settings.before must be of type function");
                     }
-
-                    before = asAsync<BeforeEachTestFunc>(settings.before);
                 }
+
+                const after = asAsync<AfterEachTestFunc>(settings.after ?? (async () => { }));
+                const afterEachOfGroup = asAsync<AfterEachTestFunc>(options.afterEach ?? (async () => { }));
+                const before = asAsync<BeforeEachTestFunc>(settings.after ?? (async () => { }));
+                const beforeEachOfGroup = asAsync<BeforeEachTestFunc>(options.afterEach ?? (async () => { }));
 
                 allRouterPaths.forEach(({ httpMethod, "routerPath": route }) => {
                     allRunners.push({
@@ -334,13 +331,9 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                             });
                         },
                         after,
-                        "afterEachOfGroup": isNil(afterEachOfGroup) ?
-                            afterEachOfGroup :
-                            asAsync<AfterEachTestFunc>(afterEachOfGroup),
+                        afterEachOfGroup,
                         before,
-                        "beforeEachOfGroup": isNil(beforeEachOfGroup) ?
-                            beforeEachOfGroup :
-                            asAsync<BeforeEachTestFunc>(beforeEachOfGroup),
+                        beforeEachOfGroup,
                         "sortBy": [
                             // first by group
                             isNil(description.sortOrder) ? 0 : description.sortOrder,
@@ -415,8 +408,8 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                     // test preparations
                     // global => group => test
                     await beforeEach(beforeEachContext);
-                    await beforeEachOfGroup?.(beforeEachContext);
-                    await before?.(beforeEachContext);
+                    await beforeEachOfGroup(beforeEachContext);
+                    await before(beforeEachContext);
 
                     await action({
                         "index": i,
@@ -437,8 +430,8 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
 
                     // test cleanups
                     // test => group => global
-                    await after?.(afterEachContext);
-                    await afterEachOfGroup?.(afterEachContext);
+                    await after(afterEachContext);
+                    await afterEachOfGroup(afterEachContext);
                     await afterEach(afterEachContext);
                 }
             }
