@@ -144,8 +144,8 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
 
                 const after = asAsync<AfterEachTestFunc>(settings.after ?? (async () => { }));
                 const afterEachOfGroup = asAsync<AfterEachTestFunc>(options.afterEach ?? (async () => { }));
-                const before = asAsync<BeforeEachTestFunc>(settings.after ?? (async () => { }));
-                const beforeEachOfGroup = asAsync<BeforeEachTestFunc>(options.afterEach ?? (async () => { }));
+                const before = asAsync<BeforeEachTestFunc>(settings.before ?? (async () => { }));
+                const beforeEachOfGroup = asAsync<BeforeEachTestFunc>(options.beforeEach ?? (async () => { }));
 
                 allRouterPaths.forEach(({ httpMethod, "routerPath": route }) => {
                     allRunners.push({
