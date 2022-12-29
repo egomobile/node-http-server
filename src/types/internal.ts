@@ -15,7 +15,7 @@
 
 import type { ServerResponse } from "http";
 import type { OpenAPIV3 } from "openapi-types";
-import type { HttpMethod, HttpMiddleware, HttpPathValidator, HttpRequestHandler, IControllerMethodInfo, IControllersOptions, IHttpController, IHttpServer, ImportValues, ITestSettings, ITestSettingValueGetterContext, ParameterOptions } from ".";
+import type { AfterEachTestFunc, BeforeEachTestFunc, HttpMethod, HttpMiddleware, HttpPathValidator, HttpRequestHandler, IControllerMethodInfo, IControllersOptions, IHttpController, IHttpServer, ImportValues, ITestSettings, ITestSettingValueGetterContext, ParameterOptions } from ".";
 
 export type Constructor<T extends any = any> = (new (...args: any[]) => T);
 
@@ -190,6 +190,8 @@ export interface ITestDescription {
 }
 
 export interface ITestOptions {
+    afterEach: Nilable<AfterEachTestFunc>;
+    beforeEach: Nilable<BeforeEachTestFunc>;
     controller: IHttpController;
     getBody: (context: ITestSettingValueGetterContext) => Promise<any>;
     getExpectedBody: (context: ITestSettingValueGetterContext) => Promise<any>;

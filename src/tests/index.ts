@@ -14,11 +14,11 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import crypto from "crypto";
-import { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, CancellationError, CancellationReason, ICreateServerOptions, IHttpServer, IHttpServerTestOptions, ITestEventCancellationEventHandlerContext, ITestEventHandlerContext, ITestSession, ITestSettingValueGetterContext, TestEventCancellationEventHandler, TestResponseValidator, TimeoutError } from "..";
+import { AfterAllTestsFunc, AfterEachTestFunc, BeforeAllTestsFunc, BeforeEachTestFunc, CancellationError, CancellationReason, IAfterEachTestContext, IBeforeEachTestContext, ICreateServerOptions, IHttpServer, IHttpServerTestOptions, ITestEventCancellationEventHandlerContext, ITestEventHandlerContext, ITestSession, ITestSettingValueGetterContext, TestEventCancellationEventHandler, TestResponseValidator, TimeoutError } from "..";
 import { ROUTER_PATHS, TEST_DESCRIPTION, TEST_OPTIONS } from "../constants";
+import { getListFromObject } from "../controllers/utils";
 import type { IRouterPathItem, ITestDescription, ITestOptions, Nilable, Optional, TestOptionsGetter } from "../types/internal";
 import { asAsync, compareValues, getExitWithCodeValue, isNil } from "../utils";
-import { getListFromObject } from "./utils";
 
 export interface ISetupHttpServerTestMethodOptions {
     options: Nilable<ICreateServerOptions>;
@@ -38,6 +38,8 @@ interface ITestRunnerActionContext {
 
 interface ITestRunnerItem {
     action: TestRunnerAction;
+    afterEachOfGroup: Nilable<AfterEachTestFunc>;
+    beforeEachOfGroup: Nilable<BeforeEachTestFunc>;
     sortBy: any[];
 }
 
@@ -89,7 +91,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
 
         const allRunners: ITestRunnerItem[] = [];
 
-        const allTestOptionGetters = getListFromObject<TestOptionsGetter>(server, TEST_OPTIONS, true, true);
+        const allTestOptionGetters = getListFromObject<TestOptionsGetter>(server, TEST_OPTIONS, false, true);
 
         // we will organize all tests into
         // flat and separate list of runners (`allRunners`), so we can better
@@ -97,6 +99,8 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
         for (const getOptions of allTestOptionGetters) {
             ((options: ITestOptions) => {
                 const {
+                    "afterEach": afterEachOfGroup,
+                    "beforeEach": beforeEachOfGroup,
                     controller,
                     getBody,
                     getExpectedBody,
@@ -309,6 +313,12 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                                 }
                             });
                         },
+                        "afterEachOfGroup": isNil(afterEachOfGroup) ?
+                            afterEachOfGroup :
+                            asAsync<AfterEachTestFunc>(afterEachOfGroup),
+                        "beforeEachOfGroup": isNil(beforeEachOfGroup) ?
+                            beforeEachOfGroup :
+                            asAsync<BeforeEachTestFunc>(beforeEachOfGroup),
                         "sortBy": [
                             // first by group
                             isNil(description.sortOrder) ? 0 : description.sortOrder,
@@ -363,16 +373,24 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
             for (let i = 0; i < totalCount; i++) {
                 let testError: any;
 
+                const runner = allRunners[i];
+
+                const {
+                    action,
+                    afterEachOfGroup,
+                    beforeEachOfGroup
+                } = runner;
+
                 try {
-                    // test preparations
-                    await beforeEach({
+                    const beforeEachContext: IBeforeEachTestContext = {
                         "index": i,
                         session,
                         totalCount
-                    });
+                    };
 
-                    const runner = allRunners[i];
-                    const { action } = runner;
+                    // test preparations
+                    await beforeEach(beforeEachContext);
+                    await beforeEachOfGroup?.(beforeEachContext);
 
                     await action({
                         "index": i,
@@ -384,13 +402,16 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
                     testError = error;
                 }
                 finally {
-                    // test cleanups
-                    await afterEach({
+                    const afterEachContext: IAfterEachTestContext = {
                         "error": testError,
                         "index": i,
                         session,
                         totalCount
-                    });
+                    };
+
+                    // test cleanups
+                    await afterEachOfGroup?.(afterEachContext);
+                    await afterEach(afterEachContext);
                 }
             }
 

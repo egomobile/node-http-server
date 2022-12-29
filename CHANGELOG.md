@@ -1,5 +1,11 @@
 # Change Log (@egomobile/http-server)
 
+## 0.60.0
+
+- can export [afterEach](https://egomobile.github.io/node-http-server/types/AfterEachTestFunc.html) and [beforeEach](https://egomobile.github.io/node-http-server/types/BeforeEachTestFunc.html) function in `.spec` files now
+- code cleanups and improvements
+- (bug-)fixes
+
 ## 0.59.0
 
 - **BREAKING CHANGE**: tests are sorted now the following way:
