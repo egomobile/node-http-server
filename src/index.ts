@@ -442,16 +442,16 @@ export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHt
                 reject(ex);
             });
 
-            const finalize = () => {
+            const finalizeInstance = () => {
                 (server as any).port = port;
 
-                resolve(undefined);
+                instance = newInstance;
             };
 
             if (isTruthy(process.env.EGO_RUN_TESTS)) {
                 // run tests instead of creating a new instance
 
-                finalize();
+                finalizeInstance();
 
                 server.test()
                     .then(() => {
@@ -460,10 +460,12 @@ export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHt
                     .catch(reject);
             }
             else {
-                newInstance.listen(port as number, "0.0.0.0", finalize);
-            }
+                newInstance.listen(port as number, "0.0.0.0", () => {
+                    finalizeInstance();
 
-            instance = newInstance;
+                    resolve();
+                });
+            }
         });
     };
 
