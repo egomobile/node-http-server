@@ -550,11 +550,11 @@ async function toTestOptions(options: IToTestOptionsOptions): Promise<ITestOptio
 
     // request body
     let getBody: () => Promise<any>;
-    if (typeof settings!.body === "function") {
+    if (typeof settings?.body === "function") {
         getBody = asAsync(settings!.body!);
     }
     else {
-        const body = settings!.body;
+        const body = settings?.body;
 
         getBody = async () => {
             return body;
