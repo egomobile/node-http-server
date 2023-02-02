@@ -70,7 +70,7 @@ export function setupHttpServerTestMethod(setupOptions: ISetupHttpServerTestMeth
     } = setupOptions;
 
     const defaultExitWithCode = getExitWithCodeValue(serverOptions?.tests?.exitCode);
-    const defaultExitWithCodeOnFail = getExitWithCodeValue(serverOptions?.tests?.exitCodeOnFail);
+    const defaultExitWithCodeOnFail = getExitWithCodeValue(serverOptions?.tests?.exitCodeOnFail, 1);
 
     const afterAll = asAsync<AfterAllTestsFunc>(
         setupOptions.options?.tests?.afterAll || (async () => { })

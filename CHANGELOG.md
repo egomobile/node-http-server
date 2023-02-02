@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-server)
 
-## 0.60.3
+## 0.60.4
 
 - can export [afterEach](https://egomobile.github.io/node-http-server/types/AfterEachTestFunc.html) and [beforeEach](https://egomobile.github.io/node-http-server/types/BeforeEachTestFunc.html) function in `.spec` files now
 - add `after` and `before` props to [ITestSettings interface](https://egomobile.github.io/node-http-server/interfaces/ITestSettings.html)
