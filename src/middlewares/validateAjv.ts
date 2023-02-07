@@ -31,6 +31,12 @@ interface ICreateMiddlewareOptions {
  */
 export interface IValidateAjvOptions {
     /**
+     * Indicates if there should be no auto update of final schema.
+     *
+     * @default `false`
+     */
+    noAutoUpdate?: Nilable<boolean>;
+    /**
      * The custom error handler.
      */
     onValidationFailed?: Nilable<SchemaValidationFailedHandler>;
@@ -115,12 +121,6 @@ export function validateAjv(schema: JsonSchema, optionsOrErrorHandler?: Nilable<
         throw new TypeError("schema must be of type object");
     }
 
-    // clone and setup defaults, if required
-    schema = clone(schema);
-    if (isNil(schema.additionalProperties)) {
-        schema.additionalProperties = false;
-    }
-
     let options: Nilable<IValidateAjvOptions>;
     if (!isNil(optionsOrErrorHandler)) {
         if (typeof optionsOrErrorHandler === "function") {
@@ -157,6 +157,17 @@ export function validateAjv(schema: JsonSchema, optionsOrErrorHandler?: Nilable<
     const onValidationFailed = options?.onValidationFailed || defaultSchemaValidationFailedHandler;
     if (typeof onValidationFailed !== "function") {
         throw new TypeError("onValidationFailed must be of type function");
+    }
+
+    const shouldNotDoAutoUpdate = !!options?.noAutoUpdate;
+
+    // clone and setup defaults, if required
+    schema = clone(schema);
+
+    if (!shouldNotDoAutoUpdate) {
+        if (isNil(schema.additionalProperties)) {
+            schema.additionalProperties = false;
+        }
     }
 
     return createMiddleware({

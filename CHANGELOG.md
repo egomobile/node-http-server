@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.61.0
+
+- add `noAutoUpdate` to [IValidateAjvOptions interface](https://egomobile.github.io/node-http-server/interfaces/IValidateAjvOptions.html)
+
 ## 0.60.4
 
 - can export [afterEach](https://egomobile.github.io/node-http-server/types/AfterEachTestFunc.html) and [beforeEach](https://egomobile.github.io/node-http-server/types/BeforeEachTestFunc.html) function in `.spec` files now
