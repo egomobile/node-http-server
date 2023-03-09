@@ -1,5 +1,8 @@
 # Change Log (@egomobile/http-server)
 
+- add ESM and CommonJS support
+- `npm update`s
+
 ## 0.61.0
 
 - add `noAutoUpdate` to [IValidateAjvOptions interface](https://egomobile.github.io/node-http-server/interfaces/IValidateAjvOptions.html)

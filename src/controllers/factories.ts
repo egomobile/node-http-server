@@ -15,7 +15,7 @@
 
 import fs from "fs";
 import { isSchema } from "joi";
-import minimatch from "minimatch";
+import minimatch, { MinimatchOptions } from "minimatch";
 import { OpenAPIV3 } from "openapi-types";
 import path from "path";
 import { ADD_CONTROLLER_METHOD_TEST_ACTION, CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER } from "../constants";
@@ -616,7 +616,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
     const { server } = setupOptions;
 
     server.controllers = (...args: any[]) => {
-        const minimatchOpts: minimatch.IOptions = {
+        const minimatchOpts: MinimatchOptions = {
             "dot": false,
             "matchBase": true
         };
