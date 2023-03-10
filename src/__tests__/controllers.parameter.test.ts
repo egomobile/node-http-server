@@ -26,7 +26,7 @@ describe("Parameter feature tests (controllers)", () => {
         const url = `/test_parameter/multi-url/${encodeURIComponent(bar)}/${encodeURIComponent(String(buzz))}`;
         const expectedResult = `bar: ${bar} (${typeof bar}); buzz: ${buzz} (${typeof buzz})`;
 
-        const server = await createServerAndInitControllers();
+        const server = createServerAndInitControllers();
 
         const response = await request(server).get(url)
             .send()
@@ -49,7 +49,7 @@ describe("Parameter feature tests (controllers)", () => {
         const url = "/test_parameter/header";
         const expectedResult = `x-ego-test: ${egoTest} (${typeof egoTest})`;
 
-        const server = await createServerAndInitControllers();
+        const server = createServerAndInitControllers();
 
         const response = await request(server).get(url)
             .set("X-Ego-Test", String(egoTest))
@@ -77,7 +77,7 @@ describe("Parameter feature tests (controllers)", () => {
         expectedResult += "request\n";
         expectedResult += "response\n";
 
-        const server = await createServerAndInitControllers();
+        const server = createServerAndInitControllers();
 
         const response = await request(server).get(url)
             .send()
@@ -105,7 +105,7 @@ describe("Parameter feature tests (controllers)", () => {
         expectedResult += `${xEgo2} (${typeof xEgo2})\n`;
         expectedResult += `${xEgo3} (${typeof xEgo3})\n`;
 
-        const server = await createServerAndInitControllers();
+        const server = createServerAndInitControllers();
 
         const response = await request(server).get(url)
             .set("x-ego-1", String(xEgo1))
@@ -142,7 +142,7 @@ describe("Parameter feature tests (controllers)", () => {
         expectedResult += `${xEgo2} (${typeof xEgo2})\n`;
         expectedResult += `${xEgo3} (${typeof xEgo3})\n`;
 
-        const server = await createServerAndInitControllers();
+        const server = createServerAndInitControllers();
 
         const response = await request(server).get(url)
             .send()
@@ -165,7 +165,7 @@ describe("Parameter feature tests (controllers)", () => {
             "buzz": 42
         };
 
-        const server = await createServerAndInitControllers();
+        const server = createServerAndInitControllers();
 
         const url = "/test_parameter/body";
 

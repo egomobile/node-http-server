@@ -650,7 +650,7 @@ async function tryFindTestSettingsByController(options: ITryFindTestSettingsByCo
 
         isFileForControllerExisting = true;
 
-        const controllerSpecModule = await import(controllerSpecFile);
+        const controllerSpecModule = require(controllerSpecFile);
 
         // may overwrite `afterEach` and/or `beforeEach`
         // from controller module

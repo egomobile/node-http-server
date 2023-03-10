@@ -448,30 +448,6 @@ export function urlSearchParamsToObject(params: Nilable<URLSearchParams>): Nilab
     return obj;
 }
 
-export async function walkDir(
-    dir: string,
-    action: (file: string, stats: fs.Stats) => PromiseLike<void>,
-    recursive = true
-) {
-    for (const item of await fs.promises.readdir(dir)) {
-        if (item.trimStart().startsWith("_")) {
-            continue;  // ignore items with beginning _
-        }
-
-        const fullPath = path.join(dir, item);
-        const stats = await fs.promises.stat(fullPath);
-
-        if (stats.isDirectory()) {
-            if (recursive) {
-                await walkDir(fullPath, action);
-            }
-        }
-        else if (stats.isFile()) {
-            await action(fullPath, stats);
-        }
-    }
-}
-
 export function walkDirSync(
     dir: string,
     action: (file: string, stats: fs.Stats) => void,
