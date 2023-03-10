@@ -1067,11 +1067,11 @@ export interface IHttpServer {
      * @param {Nilable<ImportValues>} [imports] Values to import.
      * @param {Nilable<IControllersOptions>} [options] Custom options.
      *
-     * @returns {IControllersResult} The result of the invocation with call data of the setup.
+     * @returns {Promise<IControllersResult>} The promise with the result of the invocation with call data of the setup.
      */
-    controllers(): IControllersResult;
-    controllers(rootDir: Nilable<string>, imports?: Nilable<ImportValues>): IControllersResult;
-    controllers(options: Nilable<IControllersOptions>): IControllersResult;
+    controllers(): Promise<IControllersResult>;
+    controllers(rootDir: Nilable<string>, imports?: Nilable<ImportValues>): Promise<IControllersResult>;
+    controllers(options: Nilable<IControllersOptions>): Promise<IControllersResult>;
 
     /**
      * Registers a route for a DELETE request.

@@ -12,13 +12,15 @@ export default {
             "file": "lib/index.esm.js",
             "format": "esm",
             "sourcemap": false,
-            "exports": "named"
+            "exports": "named",
+            "inlineDynamicImports": true
         },
         {
             "file": "lib/index.cjs.js",
             "format": "cjs",
             "sourcemap": false,
-            "exports": "named"
+            "exports": "named",
+            "inlineDynamicImports": true
         }
     ],
     "plugins": [

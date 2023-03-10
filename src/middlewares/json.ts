@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import { defaultParseErrorHandler } from ".";
 import { ParseError } from "../errors/parse";
 import type { HttpRequestHandler, IHttpStringBodyParserOptions, ParseErrorHandler, UniqueHttpMiddleware } from "../types";
 import type { Nilable, Nullable } from "../types/internal";
@@ -124,7 +125,7 @@ export function json(optionsOrLimit?: Nilable<number | IJsonOptions>, onLimitRea
     }
 
     if (isNil(onParsingFailed)) {
-        onParsingFailed = require(".").defaultParseErrorHandler;
+        onParsingFailed = defaultParseErrorHandler;
     }
     else {
         if (typeof onParsingFailed !== "function") {

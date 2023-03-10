@@ -21,7 +21,7 @@ import { knownFileMimes } from "../constants";
 import { normalizeRouterPath } from "../controllers/utils";
 import type { HttpMethod, IControllerMethodInfo, IControllersSwaggerOptions, IHttpServer } from "../types";
 import type { Nilable, ResolveSwaggerOperationObject } from "../types/internal";
-import { isNil, loadModule, setupObjectProperty, walkDirSync } from "../utils";
+import { isNil, loadModule, setupObjectProperty, walkDir, walkDirSync } from "../utils";
 import swaggerInitializerJs from "./resources/swagger-initializer_js";
 import { createSwaggerPathValidator, getSwaggerDocsBasePath, toOperationObject, toSwaggerPath } from "./utils";
 
@@ -67,21 +67,16 @@ const componentKeys: (keyof OpenAPIV3.ComponentsObject)[] = [
     "securitySchemes"
 ];
 
-const pathToSwaggerUi: string = require("swagger-ui-dist").absolutePath();
-
-const indexHtmlFilePath = path.join(pathToSwaggerUi, "index.html");
-const swaggerInitializerJSFilePath = path.join(pathToSwaggerUi, "swagger-initializer.js");
-
 const { readFile, stat } = fs.promises;
 
-export function prepareSwaggerDocumentFromOpenAPIFiles({
+export async function prepareSwaggerDocumentFromOpenAPIFiles({
     controllersRootDir,
     document,
     doesScriptFileMatch,
     methods,
     resolveOperation
 }: IPrepareSwaggerDocumentFromOpenAPIFilesOptions) {
-    walkDirSync(controllersRootDir, (file) => {
+    await walkDir(controllersRootDir, async (file) => {
         if (!doesScriptFileMatch(file)) {
             return;  // this is no file, we can use as script
         }
@@ -117,7 +112,7 @@ export function prepareSwaggerDocumentFromOpenAPIFiles({
                 throw new Error(`${controllerOpenAPIFile} is no file`);
             }
 
-            const controllerOpenApiModule = require(controllerOpenAPIFile);
+            const controllerOpenApiModule = await import(controllerOpenAPIFile);
 
             // try to find an export, with the exact the same name / key
             // as the underlying controller method
@@ -135,7 +130,7 @@ export function prepareSwaggerDocumentFromOpenAPIFiles({
     });
 }
 
-export function prepareSwaggerDocumentFromResources({
+export async function prepareSwaggerDocumentFromResources({
     document,
     doesScriptFileMatch,
     methods,
@@ -230,11 +225,16 @@ export function prepareSwaggerDocumentFromResources({
     }
 }
 
-export function setupSwaggerUIForServerControllers({
+export async function setupSwaggerUIForServerControllers({
     document,
     server,
     options
 }: ISetupSwaggerUIForServerControllersOptions) {
+    const pathToSwaggerUi = (await import("swagger-ui-dist")).absolutePath();
+
+    const indexHtmlFilePath = path.join(pathToSwaggerUi, "index.html");
+    const swaggerInitializerJSFilePath = path.join(pathToSwaggerUi, "swagger-initializer.js");
+
     const basePath = getSwaggerDocsBasePath(options.basePath);
     const basePathWithSuffix = basePath + (basePath.endsWith("/") ? "" : "/");
 

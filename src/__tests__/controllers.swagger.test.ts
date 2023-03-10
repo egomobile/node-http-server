@@ -43,7 +43,7 @@ describe("Swagger validation feature tests (controllers)", () => {
         it.each(validData)(`should return 200 when do a ${methodName} request and send valid query params`, async (vd) => {
             const resultText = "ok";
 
-            const server = createServerAndInitControllers();
+            const server = await createServerAndInitControllers();
 
             const response = await (request(server) as any)[method]("/test_swagger/test1?" + toQueryString(vd))
                 .send(JSON.stringify(vd))
@@ -61,7 +61,7 @@ describe("Swagger validation feature tests (controllers)", () => {
         });
 
         it.each(invalidData)(`should return 400 when do a ${methodName} request and send invalid query params`, async (ivd) => {
-            const server = createServerAndInitControllers();
+            const server = await createServerAndInitControllers();
 
             await (request(server) as any)[method]("/test_swagger/test1?" + toQueryString(ivd))
                 .send(JSON.stringify(ivd))
@@ -70,7 +70,7 @@ describe("Swagger validation feature tests (controllers)", () => {
         });
 
         it.each(invalidData)(`should return 403 when do a ${methodName} request and send invalid query params and a custom handler`, async (ivd) => {
-            const server = createServerAndInitControllers();
+            const server = await createServerAndInitControllers();
 
             const response = await (request(server) as any)[method]("/test_swagger/test2?" + toQueryString(ivd))
                 .send(JSON.stringify(ivd))

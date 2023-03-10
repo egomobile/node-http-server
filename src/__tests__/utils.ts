@@ -40,7 +40,7 @@ export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHt
     return createHttpServer(serverOptions);
 }
 
-export function createServerAndInitControllers() {
+export async function createServerAndInitControllers() {
     const server = createServer({
         "tests": {
             "requiresTestsEverywhere": false

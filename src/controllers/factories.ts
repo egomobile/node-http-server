@@ -615,7 +615,7 @@ function createRequestHandlerWithSerializer({ handler, serializer }: ICreateRequ
 export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerControllerMethodOptions) {
     const { server } = setupOptions;
 
-    server.controllers = (...args: any[]) => {
+    server.controllers = async (...args: any[]) => {
         const minimatchOpts: MinimatchOptions = {
             "dot": false,
             "matchBase": true
@@ -852,8 +852,8 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
 
         const controllerClasses: IControllerClass[] = [];
 
-        controllerFiles.forEach(file => {
-            const controllerModule = require(file.fullPath);
+        for (const file of controllerFiles) {
+            const controllerModule = await import(file.fullPath);
             const controllerClass: Nilable<IHttpController> = controllerModule.default;
 
             if (!isNil(controllerClass)) {
@@ -871,7 +871,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                     throw new TypeError(`Default export in ${file.fullPath} must be of type class`);
                 }
             }
-        });
+        }
 
         if (!controllerClasses.length) {
             throw new Error(`No controllers found in ${rootDir}`);
@@ -880,7 +880,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
         const allMethods: IControllerMethodInfo[] = [];
         const controllerMethodsWithoutTests: IControllerMethodWithoutTests[] = [];
 
-        controllerClasses.forEach(cls => {
+        for (const cls of controllerClasses) {
             const contollerOptions: IHttpControllerOptions = {
                 "app": server,
                 "file": cls.file.fullPath,
@@ -898,7 +898,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
             }, true);
 
             const classProps = getAllClassProps(cls["class"]);
-            classProps.forEach(prop => {
+            classProps.forEach(async prop => {
                 if (prop.trimStart().startsWith("_")) {
                     return;  // ignore all props with leading _
                 }
@@ -1027,7 +1027,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                     if (shouldLoadOpenAPIFiles) {
                         // try load data from `.openapi` files
 
-                        prepareSwaggerDocumentFromOpenAPIFiles({
+                        await prepareSwaggerDocumentFromOpenAPIFiles({
                             "controllersRootDir": rootDir,
                             "document": swaggerDoc,
                             "doesScriptFileMatch": (file) => {
@@ -1048,7 +1048,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                         // prepare `swaggerDoc` with resource modules
                         // in `swaggerResourcePath`
 
-                        prepareSwaggerDocumentFromResources({
+                        await prepareSwaggerDocumentFromResources({
                             "document": swaggerDoc,
                             "doesScriptFileMatch": (file) => {
                                 const relativeFilePath = normalizeRouterPath(
@@ -1133,7 +1133,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                 "fullPath": cls.file.fullPath,
                 "relativePath": cls.file.relativePath
             });
-        });
+        }
 
         if (shouldHaveTestsEverywhere) {
             // check if there is at least one method without a test
@@ -1183,7 +1183,7 @@ ${missingDocsText}`
         newControllersContext.swagger = swaggerDoc;
 
         if (swagger) {
-            setupSwaggerUIForServerControllers({
+            await setupSwaggerUIForServerControllers({
                 server,
                 "document": swaggerDoc,
                 "options": swagger

@@ -14,6 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import jsYaml, { YAMLException } from "js-yaml";
+import { defaultParseErrorHandler } from ".";
 import { ParseError } from "../errors/parse";
 import type { HttpRequestHandler, IHttpStringBodyParserOptions, ParseErrorHandler, UniqueHttpMiddleware } from "../types";
 import type { Nilable, Nullable } from "../types/internal";
@@ -125,7 +126,7 @@ export function yaml(optionsOrLimit?: Nilable<number | IYamlOptions>, onLimitRea
     }
 
     if (isNil(onParsingFailed)) {
-        onParsingFailed = require(".").defaultParseErrorHandler;
+        onParsingFailed = defaultParseErrorHandler;
     }
     else {
         if (typeof onParsingFailed !== "function") {
