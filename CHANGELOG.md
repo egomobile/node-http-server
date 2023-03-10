@@ -1,5 +1,7 @@
 # Change Log (@egomobile/http-server)
 
+## 0.62.1
+
 - add ESM and CommonJS support
 - `npm update`s
 

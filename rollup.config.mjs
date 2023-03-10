@@ -11,12 +11,14 @@ export default {
         {
             "file": "lib/index.esm.js",
             "format": "esm",
-            "sourcemap": false
+            "sourcemap": false,
+            "exports": "named"
         },
         {
             "file": "lib/index.cjs.js",
             "format": "cjs",
-            "sourcemap": false
+            "sourcemap": false,
+            "exports": "named"
         }
     ],
     "plugins": [
