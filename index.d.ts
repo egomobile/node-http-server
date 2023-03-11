@@ -1,10 +1,12 @@
 
-declare module "node:http" {
+declare module "http" {
     export interface IncomingMessage {
+        /**
+         * If available, the key/value pair of parameters.
+         */
+        params?: Record<string, string>;
     }
 }
 
-declare module "node:http2" {
-    export interface Http2ServerRequest {
-    }
+declare module "http2" {
 }

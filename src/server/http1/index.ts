@@ -19,9 +19,10 @@ import { createServer, IncomingMessage, Server, ServerOptions, ServerResponse } 
 import { createServer as createSecureServer, ServerOptions as SecureServerOptions } from "node:https";
 
 import type { RequestErrorHandler } from "../../errors/index.js";
-import type { IHttpServer, IHttpServerExtenderContext } from "../../types/index.js";
-import type { Nilable, Optional } from "../../types/internal.js";
-import { asAsync, isDev, isNil } from "../../utils/internal.js";
+import { httpMethods } from "../../index.js";
+import type { HttpMethod, HttpMiddleware, HttpNotFoundHandler, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpServer, IHttpServerExtenderContext } from "../../types/index.js";
+import type { IHttpRequestHandlerContext, Nilable, Optional } from "../../types/internal.js";
+import { asAsync, getUrlWithoutQuery, isDev, isNil, recompileHandlers } from "../../utils/internal.js";
 
 /**
  * Options for `createHttp1Server()` function.
@@ -29,6 +30,16 @@ import { asAsync, isDev, isNil } from "../../utils/internal.js";
 export type CreateHttp1ServerOptions =
     ICreateSecrureHttp1ServerOptions |
     ICreateUnsecrureHttp1ServerOptions;
+
+/**
+ * Shortcur for a HTTP 1 middleware.
+ */
+export type Http1Middleware = HttpMiddleware<IncomingMessage, ServerResponse>;
+
+/**
+ * Shortcut type for a HTTP 1 'not found' handler.
+ */
+export type Http1NotFoundHandler = HttpNotFoundHandler<IncomingMessage, ServerResponse>;
 
 /**
  * Shortcut type for a HTTP 1 extender context.
@@ -39,6 +50,13 @@ export type Http1ServerExtenderContext = IHttpServerExtenderContext<IncomingMess
  * Shortcut type for a HTTP 1 request handler.
  */
 export type Http1RequestErrorHandler = RequestErrorHandler<IncomingMessage, ServerResponse>;
+
+/**
+ * Shortcut for a HTTP 1 request handler.
+ */
+export type Http1RequestHandler = HttpRequestHandler<IncomingMessage, ServerResponse>;
+
+type Http1RequestHandlerContext = IHttpRequestHandlerContext<IncomingMessage, ServerResponse>;
 
 /**
  * Options for `createHttp1Server()` function, creating a secure instance.
@@ -72,6 +90,10 @@ export interface ICreateUnsecrureHttp1ServerOptions {
  * A HTTP 1.x server instance.
  */
 export interface IHttp1Server extends IHttpServer<IncomingMessage, ServerResponse> {
+    /**
+     * @inheritdoc
+     */
+    readonly instance: Optional<Server>;
 }
 
 /**
@@ -109,6 +131,28 @@ export const defaultHttp1RequestErrorHandler: Http1RequestErrorHandler =
         };
 
 /**
+ * A default HTTP 1 request error handler.
+ *
+ * @param {IncomingMessage} request The request context.
+ * @param {ServerResponse} response The response context.
+ */
+export const defaultHttp1NotFoundHandler: Http1NotFoundHandler =
+    async (request, response) => {
+        const errorMessage = Buffer.from(
+            `[${request.method}] ${request.url} not found`
+        );
+
+        if (!response.headersSent) {
+            response.writeHead(404, {
+                "Content-Length": errorMessage.length,
+                "Content-Type": "text/plain; charset=UTF-8"
+            });
+        }
+
+        response.end(errorMessage);
+    };
+
+/**
  * Creates a new instance of an `IHttp1Server` server.
  *
  * @param {Nilable<CreateHttp1ServerOptions>} [options] The custom options.
@@ -122,25 +166,62 @@ export async function createHttp1Server(options?: Nilable<CreateHttp1ServerOptio
         }
     }
 
+    const compiledHandlers: Partial<Record<Uppercase<HttpMethod>, Http1RequestHandlerContext[]>> = {};
     let errorHandler = defaultHttp1RequestErrorHandler;
+    const globalMiddlewares: Http1Middleware[] = [];
     let instance: Optional<Server>;
+    let notFoundHandler = defaultHttp1NotFoundHandler;
     let port: Optional<number>;
 
     // define server instance as request handler for
     // a `Server` instance first
     const server = (async (request: IncomingMessage, response: ServerResponse) => {
         try {
-            // TODO
-            response.end();
+            let ctx: Nilable<Http1RequestHandlerContext>;
+
+            const methodContextes = compiledHandlers[request.method as Uppercase<HttpMethod>];
+            if (methodContextes) {
+                for (const context of methodContextes) {
+                    const isValid = await context.isPathValid(request);
+                    if (isValid) {
+                        ctx = context;
+                        break;
+                    }
+                }
+            }
+
+            if (ctx) {
+                await ctx.handler(request, response);
+
+                await ctx.end(response);
+            }
+            else {
+                notFoundHandler(request, response)
+                    .then(() => {
+                        response.end();
+                    })
+                    .catch((ex: any) => {
+                        console.error("[HTTP1 NOT FOUND HANDLER]", ex);
+
+                        response.end();
+                    });
+            }
         }
         catch (error) {
             errorHandler(error, request, response)
-                .catch(console.error);
+                .then(() => {
+                    response.end();
+                })
+                .catch((ex: any) => {
+                    console.error("[HTTP1 ERROR HANDLER]", ex);
+
+                    response.end();
+                });
         }
     }) as unknown as IHttp1Server;
 
     // server.extend()
-    server.extend = async (extender) => {
+    server.extend = (extender) => {
         if (typeof extender !== "function") {
             throw new TypeError("extender must be of type function");
         }
@@ -149,18 +230,113 @@ export async function createHttp1Server(options?: Nilable<CreateHttp1ServerOptio
             server
         };
 
-        await Promise.resolve(
-            extender(context)
-        );
+        extender(context);
     };
 
     // server.setErrorHandler()
-    server.setErrorHandler = async (handler) => {
+    server.setErrorHandler = (handler) => {
         if (typeof handler !== "function") {
             throw new TypeError("handler must be of type function");
         }
 
         errorHandler = asAsync(handler);
+    };
+
+    // server.setNotFoundHandler()
+    server.setNotFoundHandler = (handler) => {
+        if (typeof handler !== "function") {
+            throw new TypeError("handler must be of type function");
+        }
+
+        notFoundHandler = asAsync(handler);
+    };
+
+    // methods for
+    // `connect`, `delete`, `get`, `head`, `options`, `patch`, `post`, `put`, `trace`
+    httpMethods.forEach((httpMethod) => {
+        const ucHttpMethod = httpMethod.toUpperCase() as Uppercase<HttpMethod>;
+
+        (server as any)[httpMethod] = (pathOrValidator: HttpRequestPath<IncomingMessage>, ...args: any[]) => {
+            let handler: HttpRequestHandler<IncomingMessage, ServerResponse>;
+            let isPathValid: HttpPathValidator<IncomingMessage>;
+            let middlewares: Http1Middleware[];
+
+            if (typeof pathOrValidator === "string") {
+                isPathValid = async (request) => {
+                    return getUrlWithoutQuery(request.url) === pathOrValidator;
+                };
+            }
+            else if (pathOrValidator instanceof RegExp) {
+                isPathValid = async (request) => {
+                    return pathOrValidator.test(getUrlWithoutQuery(request.url));
+                };
+            }
+            else {
+                isPathValid = asAsync(pathOrValidator);
+            }
+
+            if (Array.isArray(args[0])) {
+                // args[1]: HttpMiddleware<IncomingMessage, ServerResponse>[]
+                // args[2]: HttpRequestHandler<IncomingMessage, ServerResponse>
+
+                middlewares = args[0];
+                handler = args[1];
+            }
+            else {
+                // args[1]: HttpRequestHandler<IncomingMessage, ServerResponse>
+
+                middlewares = [];
+                handler = args[0];
+            }
+
+            if (typeof handler !== "function") {
+                throw new TypeError("handler must be of type function");
+            }
+
+            if (typeof isPathValid !== "function") {
+                throw new TypeError("pathOrValidator must be of type string, RegExp or function");
+            }
+
+            if (!Array.isArray(middlewares)) {
+                throw new TypeError("middlewares must be of type Array");
+            }
+            if (middlewares.some((mw) => {
+                return typeof mw !== "function";
+            })) {
+                throw new TypeError("All items of middlewares must be of type function");
+            }
+
+            let handlers: Optional<Http1RequestHandlerContext[]> = compiledHandlers[ucHttpMethod];
+            if (!handlers) {
+                handlers = compiledHandlers[ucHttpMethod] = [];
+            }
+
+            handlers.push({
+                "baseHandler": handler,
+                "end": async (response) => {
+                    response.end();
+                },
+                isPathValid,
+                middlewares,
+                handler
+            });
+
+            recompileHandlers(
+                compiledHandlers,
+                globalMiddlewares
+            );
+        };
+    });
+
+    // server.use()
+    server.use = (...middlewares) => {
+        if (middlewares.some((mw) => {
+            return typeof mw !== "function";
+        })) {
+            throw new TypeError("All items in middlewares must be of type function");
+        }
+
+        globalMiddlewares.push(...middlewares);
     };
 
     // server.listen()

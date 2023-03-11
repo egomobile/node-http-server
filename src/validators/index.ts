@@ -13,18 +13,4 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, HttpPathValidator, HttpRequestHandler } from "./index.js";
-
-export interface IHttpRequestHandlerContext<TRequest, TResponse> {
-    readonly end: (response: TResponse) => Promise<void>;
-    readonly baseHandler: HttpRequestHandler<TRequest, TResponse>;
-    handler: HttpRequestHandler<TRequest, TResponse>;
-    readonly isPathValid: HttpPathValidator<TRequest>;
-    readonly middlewares: HttpMiddleware<TRequest, TResponse>[];
-}
-
-export type Optional<T extends any = any> = T | undefined;
-
-export type Nilable<T extends any = any> = Optional<T> | Nullable<T>;
-
-export type Nullable<T extends any = any> = T | null;
+export * from "./params.js";
