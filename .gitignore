@@ -4,3 +4,4 @@ node_modules/
 /lib
 sandbox/
 /TODOs.md
+/sandbox*.http

@@ -8,7 +8,7 @@
     "lib": [
       "ES2022"
     ],
-    "moduleResolution": "node",
+    "resolveJsonModule": false,
     "declaration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,

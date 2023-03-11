@@ -17,17 +17,62 @@
 
 /// <reference path="../index.d.ts" />
 
-import type { IncomingMessage, ServerResponse } from "node:http";
+import { CreateHttp1ServerOptions, CreateHttp2ServerOptions, IHttp1Server, IHttp2Server, createHttp1Server, createHttp2Server } from "./server/index.js";
+import type { HttpMethod, HttpServerVersion } from "./types/index.js";
+import type { Nilable } from "./types/internal.js";
+import { isNil } from "./utils/internal.js";
 
-export interface IHttpServer {
+/**
+ * List of known HTTP methods.
+ */
+export const httpMethods: readonly HttpMethod[] = ["connect", "delete", "get", "head", "options", "patch", "post", "put", "trace"] as const;
+
+/**
+ * Creates a new server instance.
+ *
+ * @param {Nilable<CreateHttp1ServerOptions | CreateHttp2ServerOptions>} [options] Custom options.
+ * @param {HttpServerVersion} [version=1] The custom HTTP version.
+ *
+ * @returns {Promise<IHttp1Server|IHttp2Server>} The promise with the new instance.
+ */
+export function createServer(options?: Nilable<CreateHttp1ServerOptions>): Promise<IHttp1Server>;
+export function createServer(version: 1, options?: Nilable<CreateHttp1ServerOptions>): Promise<IHttp1Server>;
+export function createServer(version: 2, options?: Nilable<CreateHttp2ServerOptions>): Promise<IHttp2Server>;
+export function createServer(versionOrOptions: Nilable<HttpServerVersion | CreateHttp1ServerOptions>, options?: Nilable<CreateHttp1ServerOptions | CreateHttp2ServerOptions>): Promise<IHttp1Server | IHttp2Server> {
+    let version: HttpServerVersion;
+    let createOptions: Nilable<CreateHttp1ServerOptions | CreateHttp2ServerOptions>;
+    if (isNil(versionOrOptions)) {
+        version = 1;
+        createOptions = versionOrOptions as Nilable<CreateHttp1ServerOptions | CreateHttp2ServerOptions>;
+    }
+    else {
+        if (typeof versionOrOptions === "number") {
+            version = versionOrOptions as HttpServerVersion;
+            createOptions = options;
+        }
+        else {
+            version = 1;
+            createOptions = versionOrOptions as (CreateHttp1ServerOptions | CreateHttp2ServerOptions);
+        }
+    }
+
+    if (version === 1) {
+        return createHttp1Server(createOptions as Nilable<CreateHttp1ServerOptions>);
+    }
+
+    if (version === 2) {
+        return createHttp2Server(createOptions as Nilable<CreateHttp2ServerOptions>);
+    }
+
+    throw new TypeError("version must be of value 1 or 2");
 }
 
-export async function createServer(): Promise<IHttpServer> {
-    const server = (async (request: IncomingMessage, response: ServerResponse) => {
-
-    }) as unknown as IHttpServer;
-
-    return server;
-}
-
+/**
+ * @inheritdoc
+ */
 export default createServer;
+
+export * from "./errors/index.js";
+export * from "./server/index.js";
+export * from "./types/index.js";
+
