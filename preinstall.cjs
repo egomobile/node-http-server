@@ -1,6 +1,6 @@
-const EGO_BRANCH_NAME = process.env.EGO_BRANCH_NAME?.trim();
+const GITHUB_REF_NAME = process.env.GITHUB_REF_NAME?.trim();
 
-if (!EGO_BRANCH_NAME) {
+if (!GITHUB_REF_NAME) {
     console.log("Module version not updated");
 
     process.exit(0);
