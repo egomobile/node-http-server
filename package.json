@@ -75,6 +75,7 @@
         "!lib/**/__tests__/**/*",
         "!lib/**/*.map",
         "!lib/**/setupTests.*",
+        "preinstall.cjs",
         "README.md"
     ],
     "devDependencies": {
