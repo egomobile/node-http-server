@@ -16,12 +16,5 @@ jobs:
         with:
           node-version: 18
           registry-url: https://registry.npmjs.org/
-      - name: Get current branch
-        run: |
-          EGO_BRANCH_NAME=${GITHUB_REF#refs/heads/}
-          echo $EGO_BRANCH_NAME
-      - name: Output current branch
-        run: |
-          EGO_BRANCH_NAME=${GITHUB_REF#refs/heads/}
-          echo "Branch name: $EGO_BRANCH_NAME"
-          echo "Repo: $GITHUB_REPOSITORY"
+      - name: Install dependencies
+        run: npm install
