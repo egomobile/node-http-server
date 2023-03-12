@@ -64,6 +64,13 @@ export type HttpRequestHandler<TRequest, TResponse> =
 export type HttpRequestPath<TRequest> = string | RegExp | HttpPathValidator<TRequest>;
 
 /**
+ * Describes an event listener.
+ *
+ * @param {TContext} context The context object.
+ */
+export type HttpServerEventListener<TContext> = (context: TContext) => void;
+
+/**
  * A function, which extends an `IHttpServer` instance.
  *
  * @param {IHttpServerExtenderContext<TRequest, TResponse>} context The context.
@@ -115,16 +122,6 @@ export interface IHttpRequestHandlerOptions<TRequest, TResponse> {
 }
 
 /**
- * A context for a `HttpServerExtender` function.
- */
-export interface IHttpServerExtenderContext<TRequest, TResponse> {
-    /**
-     * The underlying server.
-     */
-    server: IHttpServer<TRequest, TResponse>;
-}
-
-/**
  * A generic definition of a HTTP server.
  */
 export interface IHttpServer<TRequest, TResponse> {
@@ -132,6 +129,13 @@ export interface IHttpServer<TRequest, TResponse> {
      * The server instance itself is already a request handler.
      */
     (request: TRequest, response: TResponse): any;
+
+    /**
+     * Closes the current server instance.
+     *
+     * @returns {Promise<boolean>} Promise with value that indicates if server could be should down or not.
+     */
+    close(): Promise<boolean>;
 
     /**
      * Adds a handler for a CONNECT request.
@@ -304,6 +308,104 @@ export interface IHttpServer<TRequest, TResponse> {
      * @returns {this}
      */
     use: (...middlewares: HttpMiddleware<TRequest, TResponse>[]) => this;
+}
+
+/**
+ * A context for a `HttpServerExtender` function.
+ */
+export interface IHttpServerExtenderContext<TRequest, TResponse> {
+    /**
+     * The underlying event emitter.
+     */
+    events: NodeJS.EventEmitter;
+
+    /**
+     * Deactivates an event listener.
+     *
+     * @param {string} name The name of the event.
+     * @param {HttpServerEventListener<any>} listener The listener.
+     *
+     * @returns {this}
+     */
+    off(name: "server:close", listener: HttpServerEventListener<IHttpServerIsClosingEventContext>): this;
+    off(name: "server:closed", listener: HttpServerEventListener<IHttpServerHasBeenClosedEventContext>): this;
+    off(name: "server:listen", listener: HttpServerEventListener<IHttpServerStartsListingEventContext>): this;
+    off(name: "server:listening", listener: HttpServerEventListener<IHttpServerIsListingEventContext>): this;
+
+    /**
+     * Registers an event listener, that is executed every time, until it is deactivated.
+     *
+     * @param {string} name The name of the event.
+     * @param {HttpServerEventListener<any>} listener The listener.
+     *
+     * @returns {this}
+     */
+    on(name: "server:close", listener: HttpServerEventListener<IHttpServerIsClosingEventContext>): this;
+    on(name: "server:closed", listener: HttpServerEventListener<IHttpServerHasBeenClosedEventContext>): this;
+    on(name: "server:listen", listener: HttpServerEventListener<IHttpServerStartsListingEventContext>): this;
+    on(name: "server:listening", listener: HttpServerEventListener<IHttpServerIsListingEventContext>): this;
+
+    /**
+     * Registers an event listener, that is executed once.
+     *
+     * @param {string} name The name of the event.
+     * @param {HttpServerEventListener<any>} listener The listener.
+     *
+     * @returns {this}
+     */
+    once(name: "server:close", listener: HttpServerEventListener<IHttpServerIsClosingEventContext>): this;
+    once(name: "server:closed", listener: HttpServerEventListener<IHttpServerHasBeenClosedEventContext>): this;
+    once(name: "server:listen", listener: HttpServerEventListener<IHttpServerStartsListingEventContext>): this;
+    once(name: "server:listening", listener: HttpServerEventListener<IHttpServerIsListingEventContext>): this;
+
+    /**
+     * The underlying server.
+     */
+    server: IHttpServer<TRequest, TResponse>;
+}
+
+/**
+ * An context for a HTTP server event, that is emitted, when the server has been closed and freed a TCP port.
+ */
+export interface IHttpServerHasBeenClosedEventContext {
+    /**
+     * The error, if available.
+     */
+    readonly error?: Optional<any>;
+    /**
+     * The TCP port.
+     */
+    readonly port: Optional<number>;
+}
+
+/**
+ * An context for a HTTP server event, that is emitted, when the server is closing and frees a TCP port.
+ */
+export interface IHttpServerIsClosingEventContext {
+    /**
+     * The TCP port.
+     */
+    readonly port: Optional<number>;
+}
+
+/**
+ * An context for a HTTP server event, that is emitted, when the server is listening on a TCP port.
+ */
+export interface IHttpServerIsListingEventContext {
+    /**
+     * The TCP port.
+     */
+    readonly port: number;
+}
+
+/**
+ * An context for a HTTP server event, that is emitted, when the server starts listening on a TCP port.
+ */
+export interface IHttpServerStartsListingEventContext {
+    /**
+     * The TCP port.
+     */
+    readonly port: number;
 }
 
 /**

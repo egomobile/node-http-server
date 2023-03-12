@@ -16,6 +16,10 @@
 import type { Nilable } from "../types/internal.js";
 
 export function asAsync<TFunc extends Function = Function>(func: Function): TFunc {
+    if (typeof func !== "function") {
+        throw new TypeError("func must be of type function");
+    }
+
     if (func.constructor.name === "AsyncFunction") {
         return func as TFunc;
     }

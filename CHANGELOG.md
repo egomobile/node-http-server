@@ -5,7 +5,7 @@
 - **BREAKING CHANGES**:
   - `autoEnd` => `noAutoEnd`
   - `listen()` method of HTTP server instance now returns TCP port
-  - parameters are now activated automatically, if `/:` is found in a string path
+  - parameters are now activated automatically, if `:` is found in a string path
   - remove controller framework, which will be outsourced to separate library
   - remove test framework, which will be outsourced to separate library
   - remove OpenAPI framework, which will be outsourced to separate library

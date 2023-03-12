@@ -1,6 +1,6 @@
 const GITHUB_REF_NAME = process.env.GITHUB_REF_NAME?.trim();
 
-if (!GITHUB_REF_NAME) {
+if (!GITHUB_REF_NAME || ["main", "master"].includes(GITHUB_REF_NAME)) {
     console.log("Module version not updated");
 
     process.exit(0);

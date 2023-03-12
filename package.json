@@ -21,7 +21,7 @@
         "lint": "eslint -c .eslintrc.cjs --ext .ts src",
         "lint:fix": "eslint --fix -c .eslintrc.cjs --ext .ts src",
         "preinstall": "node ./preinstall.cjs",
-        "sandbox": "NODE_ENV=development nodemon --watch './sandbox/**/*.ts' --exec node --experimental-specifier-resolution=node --loader ts-node/esm --inspect=0.0.0.0:9229 ./sandbox/index.ts",
+        "sandbox": "NODE_ENV=development nodemon --watch './sandbox/**/*.ts' --watch './sandbox/**/*.cts' --watch './sandbox/**/*.mts' --exec node --experimental-specifier-resolution=node --loader ts-node/esm --inspect=0.0.0.0:9229 ./sandbox/index.ts",
         "test": "exit 0",
         "test2": "jest --no-cache --silent"
     },
@@ -83,7 +83,6 @@
         "@rollup/plugin-node-resolve": "15.0.1",
         "@rollup/plugin-typescript": "11.0.0",
         "@types/node": "18.15.0",
-        "axios": "1.3.4",
         "del-cli": "5.0.0",
         "eslint": "8.35.0",
         "eslint-config-ego": "^0.17.1",

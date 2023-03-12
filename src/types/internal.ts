@@ -15,8 +15,11 @@
 
 import type { HttpMiddleware, HttpPathValidator, HttpRequestHandler } from "./index.js";
 
+export type RequestHandlerContextEndMethod<TResponse> =
+    (response: TResponse) => Promise<void>;
+
 export interface IHttpRequestHandlerContext<TRequest, TResponse> {
-    readonly end: (response: TResponse) => Promise<void>;
+    readonly end: RequestHandlerContextEndMethod<TResponse>;
     readonly baseHandler: HttpRequestHandler<TRequest, TResponse>;
     handler: HttpRequestHandler<TRequest, TResponse>;
     readonly isPathValid: HttpPathValidator<TRequest>;

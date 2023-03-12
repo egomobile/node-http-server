@@ -10,8 +10,8 @@
     ],
     "resolveJsonModule": false,
     "declaration": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
+    "emitDecoratorMetadata": false,
+    "experimentalDecorators": false,
     "sourceMap": false
   },
   "ts-node": {

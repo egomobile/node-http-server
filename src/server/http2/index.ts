@@ -15,14 +15,14 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import { EventEmitter } from "node:events";
 import { createSecureServer, createServer, Http2Server, Http2ServerRequest, Http2ServerResponse, SecureServerOptions, ServerOptions } from "node:http2";
 
 import type { RequestErrorHandler } from "../../errors/index.js";
-import { httpMethods, params } from "../../index.js";
-import type { HttpMethod, HttpMiddleware, HttpNotFoundHandler, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, IHttpServerExtenderContext } from "../../types/index.js";
+import type { HttpMethod, HttpMiddleware, HttpNotFoundHandler, HttpPathValidator, HttpRequestHandler, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, IHttpServerExtenderContext, IHttpServerIsListingEventContext, IHttpServerStartsListingEventContext } from "../../types/index.js";
 import type { IHttpRequestHandlerContext, Nilable, Optional } from "../../types/internal.js";
-import { asAsync, getUrlWithoutQuery, isDev, isNil } from "../../utils/internal.js";
-import { recompileHandlers } from "../utils.js";
+import { isDev, isNil } from "../../utils/internal.js";
+import { createRequestHandler, setupServerInstance } from "../factories.js";
 
 /**
  * Options for `createHttp2Server()` function.
@@ -197,6 +197,7 @@ export function createHttp2Server(options: Nilable<CreateHttp2ServerOptions>): I
 
     const compiledHandlers: Partial<Record<Uppercase<HttpMethod>, Http2RequestHandlerContext[]>> = {};
     let errorHandler = defaultHttp2RequestErrorHandler;
+    const events = new EventEmitter();
     const globalMiddlewares: Http2Middleware[] = [];
     let instance: Optional<Http2Server>;
     let notFoundHandler = defaultHttp2NotFoundHandler;
@@ -204,207 +205,15 @@ export function createHttp2Server(options: Nilable<CreateHttp2ServerOptions>): I
 
     // define server instance as request handler for
     // a `Http2Server` instance first
-    const server = (async (request: IHttp2Request, response: IHttp2Response) => {
-        try {
-            let ctx: Nilable<Http2RequestHandlerContext>;
-
-            const methodContextes = compiledHandlers[request.method as Uppercase<HttpMethod>];
-            const methodContextesLength = methodContextes?.length;
-
-            if (methodContextesLength) {
-                for (let i = 0; i < methodContextesLength; i++) {
-                    const context = methodContextes[i];
-                    const isValid = await context.isPathValid(request);
-
-                    if (isValid) {
-                        ctx = context;
-                        break;
-                    }
-                }
-            }
-
-            if (ctx) {
-                await ctx.handler(request, response);
-
-                await ctx.end(response);
-            }
-            else {
-                notFoundHandler(request, response)
-                    .then(() => {
-                        response.end();
-                    })
-                    .catch((ex: any) => {
-                        console.error("[HTTP2 NOT FOUND HANDLER]", ex);
-
-                        response.end();
-                    });
-            }
-        }
-        catch (error) {
-            errorHandler(error, request, response)
-                .then(() => {
-                    response.end();
-                })
-                .catch((ex: any) => {
-                    console.error("[HTTP2 ERROR HANDLER]", ex);
-
-                    response.end();
-                });
+    const server = createRequestHandler({
+        compiledHandlers,
+        "getErrorHandler": () => {
+            return errorHandler;
+        },
+        "getNotFoundHandler": () => {
+            return notFoundHandler;
         }
     }) as unknown as IHttp2Server;
-
-    // server.extend()
-    server.extend = (extender) => {
-        if (typeof extender !== "function") {
-            throw new TypeError("extender must be of type function");
-        }
-
-        const context: Http2ServerExtenderContext = {
-            server
-        };
-
-        extender(context);
-
-        return server;
-    };
-
-    // server.setErrorHandler()
-    server.setErrorHandler = (handler) => {
-        if (typeof handler !== "function") {
-            throw new TypeError("handler must be of type function");
-        }
-
-        errorHandler = asAsync(handler);
-
-        return server;
-    };
-
-    // server.setNotFoundHandler()
-    server.setNotFoundHandler = (handler) => {
-        if (typeof handler !== "function") {
-            throw new TypeError("handler must be of type function");
-        }
-
-        notFoundHandler = asAsync(handler);
-
-        return server;
-    };
-
-    // methods for
-    // `connect`, `delete`, `get`, `head`, `options`, `patch`, `post`, `put`, `trace`
-    httpMethods.forEach((httpMethod) => {
-        const ucHttpMethod = httpMethod.toUpperCase() as Uppercase<HttpMethod>;
-
-        (server as any)[httpMethod] = (pathOrValidator: HttpRequestPath<IHttp2Request>, ...args: any[]) => {
-            let options: Http2RequestHandlerOptions;
-            let handler: Http2RequestHandler;
-            let isPathValid: Http2PathValidator;
-
-            if (args.length < 2) {
-                // args[0]: Http2RequestHandler
-
-                options = {};
-                handler = args[0];
-            }
-            else {
-                if (Array.isArray(args[0])) {
-                    // args[0]: Http2Middleware[]
-                    // args[1]: Http2RequestHandler
-
-                    options = {
-                        "use": args[0]
-                    };
-                    handler = args[1];
-                }
-                else {
-                    // args[0]: Http2RequestHandlerOptions
-                    // args[1]: Http2RequestHandler
-
-                    options = args[0];
-                    handler = args[1];
-                }
-            }
-
-            const middlewares = options.use ?? [];
-            const shouldNotDoAutoEnd = !!options.noAutoEnd;
-            const shouldNotDoAutoParams = !!options.noAutoParams;
-
-            if (typeof pathOrValidator === "string") {
-                if (shouldNotDoAutoParams || !pathOrValidator.includes("/:")) {
-                    isPathValid = async (request) => {
-                        return getUrlWithoutQuery(request.url) === pathOrValidator;
-                    };
-                }
-                else {
-                    isPathValid = params(pathOrValidator);
-                }
-            }
-            else if (pathOrValidator instanceof RegExp) {
-                isPathValid = async (request) => {
-                    return pathOrValidator.test(getUrlWithoutQuery(request.url));
-                };
-            }
-            else {
-                isPathValid = asAsync(pathOrValidator);
-            }
-
-            if (typeof handler !== "function") {
-                throw new TypeError("handler must be of type function");
-            }
-
-            if (typeof isPathValid !== "function") {
-                throw new TypeError("pathOrValidator must be of type string, RegExp or function");
-            }
-
-            if (!Array.isArray(middlewares)) {
-                throw new TypeError("middlewares must be of type Array");
-            }
-            if (middlewares.some((mw) => {
-                return typeof mw !== "function";
-            })) {
-                throw new TypeError("All items of middlewares must be of type function");
-            }
-
-            let handlers: Optional<Http2RequestHandlerContext[]> = compiledHandlers[ucHttpMethod];
-            if (!handlers) {
-                handlers = compiledHandlers[ucHttpMethod] = [];
-            }
-
-            handlers.push({
-                "baseHandler": handler,
-                "end": shouldNotDoAutoEnd ?
-                    async () => { } :
-                    async (response) => {
-                        response.end();
-                    },
-                isPathValid,
-                "middlewares": middlewares.map((mw) => {
-                    return asAsync<Http2Middleware>(mw);
-                }),
-                handler
-            });
-
-            recompileHandlers(
-                compiledHandlers,
-                globalMiddlewares
-            );
-
-            return server;
-        };
-    });
-
-    // server.use()
-    server.use = (...middlewares) => {
-        if (middlewares.some((mw) => {
-            return typeof mw !== "function";
-        })) {
-            throw new TypeError("All items in middlewares must be of type function");
-        }
-
-        globalMiddlewares.push(...middlewares);
-
-        return server;
-    };
 
     // server.listen()
     server.listen = (p) => {
@@ -453,36 +262,46 @@ export function createHttp2Server(options: Nilable<CreateHttp2ServerOptions>): I
 
             newInstance.once("error", reject);
 
+            events.emit(
+                "server:listen",
+                {
+                    "port": tcpPort
+                } as IHttpServerStartsListingEventContext
+            );
+
             newInstance.listen(tcpPort, () => {
                 instance = newInstance;
                 port = tcpPort;
+
+                events.emit(
+                    "server:listening",
+                    {
+                        "port": tcpPort
+                    } as IHttpServerIsListingEventContext
+                );
 
                 return resolve(tcpPort);
             });
         });
     };
 
-    return Object.defineProperties(server, {
-        "httpVersion": {
-            "enumerable": true,
-            "configurable": false,
-            "get": () => {
-                return 2;
-            }
+    return setupServerInstance({
+        compiledHandlers,
+        events,
+        "getInstance": () => {
+            return instance;
         },
-        "instance": {
-            "enumerable": true,
-            "configurable": false,
-            "get": () => {
-                return instance;
-            }
+        "getPort": () => {
+            return port;
         },
-        "port": {
-            "enumerable": true,
-            "configurable": false,
-            "get": () => {
-                return port;
-            }
-        }
-    });
+        globalMiddlewares,
+        "httpVersion": 2,
+        "onErrorHandlerUpdate": (handler) => {
+            errorHandler = handler as Http2RequestErrorHandler;
+        },
+        "onNotFoundHandlerUpdate": (handler) => {
+            notFoundHandler = handler as Http2NotFoundHandler;
+        },
+        server
+    }) as IHttp2Server;
 }

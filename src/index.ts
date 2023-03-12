@@ -17,7 +17,7 @@
 
 /// <reference path="../index.d.ts" />
 
-import { CreateHttp1ServerOptions, CreateHttp2ServerOptions, IHttp1Server, IHttp2Server, createHttp1Server, createHttp2Server } from "./server/index.js";
+import { createHttp1Server, CreateHttp1ServerOptions, createHttp2Server, CreateHttp2ServerOptions, IHttp1Server, IHttp2Server } from "./server/index.js";
 import type { HttpMethod, HttpServerVersion } from "./types/index.js";
 import type { Nilable } from "./types/internal.js";
 import { isNil } from "./utils/internal.js";
@@ -84,4 +84,3 @@ export * from "./errors/index.js";
 export * from "./server/index.js";
 export * from "./types/index.js";
 export * from "./validators/index.js";
-
