@@ -1,5 +1,17 @@
 # Change Log (@egomobile/http-server)
 
+## 0.64.0
+
+- **BREAKING CHANGES**:
+  - `autoEnd` => `noAutoEnd`
+  - `listen()` method of HTTP server instance now returns TCP port
+  - parameters are now activated automatically, if `/:` is found in a string path
+  - remove controller framework, which will be outsourced to separate library
+  - remove test framework, which will be outsourced to separate library
+  - remove OpenAPI framework, which will be outsourced to separate library
+  - remove validation framework, which will be outsourced to separate library
+- add ESM and CommonJS support
+
 ## 0.63.0
 
 - revert to version `0.61.x`

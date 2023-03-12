@@ -1,6 +1,6 @@
 
 declare module "http" {
-    export interface IncomingMessage {
+    interface IncomingMessage {
         /**
          * If available, the key/value pair of parameters.
          */

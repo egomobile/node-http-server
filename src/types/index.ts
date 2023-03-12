@@ -77,6 +77,44 @@ export type HttpServerExtender<TRequest, TResponse> =
 export type HttpServerVersion = 1 | 2;
 
 /**
+ * A generic HTTP request context.
+ */
+export interface IHttpRequest {
+    /**
+     * If available, the key/value pair of parameters.
+     */
+    params?: Record<string, string>;
+}
+
+/**
+ * A generic HTTP response context.
+ */
+export interface IHttpResponse {
+}
+
+/**
+ * Options for a HTTP request handler.
+ */
+export interface IHttpRequestHandlerOptions<TRequest, TResponse> {
+    /**
+     * Indicates, if default behavior of closing request connection automatically, should be
+     * deactivated or not.
+     */
+    noAutoEnd?: Nilable<boolean>;
+
+    /**
+     * Indicates, if default behavior of automatically setup parameters, should be
+     * deactivated or not.
+     */
+    noAutoParams?: Nilable<boolean>;
+
+    /**
+     * Additional middlewares to use.
+     */
+    use?: HttpMiddleware<TRequest, TResponse>[];
+}
+
+/**
  * A context for a `HttpServerExtender` function.
  */
 export interface IHttpServerExtenderContext<TRequest, TResponse> {
@@ -98,49 +136,72 @@ export interface IHttpServer<TRequest, TResponse> {
     /**
      * Adds a handler for a CONNECT request.
      *
-     * @param {HttpPathValidator<TRequest>} pathOrValidator The path or the validator.
+     * @param {HttpRequestPath<TRequest>} pathOrValidator The path or the validator.
      * @param {HttpMiddleware<TRequest, TResponse>[]} middlewares One or more middleware to add.
      * @param {HttpRequestHandler<TRequest, TResponse>} handler The handler.
+     * @param {IHttpRequestHandlerOptions<TRequest, TResponse>} [options] Custom options.
+     *
+     * @returns {this}
      */
-    connect(pathOrValidator: HttpPathValidator<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): void;
-    connect(pathOrValidator: HttpPathValidator<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): void;
+    connect(pathOrValidator: HttpRequestPath<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): this;
+    connect(pathOrValidator: HttpRequestPath<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): this;
+    connect(pathOrValidator: HttpRequestPath<TRequest>, options: IHttpRequestHandlerOptions<TRequest, TResponse>, handler: HttpRequestHandler<TRequest, TResponse>): this;
 
     /**
      * Adds a handler for a DELETE request.
      *
-     * @param {HttpPathValidator<TRequest>} pathOrValidator The path or the validator.
+     * @param {HttpRequestPath<TRequest>} pathOrValidator The path or the validator.
      * @param {HttpMiddleware<TRequest, TResponse>[]} middlewares One or more middleware to add.
      * @param {HttpRequestHandler<TRequest, TResponse>} handler The handler.
+     * @param {IHttpRequestHandlerOptions<TRequest, TResponse>} [options] Custom options.
+     *
+     * @returns {this}
      */
-    delete(pathOrValidator: HttpPathValidator<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): void;
-    delete(pathOrValidator: HttpPathValidator<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): void;
+    delete(pathOrValidator: HttpRequestPath<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): this;
+    delete(pathOrValidator: HttpRequestPath<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): this;
+    delete(pathOrValidator: HttpRequestPath<TRequest>, options: IHttpRequestHandlerOptions<TRequest, TResponse>, handler: HttpRequestHandler<TRequest, TResponse>): this;
 
     /**
      * Extends the server.
      *
      * @param {HttpServerExtender<TRequest, TResponse>} extender The function, that extends the server.
+     *
+     * @returns {this}
      */
-    extend(extender: HttpServerExtender<TRequest, TResponse>): void;
+    extend(extender: HttpServerExtender<TRequest, TResponse>): this;
 
     /**
      * Adds a handler for a GET request.
      *
-     * @param {HttpPathValidator<TRequest>} pathOrValidator The path or the validator.
+     * @param {HttpRequestPath<TRequest>} pathOrValidator The path or the validator.
      * @param {HttpMiddleware<TRequest, TResponse>[]} middlewares One or more middleware to add.
      * @param {HttpRequestHandler<TRequest, TResponse>} handler The handler.
+     * @param {IHttpRequestHandlerOptions<TRequest, TResponse>} [options] Custom options.
+     *
+     * @returns {this}
      */
-    get(pathOrValidator: HttpPathValidator<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): void;
-    get(pathOrValidator: HttpPathValidator<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): void;
+    get(pathOrValidator: HttpRequestPath<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): this;
+    get(pathOrValidator: HttpRequestPath<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): this;
+    get(pathOrValidator: HttpRequestPath<TRequest>, options: IHttpRequestHandlerOptions<TRequest, TResponse>, handler: HttpRequestHandler<TRequest, TResponse>): this;
 
     /**
      * Adds a handler for a HEAD request.
      *
-     * @param {HttpPathValidator<TRequest>} pathOrValidator The path or the validator.
+     * @param {HttpRequestPath<TRequest>} pathOrValidator The path or the validator.
      * @param {HttpMiddleware<TRequest, TResponse>[]} middlewares One or more middleware to add.
      * @param {HttpRequestHandler<TRequest, TResponse>} handler The handler.
+     * @param {IHttpRequestHandlerOptions<TRequest, TResponse>} [options] Custom options.
+     *
+     * @returns {this}
      */
-    head(pathOrValidator: HttpPathValidator<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): void;
-    head(pathOrValidator: HttpPathValidator<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): void;
+    head(pathOrValidator: HttpRequestPath<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): this;
+    head(pathOrValidator: HttpRequestPath<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): this;
+    head(pathOrValidator: HttpRequestPath<TRequest>, options: IHttpRequestHandlerOptions<TRequest, TResponse>, handler: HttpRequestHandler<TRequest, TResponse>): this;
+
+    /**
+     * The HTTP major version.
+     */
+    readonly httpVersion: number;
 
     /**
      * The instance, otherwise `undefined`.
@@ -152,29 +213,37 @@ export interface IHttpServer<TRequest, TResponse> {
      *
      * @param {Nilable<number|string>} [port] The custom TCP port to listen on.
      *
-     * @remarks The no port is defined, `8080` will be default, if `NODE_ENV` is `development`, otherwise `80`.
+     * @remarks If no port is defined, `8080` will be used as default, if `NODE_ENV` is `development`; otherwise `80`.
      */
     listen(port?: Nilable<number | string>): Promise<number>;
 
     /**
      * Adds a handler for a OPTIONS request.
      *
-     * @param {HttpPathValidator<TRequest>} pathOrValidator The path or the validator.
+     * @param {HttpRequestPath<TRequest>} pathOrValidator The path or the validator.
      * @param {HttpMiddleware<TRequest, TResponse>[]} middlewares One or more middleware to add.
      * @param {HttpRequestHandler<TRequest, TResponse>} handler The handler.
+     * @param {IHttpRequestHandlerOptions<TRequest, TResponse>} [options] Custom options.
+     *
+     * @returns {this}
      */
-    options(pathOrValidator: HttpPathValidator<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): void;
-    options(pathOrValidator: HttpPathValidator<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): void;
+    options(pathOrValidator: HttpRequestPath<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): this;
+    options(pathOrValidator: HttpRequestPath<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): this;
+    options(pathOrValidator: HttpRequestPath<TRequest>, options: IHttpRequestHandlerOptions<TRequest, TResponse>, handler: HttpRequestHandler<TRequest, TResponse>): this;
 
     /**
      * Adds a handler for a PATCH request.
      *
-     * @param {HttpPathValidator<TRequest>} pathOrValidator The path or the validator.
+     * @param {HttpRequestPath<TRequest>} pathOrValidator The path or the validator.
      * @param {HttpMiddleware<TRequest, TResponse>[]} middlewares One or more middleware to add.
      * @param {HttpRequestHandler<TRequest, TResponse>} handler The handler.
+     * @param {IHttpRequestHandlerOptions<TRequest, TResponse>} [options] Custom options.
+     *
+     * @returns {this}
      */
-    patch(pathOrValidator: HttpPathValidator<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): void;
-    patch(pathOrValidator: HttpPathValidator<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): void;
+    patch(pathOrValidator: HttpRequestPath<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): this;
+    patch(pathOrValidator: HttpRequestPath<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): this;
+    patch(pathOrValidator: HttpRequestPath<TRequest>, options: IHttpRequestHandlerOptions<TRequest, TResponse>, handler: HttpRequestHandler<TRequest, TResponse>): this;
 
     /**
      * The current TCP port, server is running on, otherwise `undefined`.
@@ -184,43 +253,57 @@ export interface IHttpServer<TRequest, TResponse> {
     /**
      * Adds a handler for a POST request.
      *
-     * @param {HttpPathValidator<TRequest>} pathOrValidator The path or the validator.
+     * @param {HttpRequestPath<TRequest>} pathOrValidator The path or the validator.
      * @param {HttpMiddleware<TRequest, TResponse>[]} middlewares One or more middleware to add.
      * @param {HttpRequestHandler<TRequest, TResponse>} handler The handler.
+     * @param {IHttpRequestHandlerOptions<TRequest, TResponse>} [options] Custom options.
+     *
+     * @returns {this}
      */
-    post(pathOrValidator: HttpPathValidator<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): void;
-    post(pathOrValidator: HttpPathValidator<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): void;
+    post(pathOrValidator: HttpRequestPath<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): this;
+    post(pathOrValidator: HttpRequestPath<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): this;
+    post(pathOrValidator: HttpRequestPath<TRequest>, options: IHttpRequestHandlerOptions<TRequest, TResponse>, handler: HttpRequestHandler<TRequest, TResponse>): this;
 
     /**
      * Sets a custom error handler.
      *
      * @param {RequestErrorHandler<TRequest, TResponse>} handler The new handler to set.
+     *
+     * @returns {this}
      */
-    setErrorHandler(handler: RequestErrorHandler<TRequest, TResponse>): void;
+    setErrorHandler(handler: RequestErrorHandler<TRequest, TResponse>): this;
 
     /**
      * Sets a custom 'not found' handler.
      *
      * @param {HttpNotFoundHandler<TRequest, TResponse>} handler The new handler to set.
+     *
+     * @returns {this}
      */
-    setNotFoundHandler(handler: HttpNotFoundHandler<TRequest, TResponse>): void;
+    setNotFoundHandler(handler: HttpNotFoundHandler<TRequest, TResponse>): this;
 
     /**
      * Adds a handler for a TRACE request.
      *
-     * @param {HttpPathValidator<TRequest>} pathOrValidator The path or the validator.
+     * @param {HttpRequestPath<TRequest>} pathOrValidator The path or the validator.
      * @param {HttpMiddleware<TRequest, TResponse>[]} middlewares One or more middleware to add.
      * @param {HttpRequestHandler<TRequest, TResponse>} handler The handler.
+     * @param {IHttpRequestHandlerOptions<TRequest, TResponse>} [options] Custom options.
+     *
+     * @returns {this}
      */
-    trace(pathOrValidator: HttpPathValidator<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): void;
-    trace(pathOrValidator: HttpPathValidator<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): void;
+    trace(pathOrValidator: HttpRequestPath<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): this;
+    trace(pathOrValidator: HttpRequestPath<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): this;
+    trace(pathOrValidator: HttpRequestPath<TRequest>, options: IHttpRequestHandlerOptions<TRequest, TResponse>, handler: HttpRequestHandler<TRequest, TResponse>): this;
 
     /**
      * Adds one or more middlewares.
      *
      * @param {HttpMiddleware<TRequest, TResponse>[]} [middlewares] One or more middleware to add.
+     *
+     * @returns {this}
      */
-    use: (...middlewares: HttpMiddleware<TRequest, TResponse>[]) => void;
+    use: (...middlewares: HttpMiddleware<TRequest, TResponse>[]) => this;
 }
 
 /**

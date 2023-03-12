@@ -28,17 +28,25 @@ import { isNil } from "./utils/internal.js";
 export const httpMethods: readonly HttpMethod[] = ["connect", "delete", "get", "head", "options", "patch", "post", "put", "trace"] as const;
 
 /**
+ * Indicates in which mode this module is currently running in.
+ */
+export const moduleMode = typeof module !== "undefined" && typeof module?.exports !== "undefined" ?
+    "cjs" :
+    "esm";
+
+/**
  * Creates a new server instance.
  *
  * @param {Nilable<CreateHttp1ServerOptions | CreateHttp2ServerOptions>} [options] Custom options.
  * @param {HttpServerVersion} [version=1] The custom HTTP version.
  *
- * @returns {Promise<IHttp1Server|IHttp2Server>} The promise with the new instance.
+ * @returns {IHttp1Server|IHttp2Server} The new instance.
  */
-export function createServer(options?: Nilable<CreateHttp1ServerOptions>): Promise<IHttp1Server>;
-export function createServer(version: 1, options?: Nilable<CreateHttp1ServerOptions>): Promise<IHttp1Server>;
-export function createServer(version: 2, options?: Nilable<CreateHttp2ServerOptions>): Promise<IHttp2Server>;
-export function createServer(versionOrOptions: Nilable<HttpServerVersion | CreateHttp1ServerOptions>, options?: Nilable<CreateHttp1ServerOptions | CreateHttp2ServerOptions>): Promise<IHttp1Server | IHttp2Server> {
+export function createServer(): IHttp1Server;
+export function createServer(options: Nilable<CreateHttp1ServerOptions>): IHttp1Server;
+export function createServer(version: 1, options?: Nilable<CreateHttp1ServerOptions>): IHttp1Server;
+export function createServer(version: 2, options?: Nilable<CreateHttp2ServerOptions>): IHttp2Server;
+export function createServer(versionOrOptions?: Nilable<HttpServerVersion | CreateHttp1ServerOptions>, options?: Nilable<CreateHttp1ServerOptions | CreateHttp2ServerOptions>): IHttp1Server | IHttp2Server {
     let version: HttpServerVersion;
     let createOptions: Nilable<CreateHttp1ServerOptions | CreateHttp2ServerOptions>;
     if (isNil(versionOrOptions)) {

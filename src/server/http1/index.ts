@@ -19,10 +19,11 @@ import { createServer, IncomingMessage, Server, ServerOptions, ServerResponse } 
 import { createServer as createSecureServer, ServerOptions as SecureServerOptions } from "node:https";
 
 import type { RequestErrorHandler } from "../../errors/index.js";
-import { httpMethods } from "../../index.js";
-import type { HttpMethod, HttpMiddleware, HttpNotFoundHandler, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpServer, IHttpServerExtenderContext } from "../../types/index.js";
+import { httpMethods, params } from "../../index.js";
+import type { HttpMethod, HttpMiddleware, HttpNotFoundHandler, HttpPathValidator, HttpRequestHandler, HttpRequestPath, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, IHttpServerExtenderContext } from "../../types/index.js";
 import type { IHttpRequestHandlerContext, Nilable, Optional } from "../../types/internal.js";
-import { asAsync, getUrlWithoutQuery, isDev, isNil, recompileHandlers } from "../../utils/internal.js";
+import { asAsync, getUrlWithoutQuery, isDev, isNil } from "../../utils/internal.js";
+import { recompileHandlers } from "../utils.js";
 
 /**
  * Options for `createHttp1Server()` function.
@@ -34,29 +35,44 @@ export type CreateHttp1ServerOptions =
 /**
  * Shortcur for a HTTP 1 middleware.
  */
-export type Http1Middleware = HttpMiddleware<IncomingMessage, ServerResponse>;
+export type Http1Middleware = HttpMiddleware<IHttp1Request, IHttp1Response>;
 
 /**
  * Shortcut type for a HTTP 1 'not found' handler.
  */
-export type Http1NotFoundHandler = HttpNotFoundHandler<IncomingMessage, ServerResponse>;
+export type Http1NotFoundHandler = HttpNotFoundHandler<IHttp1Request, IHttp1Response>;
 
 /**
- * Shortcut type for a HTTP 1 extender context.
+ * Shortcut type for a HTTP 1 path validator.
  */
-export type Http1ServerExtenderContext = IHttpServerExtenderContext<IncomingMessage, ServerResponse>;
+export type Http1PathValidator = HttpPathValidator<IHttp1Request>;
 
 /**
  * Shortcut type for a HTTP 1 request handler.
  */
-export type Http1RequestErrorHandler = RequestErrorHandler<IncomingMessage, ServerResponse>;
+export type Http1RequestErrorHandler = RequestErrorHandler<IHttp1Request, IHttp1Response>;
+
+/**
+ * Shortcut type for a HTTP 1 request handler options.
+ */
+export type Http1RequestHandlerOptions = IHttpRequestHandlerOptions<IHttp1Request, IHttp1Response>;
+
+/**
+ * Shortcut type for a HTTP 1 request path.
+ */
+export type Http1RequestPath = HttpRequestPath<IHttp1Request>;
+
+/**
+ * Shortcut type for a HTTP 1 extender context.
+ */
+export type Http1ServerExtenderContext = IHttpServerExtenderContext<IHttp1Request, IHttp1Response>;
 
 /**
  * Shortcut for a HTTP 1 request handler.
  */
-export type Http1RequestHandler = HttpRequestHandler<IncomingMessage, ServerResponse>;
+export type Http1RequestHandler = HttpRequestHandler<IHttp1Request, IHttp1Response>;
 
-type Http1RequestHandlerContext = IHttpRequestHandlerContext<IncomingMessage, ServerResponse>;
+type Http1RequestHandlerContext = IHttpRequestHandlerContext<IHttp1Request, IHttp1Response>;
 
 /**
  * Options for `createHttp1Server()` function, creating a secure instance.
@@ -66,6 +82,7 @@ export interface ICreateSecrureHttp1ServerOptions {
      * The options for the underlying instance.
      */
     instanceOptions?: Nilable<SecureServerOptions>;
+
     /**
      * Indicates to create a secure instance.
      */
@@ -80,6 +97,7 @@ export interface ICreateUnsecrureHttp1ServerOptions {
      * The options for the underlying instance.
      */
     instanceOptions?: Nilable<ServerOptions>;
+
     /**
      * Indicates to create a secure instance.
      */
@@ -87,9 +105,26 @@ export interface ICreateUnsecrureHttp1ServerOptions {
 }
 
 /**
+ * A HTTP 1 request context.
+ */
+export interface IHttp1Request extends IncomingMessage, IHttpRequest {
+}
+
+/**
+ * A HTTP 1 response context.
+ */
+export interface IHttp1Response extends ServerResponse, IHttpResponse {
+}
+
+/**
  * A HTTP 1.x server instance.
  */
-export interface IHttp1Server extends IHttpServer<IncomingMessage, ServerResponse> {
+export interface IHttp1Server extends IHttpServer<IHttp1Request, IHttp1Response> {
+    /**
+     * @inheritdoc
+     */
+    readonly httpVersion: 1;
+
     /**
      * @inheritdoc
      */
@@ -157,9 +192,9 @@ export const defaultHttp1NotFoundHandler: Http1NotFoundHandler =
  *
  * @param {Nilable<CreateHttp1ServerOptions>} [options] The custom options.
  *
- * @returns {Promise<IHttp1Server>} The promise with the new instance.
+ * @returns {IHttp1Server} The new instance.
  */
-export async function createHttp1Server(options?: Nilable<CreateHttp1ServerOptions>): Promise<IHttp1Server> {
+export function createHttp1Server(options?: Nilable<CreateHttp1ServerOptions>): IHttp1Server {
     if (!isNil(options)) {
         if (typeof options !== "object") {
             throw new TypeError("options must be of type object");
@@ -175,14 +210,18 @@ export async function createHttp1Server(options?: Nilable<CreateHttp1ServerOptio
 
     // define server instance as request handler for
     // a `Server` instance first
-    const server = (async (request: IncomingMessage, response: ServerResponse) => {
+    const server = (async (request: IHttp1Request, response: IHttp1Response) => {
         try {
             let ctx: Nilable<Http1RequestHandlerContext>;
 
             const methodContextes = compiledHandlers[request.method as Uppercase<HttpMethod>];
-            if (methodContextes) {
-                for (const context of methodContextes) {
+            const methodContextesLength = methodContextes?.length;
+
+            if (methodContextesLength) {
+                for (let i = 0; i < methodContextesLength; i++) {
+                    const context = methodContextes[i];
                     const isValid = await context.isPathValid(request);
+
                     if (isValid) {
                         ctx = context;
                         break;
@@ -201,7 +240,7 @@ export async function createHttp1Server(options?: Nilable<CreateHttp1ServerOptio
                         response.end();
                     })
                     .catch((ex: any) => {
-                        console.error("[HTTP1 NOT FOUND HANDLER]", ex);
+                        console.error("[HTTP2 NOT FOUND HANDLER]", ex);
 
                         response.end();
                     });
@@ -213,7 +252,7 @@ export async function createHttp1Server(options?: Nilable<CreateHttp1ServerOptio
                     response.end();
                 })
                 .catch((ex: any) => {
-                    console.error("[HTTP1 ERROR HANDLER]", ex);
+                    console.error("[HTTP2 ERROR HANDLER]", ex);
 
                     response.end();
                 });
@@ -231,6 +270,8 @@ export async function createHttp1Server(options?: Nilable<CreateHttp1ServerOptio
         };
 
         extender(context);
+
+        return server;
     };
 
     // server.setErrorHandler()
@@ -240,6 +281,8 @@ export async function createHttp1Server(options?: Nilable<CreateHttp1ServerOptio
         }
 
         errorHandler = asAsync(handler);
+
+        return server;
     };
 
     // server.setNotFoundHandler()
@@ -249,6 +292,8 @@ export async function createHttp1Server(options?: Nilable<CreateHttp1ServerOptio
         }
 
         notFoundHandler = asAsync(handler);
+
+        return server;
     };
 
     // methods for
@@ -256,15 +301,49 @@ export async function createHttp1Server(options?: Nilable<CreateHttp1ServerOptio
     httpMethods.forEach((httpMethod) => {
         const ucHttpMethod = httpMethod.toUpperCase() as Uppercase<HttpMethod>;
 
-        (server as any)[httpMethod] = (pathOrValidator: HttpRequestPath<IncomingMessage>, ...args: any[]) => {
-            let handler: HttpRequestHandler<IncomingMessage, ServerResponse>;
-            let isPathValid: HttpPathValidator<IncomingMessage>;
-            let middlewares: Http1Middleware[];
+        (server as any)[httpMethod] = (pathOrValidator: Http1RequestPath, ...args: any[]) => {
+            let options: Http1RequestHandlerOptions;
+            let handler: Http1RequestHandler;
+            let isPathValid: Http1PathValidator;
+
+            if (args.length < 2) {
+                // args[0]: Http1RequestHandler
+
+                options = {};
+                handler = args[0];
+            }
+            else {
+                if (Array.isArray(args[0])) {
+                    // args[0]: Http1Middleware[]
+                    // args[1]: Http1RequestHandler
+
+                    options = {
+                        "use": args[0]
+                    };
+                    handler = args[1];
+                }
+                else {
+                    // args[0]: Http1RequestHandlerOptions
+                    // args[1]: Http1RequestHandler
+
+                    options = args[0];
+                    handler = args[1];
+                }
+            }
+
+            const middlewares = options.use ?? [];
+            const shouldNotDoAutoEnd = !!options.noAutoEnd;
+            const shouldNotDoAutoParams = !!options.noAutoParams;
 
             if (typeof pathOrValidator === "string") {
-                isPathValid = async (request) => {
-                    return getUrlWithoutQuery(request.url) === pathOrValidator;
-                };
+                if (shouldNotDoAutoParams || !pathOrValidator.includes("/:")) {
+                    isPathValid = async (request) => {
+                        return getUrlWithoutQuery(request.url) === pathOrValidator;
+                    };
+                }
+                else {
+                    isPathValid = params(pathOrValidator);
+                }
             }
             else if (pathOrValidator instanceof RegExp) {
                 isPathValid = async (request) => {
@@ -273,20 +352,6 @@ export async function createHttp1Server(options?: Nilable<CreateHttp1ServerOptio
             }
             else {
                 isPathValid = asAsync(pathOrValidator);
-            }
-
-            if (Array.isArray(args[0])) {
-                // args[1]: HttpMiddleware<IncomingMessage, ServerResponse>[]
-                // args[2]: HttpRequestHandler<IncomingMessage, ServerResponse>
-
-                middlewares = args[0];
-                handler = args[1];
-            }
-            else {
-                // args[1]: HttpRequestHandler<IncomingMessage, ServerResponse>
-
-                middlewares = [];
-                handler = args[0];
             }
 
             if (typeof handler !== "function") {
@@ -313,11 +378,15 @@ export async function createHttp1Server(options?: Nilable<CreateHttp1ServerOptio
 
             handlers.push({
                 "baseHandler": handler,
-                "end": async (response) => {
-                    response.end();
-                },
+                "end": shouldNotDoAutoEnd ?
+                    async () => { } :
+                    async (response) => {
+                        response.end();
+                    },
                 isPathValid,
-                middlewares,
+                "middlewares": middlewares.map((mw) => {
+                    return asAsync<Http1Middleware>(mw);
+                }),
                 handler
             });
 
@@ -325,6 +394,8 @@ export async function createHttp1Server(options?: Nilable<CreateHttp1ServerOptio
                 compiledHandlers,
                 globalMiddlewares
             );
+
+            return server;
         };
     });
 
@@ -337,6 +408,8 @@ export async function createHttp1Server(options?: Nilable<CreateHttp1ServerOptio
         }
 
         globalMiddlewares.push(...middlewares);
+
+        return server;
     };
 
     // server.listen()
@@ -396,6 +469,13 @@ export async function createHttp1Server(options?: Nilable<CreateHttp1ServerOptio
     };
 
     return Object.defineProperties(server, {
+        "httpVersion": {
+            "enumerable": true,
+            "configurable": false,
+            "get": () => {
+                return 1;
+            }
+        },
         "instance": {
             "enumerable": true,
             "configurable": false,
