@@ -36,6 +36,8 @@ if (!GITHUB_SHA) {
 async function getFirstCommitHash() {
     const url = GITHUB_API_URL + "/repos/" + GITHUB_REPOSITORY + "/commits";
 
+    console.log("Try get first commit hash in branch", GITHUB_REF_NAME, "via", url, "...");
+
     const response = await axios.get(url);
     const link = response.headers["link"];
 
@@ -51,6 +53,9 @@ async function getFirstCommitHash() {
         firstCommit = response.data;
     }
 
+    const firstCommitHash = firstCommit[firstCommit.length - 1]["sha"];
+    console.log("First commit hash:", firstCommitHash);
+
     return firstCommit[firstCommit.length - 1]["sha"];
 }
 
@@ -58,9 +63,14 @@ async function getTotalCommitCount() {
     const firstCommitHash = await getFirstCommitHash();
     const compareUrl = GITHUB_API_URL + "/repos/" + GITHUB_REPOSITORY + "/compare/" + firstCommitHash + "..." + GITHUB_SHA;
 
+    console.log("Try get compare url for branch", GITHUB_REF_NAME, "via", compareUrl, "...");
+
     const { data } = await axios.get(compareUrl);
 
-    return Number(data["total_commits"]);
+    const totalCommits = Number(data["total_commits"]);
+    console.log("total_commits:", totalCommits);
+
+    return totalCommits;
 }
 // ########## s. https://gist.github.com/yershalom/a7c08f9441d1aadb13777bce4c7cdc3b ##########
 
