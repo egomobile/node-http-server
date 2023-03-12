@@ -17,6 +17,8 @@ jobs:
           node-version: 18
           registry-url: https://registry.npmjs.org/
       - name: Get current branch
-        run: EGO_BRANCH_NAME=${GITHUB_REF#refs/heads/}
+        run: |
+          EGO_BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          echo $EGO_BRANCH_NAME
       - name: Output current branch
         run: echo $EGO_BRANCH_NAME
