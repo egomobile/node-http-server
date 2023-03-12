@@ -18,3 +18,13 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - name: Install dependencies
         run: npm install --force
+      - name: Lint code
+        run: npm run lint
+      - name: Run tests
+        run: npm run test
+      - name: Build library
+        run: npm run build
+      - name: Publish to NPM
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
