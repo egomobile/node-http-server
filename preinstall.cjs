@@ -7,7 +7,10 @@ if (!GITHUB_REF_NAME) {
 }
 
 const axios = require("axios");
-const fs = require("fs");
+const fs = require("node:fs");
+const path = require("node:path");
+
+const packageJSONFile = path.join(__dirname, "package.json");
 
 // ########## environment variables ##########
 const GITHUB_API_URL = process.env.GITHUB_API_URL?.trim();
