@@ -21,6 +21,7 @@
         "docs:generate": "del ./docs && typedoc --out ./docs ./src",
         "lint": "eslint -c .eslintrc.cjs --ext .ts src",
         "lint:fix": "eslint --fix -c .eslintrc.cjs --ext .ts src",
+        "preinstall": "node ./preinstall.cjs",
         "sandbox": "NODE_ENV=development nodemon --watch './sandbox/**/*.ts' --exec node --experimental-specifier-resolution=node --loader ts-node/esm --inspect=0.0.0.0:9229 ./sandbox/index.ts",
         "test": "jest --no-cache --silent"
     },

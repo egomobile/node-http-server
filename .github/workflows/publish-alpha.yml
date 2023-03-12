@@ -21,4 +21,8 @@ jobs:
           EGO_BRANCH_NAME=${GITHUB_REF#refs/heads/}
           echo $EGO_BRANCH_NAME
       - name: Output current branch
-        run: echo $EGO_BRANCH_NAME
+        run: |
+          EGO_BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          echo "Branch name: $EGO_BRANCH_NAME"
+          echo "Repo owner: $REPO_OWNER"
+          echo "Repo name: $REPO_NAME"
