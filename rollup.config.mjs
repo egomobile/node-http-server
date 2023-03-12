@@ -10,13 +10,13 @@ export default {
     "input": "src/index.ts",
     "output": [
         {
-            "file": "lib/index.esm.js",
+            "file": "lib/index.mjs",
             "format": "esm",
             "sourcemap": false,
             "exports": "named"
         },
         {
-            "file": "lib/index.cjs.js",
+            "file": "lib/index.cjs",
             "format": "cjs",
             "sourcemap": false,
             "exports": "named"

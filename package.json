@@ -7,8 +7,8 @@
     "types": "lib/index.d.ts",
     "exports": {
         ".": {
-            "import": "./lib/index.esm.js",
-            "require": "./lib/index.cjs.js",
+            "import": "./lib/index.mjs",
+            "require": "./lib/index.cjs",
             "types": "./lib/index.d.ts"
         }
     },
