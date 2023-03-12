@@ -22,4 +22,6 @@ app.get("/user/:id", async (request, response) => {
     response.end(`User: ${request.params.id}`);
 });
 
-app.listen(3000);
+app.listen(3000, () => {
+    console.log("Express running ...");
+});

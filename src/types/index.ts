@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import type { URLSearchParams } from "node:url";
 import type { RequestErrorHandler } from "../errors/index.js";
 import type { Nilable, Optional } from "./internal.js";
 
@@ -91,6 +92,11 @@ export interface IHttpRequest {
      * If available, the key/value pair of parameters.
      */
     params?: Record<string, string>;
+
+    /**
+     * The query parameters.
+     */
+    query?: URLSearchParams;
 }
 
 /**
@@ -114,6 +120,11 @@ export interface IHttpRequestHandlerOptions<TRequest, TResponse> {
      * deactivated or not.
      */
     noAutoParams?: Nilable<boolean>;
+
+    /**
+     * If `true`, do not parse query parameters automatically in this handler.
+     */
+    noAutoQuery?: Nilable<boolean>;
 
     /**
      * Additional middlewares to use.

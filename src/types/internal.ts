@@ -24,6 +24,7 @@ export interface IHttpRequestHandlerContext<TRequest, TResponse> {
     handler: HttpRequestHandler<TRequest, TResponse>;
     readonly isPathValid: HttpPathValidator<TRequest>;
     readonly middlewares: HttpMiddleware<TRequest, TResponse>[];
+    readonly shouldNotDoAutoQuery: Nullable<boolean>;
 }
 
 export type Optional<T extends any = any> = T | undefined;

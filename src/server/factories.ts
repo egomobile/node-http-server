@@ -14,10 +14,10 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { RequestErrorHandler } from "../errors/index.js";
-import { httpMethods } from "../index.js";
+import { httpMethods, query } from "../index.js";
 import type { HttpMethod, HttpNotFoundHandler, HttpServerEventListener, IHttpRequestHandlerOptions, IHttpServer, IHttpServerExtenderContext, IHttpServerHasBeenClosedEventContext, IHttpServerIsClosingEventContext, NextFunction, HttpPathValidator as _Http1PathValidator, HttpMiddleware as _HttpMiddleware, HttpRequestHandler as _HttpRequestHandler, HttpRequestPath as _HttpRequestPath } from "../types/index.js";
-import type { IHttpRequestHandlerContext, Nilable, Optional, RequestHandlerContextEndMethod as _RequestHandlerContextEndMethod } from "../types/internal.js";
-import { asAsync, getUrlWithoutQuery } from "../utils/internal.js";
+import type { IHttpRequestHandlerContext, Nilable, Nullable, Optional, RequestHandlerContextEndMethod as _RequestHandlerContextEndMethod } from "../types/internal.js";
+import { asAsync, getUrlWithoutQuery, isNil } from "../utils/internal.js";
 import { params } from "../validators/params.js";
 
 type RequestHandlerContextEndMethod = _RequestHandlerContextEndMethod<any>;
@@ -47,11 +47,13 @@ interface IGetEndMethodOptions {
 interface IMergeHandlerOptions {
     context: HttpRequestHandlerContext;
     globalMiddlewares: HttpMiddleware[];
+    shouldNotParseQueryParams: Nullable<boolean>;
 }
 
 interface IRecompileHandlersOptions {
     compiledHandlers: Record<string, HttpRequestHandlerContext[]>;
     globalMiddlewares: HttpMiddleware[];
+    shouldNotParseQueryParams: Nullable<boolean>;
 }
 
 interface ISetupServerInstanceOptions {
@@ -64,6 +66,8 @@ interface ISetupServerInstanceOptions {
     onErrorHandlerUpdate: (newHandler: RequestErrorHandler<any, any>) => void;
     onNotFoundHandlerUpdate: (newHandler: HttpNotFoundHandler<any, any>) => void;
     server: IHttpServer<any, any>;
+    shouldNotParsePathParams: Nullable<boolean>;
+    shouldNotParseQueryParams: Nullable<boolean>;
 }
 
 interface IToPathValidatorOptions {
@@ -142,15 +146,29 @@ function getEndMethod({
 
 function mergeHandler({
     context,
-    globalMiddlewares
+    globalMiddlewares,
+    shouldNotParseQueryParams
 }: IMergeHandlerOptions) {
+    let shouldNotAddQueryMiddleware = false;
+    if (context.shouldNotDoAutoQuery !== null) {
+        // handler specific
+        shouldNotAddQueryMiddleware = context.shouldNotDoAutoQuery;
+    }
+    else if (shouldNotParseQueryParams !== null) {
+        // global
+        shouldNotAddQueryMiddleware = shouldNotParseQueryParams;
+    }
+
     // collect all and make then
     // async if needed
     const allMiddlewares = [
+        shouldNotAddQueryMiddleware ? null : query(),
         ...globalMiddlewares,
         ...context.middlewares
-    ].map((mw) => {
-        return asAsync<HttpMiddleware>(mw);
+    ].filter((mw) => {
+        return typeof mw === "function";
+    }).map((mw) => {
+        return asAsync<HttpMiddleware>(mw!);
     });
 
     // keep sure, we have an async function here
@@ -197,13 +215,15 @@ function mergeHandler({
 
 function recompileHandlers({
     compiledHandlers,
-    globalMiddlewares
+    globalMiddlewares,
+    shouldNotParseQueryParams
 }: IRecompileHandlersOptions) {
     for (const contextes of Object.values(compiledHandlers)) {
         for (const context of contextes) {
             mergeHandler({
                 context,
-                globalMiddlewares
+                globalMiddlewares,
+                shouldNotParseQueryParams
             });
         }
     }
@@ -219,7 +239,9 @@ export function setupServerInstance(options: ISetupServerInstanceOptions) {
         httpVersion,
         onErrorHandlerUpdate,
         onNotFoundHandlerUpdate,
-        server
+        server,
+        shouldNotParsePathParams,
+        shouldNotParseQueryParams
     } = options;
 
     // server.extend()
@@ -305,7 +327,8 @@ export function setupServerInstance(options: ISetupServerInstanceOptions) {
         // recompile / merge all
         recompileHandlers({
             compiledHandlers,
-            globalMiddlewares
+            globalMiddlewares,
+            shouldNotParseQueryParams
         });
 
         return server;
@@ -373,7 +396,17 @@ export function setupServerInstance(options: ISetupServerInstanceOptions) {
 
             const middlewares = options.use ?? [];
             const shouldNotDoAutoEnd = !!options.noAutoEnd;
-            const shouldNotDoAutoParams = !!options.noAutoParams;
+            const shouldNotDoAutoQuery = isNil(options?.noAutoQuery) ? null : !!options?.noAutoQuery;
+
+            let shouldNotDoAutoParams = false;
+            if (!isNil(options.noAutoParams)) {
+                // handler specific
+                shouldNotDoAutoParams = !!options.noAutoParams;
+            }
+            else if (shouldNotParsePathParams !== null) {
+                // global
+                shouldNotDoAutoParams = shouldNotParsePathParams;
+            }
 
             const isPathValid = toPathValidator({
                 pathOrValidator,
@@ -405,7 +438,8 @@ export function setupServerInstance(options: ISetupServerInstanceOptions) {
                 }),
                 isPathValid,
                 middlewares,
-                handler
+                handler,
+                shouldNotDoAutoQuery
             };
 
             handlers.push(newHandlerContext);
@@ -413,7 +447,8 @@ export function setupServerInstance(options: ISetupServerInstanceOptions) {
             // recompile / merge single context
             mergeHandler({
                 "context": newHandlerContext,
-                globalMiddlewares
+                globalMiddlewares,
+                shouldNotParseQueryParams
             });
 
             return server;

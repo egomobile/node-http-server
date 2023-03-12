@@ -23,3 +23,5 @@ app.get("/user/:id", async (request, response) => {
 });
 
 app.listen(3000);
+
+console.log("polka running ...");

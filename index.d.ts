@@ -1,3 +1,4 @@
+import type { URLSearchParams } from "node:url";
 
 declare module "http" {
     interface IncomingMessage {
@@ -5,6 +6,11 @@ declare module "http" {
          * If available, the key/value pair of parameters.
          */
         params?: Record<string, string>;
+
+        /**
+         * The query parameters.
+         */
+        query?: URLSearchParams;
     }
 }
 

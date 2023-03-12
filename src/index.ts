@@ -81,6 +81,7 @@ export function createServer(versionOrOptions?: Nilable<HttpServerVersion | Crea
 export default createServer;
 
 export * from "./errors/index.js";
+export * from "./middlewares/index.js";
 export * from "./server/index.js";
 export * from "./types/index.js";
 export * from "./validators/index.js";

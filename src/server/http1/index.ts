@@ -29,8 +29,8 @@ import { createRequestHandler, setupServerInstance } from "../factories.js";
  * Options for `createHttp1Server()` function.
  */
 export type CreateHttp1ServerOptions =
-    ICreateSecrureHttp1ServerOptions |
-    ICreateUnsecrureHttp1ServerOptions;
+    ICreateSecureHttp1ServerOptions |
+    ICreateUnsecureHttp1ServerOptions;
 
 /**
  * Shortcur for a HTTP 1 middleware.
@@ -75,9 +75,25 @@ export type Http1RequestHandler = HttpRequestHandler<IHttp1Request, IHttp1Respon
 type Http1RequestHandlerContext = IHttpRequestHandlerContext<IHttp1Request, IHttp1Response>;
 
 /**
+ * Basic options for `createHttp1Server()` function.
+ */
+export interface ICreateHttp1ServerOptions {
+    /**
+     * Indicates, if default behavior of automatically setup parameters, should be
+     * deactivated or not.
+     */
+    noAutoParams?: Nilable<boolean>;
+
+    /**
+     * If `true`, do not parse query parameters automatically.
+     */
+    noAutoQuery?: Nilable<boolean>;
+}
+
+/**
  * Options for `createHttp1Server()` function, creating a secure instance.
  */
-export interface ICreateSecrureHttp1ServerOptions {
+export interface ICreateSecureHttp1ServerOptions extends ICreateHttp1ServerOptions {
     /**
      * The options for the underlying instance.
      */
@@ -92,7 +108,7 @@ export interface ICreateSecrureHttp1ServerOptions {
 /**
  * Options for `createHttp1Server()` function, creating an unsecure instance.
  */
-export interface ICreateUnsecrureHttp1ServerOptions {
+export interface ICreateUnsecureHttp1ServerOptions extends ICreateHttp1ServerOptions {
     /**
      * The options for the underlying instance.
      */
@@ -208,6 +224,8 @@ export function createHttp1Server(options?: Nilable<CreateHttp1ServerOptions>): 
     let instance: Optional<Server>;
     let notFoundHandler = defaultHttp1NotFoundHandler;
     let port: Optional<number>;
+    const shouldNotParsePathParams = isNil(options?.noAutoParams) ? null : !!options?.noAutoParams;
+    const shouldNotParseQueryParams = isNil(options?.noAutoQuery) ? null : !!options?.noAutoQuery;
 
     // define server instance as request handler for
     // a `Server` instance first
@@ -308,6 +326,8 @@ export function createHttp1Server(options?: Nilable<CreateHttp1ServerOptions>): 
         "onNotFoundHandlerUpdate": (handler) => {
             notFoundHandler = handler as Http1NotFoundHandler;
         },
-        server
+        server,
+        shouldNotParsePathParams,
+        shouldNotParseQueryParams
     }) as IHttp1Server;
 }

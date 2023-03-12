@@ -28,8 +28,8 @@ import { createRequestHandler, setupServerInstance } from "../factories.js";
  * Options for `createHttp2Server()` function.
  */
 export type CreateHttp2ServerOptions =
-    ICreateSecrureHttp2ServerOptions |
-    ICreateUnsecrureHttp2ServerOptions;
+    ICreateSecureHttp2ServerOptions |
+    ICreateUnsecureHttp2ServerOptions;
 
 /**
  * Shortcur for a HTTP 1 middleware.
@@ -69,9 +69,25 @@ export type Http2RequestHandler = HttpRequestHandler<IHttp2Request, IHttp2Respon
 type Http2RequestHandlerContext = IHttpRequestHandlerContext<IHttp2Request, IHttp2Response>;
 
 /**
+ * Basic options for `createHttp2Server()` function.
+ */
+export interface ICreateHttp2ServerOptions {
+    /**
+     * Indicates, if default behavior of automatically setup parameters, should be
+     * deactivated or not.
+     */
+    noAutoParams?: Nilable<boolean>;
+
+    /**
+     * If `true`, do not parse query parameters automatically.
+     */
+    noAutoQuery?: Nilable<boolean>;
+}
+
+/**
  * Options for `createHttp2Server()` function, creating a secure instance.
  */
-export interface ICreateSecrureHttp2ServerOptions {
+export interface ICreateSecureHttp2ServerOptions extends ICreateHttp2ServerOptions {
     /**
      * The options for the underlying instance.
      */
@@ -86,7 +102,7 @@ export interface ICreateSecrureHttp2ServerOptions {
 /**
  * Options for `createHttp2Server()` function, creating an unsecure instance.
  */
-export interface ICreateUnsecrureHttp2ServerOptions {
+export interface ICreateUnsecureHttp2ServerOptions extends ICreateHttp2ServerOptions {
     /**
      * The options for the underlying instance.
      */
@@ -202,6 +218,8 @@ export function createHttp2Server(options: Nilable<CreateHttp2ServerOptions>): I
     let instance: Optional<Http2Server>;
     let notFoundHandler = defaultHttp2NotFoundHandler;
     let port: Optional<number>;
+    const shouldNotParsePathParams = isNil(options?.noAutoParams) ? null : !!options?.noAutoParams;
+    const shouldNotParseQueryParams = isNil(options?.noAutoQuery) ? null : !!options?.noAutoQuery;
 
     // define server instance as request handler for
     // a `Http2Server` instance first
@@ -302,6 +320,8 @@ export function createHttp2Server(options: Nilable<CreateHttp2ServerOptions>): I
         "onNotFoundHandlerUpdate": (handler) => {
             notFoundHandler = handler as Http2NotFoundHandler;
         },
-        server
+        server,
+        shouldNotParsePathParams,
+        shouldNotParseQueryParams
     }) as IHttp2Server;
 }

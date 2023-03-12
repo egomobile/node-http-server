@@ -26,4 +26,6 @@ app.register(require("@fastify/express")).then(async () => {
     await app.listen({
         "port": 3000
     });
+
+    console.log("Fastify running ...");
 });

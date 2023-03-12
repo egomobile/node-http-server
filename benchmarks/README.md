@@ -8,23 +8,23 @@ wrk -t8 -c100 -d30s http://localhost:3000/user/123
 
 ## Results
 
-### Node v16.16.0
+### Node v18.15.0
 
 Machine:
 
 - MacBook Pro (16", 2021)
 - CPU: Apple M1 Max
 - Memory: 64 GB
-- OS: MacOS 13.0.1
+- OS: MacOS 13.2.1
 
 Comparison:
 
-| &nbsp;                   | `Express` | `fastify` | `polka` | `@egomobile/http-server` |
-| ------------------------ | :-------: | :-------: | :-----: | :----------------------: |
-| `Express`                |     -     |   104%    |   38%   |           34%            |
-| `fastify`                |    96%    |     -     |   36%   |           32%            |
-| `polka`                  |   267%    |   277%    |    -    |           91%            |
-| `@egomobile/http-server` |   293%    |   304%    |  110%   |            -             |
+| &nbsp;                   | `Express` | `fastify` (with [Express layer](https://github.com/fastify/fastify-express)) | `polka` | `@egomobile/http-server` |
+| ------------------------ | :-------: | :--------------------------------------------------------------------------: | :-----: | :----------------------: |
+| `Express`                |     -     |                                     96%                                      |   36%   |           34%            |
+| `fastify`                |   104%    |                                      -                                       |   37%   |           36%            |
+| `polka`                  |   280%    |                                     270%                                     |    -    |           96%            |
+| `@egomobile/http-server` |   292%    |                                     281%                                     |  104%   |            -             |
 
 Details:
 
@@ -34,24 +34,24 @@ Details:
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     3.53ms  710.38us  33.72ms   92.90%
-    Req/Sec     3.42k   185.74     6.76k    95.62%
-  817385 requests in 30.03s, 120.05MB read
-Requests/sec:  27217.59
-Transfer/sec:      4.00MB
+    Latency     3.89ms  675.00us  24.36ms   91.14%
+    Req/Sec     3.10k   177.85     4.24k    80.75%
+  740877 requests in 30.04s, 108.81MB read
+Requests/sec:  24665.64
+Transfer/sec:      3.62MB
 ```
 
-#### [fastify](https://github.com/fastify/fastify)
+#### [fastify](https://github.com/fastify/fastify) (with [Express layer](https://github.com/fastify/fastify-express))
 
 ```
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     3.69ms  801.98us  28.05ms   84.54%
-    Req/Sec     3.27k   186.68     5.80k    93.00%
-  781641 requests in 30.04s, 128.96MB read
-Requests/sec:  26018.04
-Transfer/sec:      4.29MB
+    Latency     3.70ms  763.78us  25.11ms   83.66%
+    Req/Sec     3.26k   150.79     5.17k    93.46%
+  779213 requests in 30.03s, 128.56MB read
+Requests/sec:  25943.80
+Transfer/sec:      4.28MB
 ```
 
 #### [Polka](https://github.com/lukeed/polka)
@@ -60,11 +60,11 @@ Transfer/sec:      4.29MB
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     1.34ms  379.99us  24.55ms   97.93%
-    Req/Sec     9.07k   453.21     9.49k    95.06%
-  2173208 requests in 30.10s, 271.50MB read
-Requests/sec:  72196.10
-Transfer/sec:      9.02MB
+    Latency     1.37ms  330.93us  22.11ms   97.94%
+    Req/Sec     8.82k   369.02     9.19k    94.39%
+  2113170 requests in 30.10s, 264.00MB read
+Requests/sec:  70202.18
+Transfer/sec:      8.77MB
 ```
 
 #### [@egomobile/http-server](https://github.com/egomobile/node-http-server)
@@ -73,9 +73,9 @@ Transfer/sec:      9.02MB
 Running 30s test @ http://localhost:3000/user/123
   8 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     1.22ms  303.05us  19.87ms   97.71%
-    Req/Sec     9.88k   496.24    10.32k    92.44%
-  2367245 requests in 30.10s, 295.74MB read
-Requests/sec:  78642.42
-Transfer/sec:      9.82MB
+    Latency     1.31ms  298.42us  19.89ms   96.60%
+    Req/Sec     9.21k   438.38    11.05k    90.94%
+  2206870 requests in 30.10s, 275.71MB read
+Requests/sec:  73315.03
+Transfer/sec:      9.16MB
 ```
