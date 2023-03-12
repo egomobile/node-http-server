@@ -85,12 +85,11 @@ async function main() {
     const packageJSON = JSON.parse(fs.readFileSync(packageJSONFile, "utf8"));
 
     // environment variable
-    const branchName = EGO_BRANCH_NAME.toLowerCase().trim();
+    const branchName = GITHUB_REF_NAME.toLowerCase().trim();
 
-    // update version from EGO_BRANCH_NAME
+    // update version in package.json
     const versionParts = packageJSON.version.split(".");
     const packageVersion = `${versionParts[0]}.${versionParts[1]}.${versionParts[2]}`;
-
     packageJSON.version = `${packageVersion}-${branchName}.${nextNr}`;
 
     // update package.json
