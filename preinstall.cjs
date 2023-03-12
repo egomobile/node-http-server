@@ -24,7 +24,7 @@ if (!GITHUB_REPOSITORY) {
     process.exit(3);
 }
 
-const GITHUB_SHA = process.env.GITHUB_REPOSITORY?.trim();
+const GITHUB_SHA = process.env.GITHUB_SHA?.trim();
 if (!GITHUB_SHA) {
     console.error("Cannot find environment variable GITHUB_SHA");
 
