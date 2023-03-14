@@ -1,12 +1,17 @@
-name: Publish
+name: Check pull requests
 
 on:
-  push:
-    branches:
-      - alpha
+  pull_request:
+    types: ["opened", "edited", "reopened", "synchronize"]
+    paths:
+      - "packages/http-server/**"
+
+defaults:
+  run:
+    working-directory: "packages/http-server"
 
 jobs:
-  build-and-publish:
+  check-pr:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -14,17 +19,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 16
           registry-url: https://registry.npmjs.org/
       - name: Install dependencies
-        run: npm install --force
+        run: npm install
       - name: Lint code
         run: npm run lint
       - name: Run tests
         run: npm run test
       - name: Build library
         run: npm run build
-      - name: Publish to NPM
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - name: Generate documentation
+        run: npm run docs:generate

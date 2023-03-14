@@ -2,7 +2,7 @@
   "editor.formatOnSave": true,
   "editor.tabSize": 4,
   "eslint.quiet": false,
-  "eslint.workingDirectories": ["./packages/http-server/src"],
+  "eslint.workingDirectories": ["./src"],
   "editor.codeActionsOnSave": {
     "source.fixAll": true,
     "source.organizeImports": true
