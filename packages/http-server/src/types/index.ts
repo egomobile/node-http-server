@@ -280,7 +280,7 @@ export interface IHttpServer<TRequest, TResponse> {
     post(pathOrValidator: HttpRequestPath<TRequest>, options: IHttpRequestHandlerOptions<TRequest, TResponse>, handler: HttpRequestHandler<TRequest, TResponse>): this;
 
     /**
-     * Adds a handler for a POST request.
+     * Adds a handler for a PUT request.
      *
      * @param {HttpRequestPath<TRequest>} pathOrValidator The path or the validator.
      * @param {HttpMiddleware<TRequest, TResponse>[]} middlewares One or more middleware to add.
