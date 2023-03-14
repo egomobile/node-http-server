@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-server)
 
-## 0.63.0
+## 0.63.1
 
 - revert to version `0.61.x`
 - `npm update`s
