@@ -29,5 +29,5 @@ jobs:
         run: npm run test
       - name: Build library
         run: npm run build
-      - name: Generate documentation
-        run: npm run docs:generate
+      # - name: Generate documentation
+      #   run: npm run docs:generate

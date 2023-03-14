@@ -71,9 +71,9 @@
         "CHANGELOG.md",
         "LICENSE",
         "lib",
-        "!lib/**/__tests__/**/*",
         "!lib/**/*.map",
         "!lib/**/setupTests.*",
+        "!lib/**/__tests__/**/*",
         "preinstall.cjs",
         "README.md"
     ],
