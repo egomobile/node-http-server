@@ -129,7 +129,7 @@ export interface IHttpRequestHandlerOptions<TRequest, TResponse> {
     /**
      * Additional middlewares to use.
      */
-    use?: HttpMiddleware<TRequest, TResponse>[];
+    use?: Nilable<HttpMiddleware<TRequest, TResponse>[]>;
 }
 
 /**
