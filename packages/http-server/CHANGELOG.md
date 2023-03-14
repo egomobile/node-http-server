@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-server)
 
-## 0.64.0
+## 0.64.0-alpha
 
 - **BREAKING CHANGES**:
   - `autoEnd` => `noAutoEnd`
