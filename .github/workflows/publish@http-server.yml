@@ -2,10 +2,7 @@ name: Publish
 
 on:
   push:
-    branches:
-      - main
-      - beta
-      - alpha
+    branches: ["main", "beta", "alpha"]
     paths:
       - "packages/http-server/**"
 
