@@ -5,6 +5,10 @@
       "name": "http-server"
     },
     {
+      "path": "./packages/http-controllers",
+      "name": "http-controllers"
+    },
+    {
       "path": ".",
       "name": "(root)"
     }

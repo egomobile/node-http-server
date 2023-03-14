@@ -280,6 +280,20 @@ export interface IHttpServer<TRequest, TResponse> {
     post(pathOrValidator: HttpRequestPath<TRequest>, options: IHttpRequestHandlerOptions<TRequest, TResponse>, handler: HttpRequestHandler<TRequest, TResponse>): this;
 
     /**
+     * Adds a handler for a POST request.
+     *
+     * @param {HttpRequestPath<TRequest>} pathOrValidator The path or the validator.
+     * @param {HttpMiddleware<TRequest, TResponse>[]} middlewares One or more middleware to add.
+     * @param {HttpRequestHandler<TRequest, TResponse>} handler The handler.
+     * @param {IHttpRequestHandlerOptions<TRequest, TResponse>} [options] Custom options.
+     *
+     * @returns {this}
+     */
+    put(pathOrValidator: HttpRequestPath<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): this;
+    put(pathOrValidator: HttpRequestPath<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): this;
+    put(pathOrValidator: HttpRequestPath<TRequest>, options: IHttpRequestHandlerOptions<TRequest, TResponse>, handler: HttpRequestHandler<TRequest, TResponse>): this;
+
+    /**
      * Sets a custom error handler.
      *
      * @param {RequestErrorHandler<TRequest, TResponse>} handler The new handler to set.
