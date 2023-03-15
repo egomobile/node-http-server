@@ -16,10 +16,19 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import type { HttpMiddleware } from "@egomobile/http-server";
 import { createHttpMethodDecorator } from "../factories/decorators.js";
+import { Nilable } from "../types/internal.js";
+import type { HttpMethodDecoratorArg1, HttpMethodDecoratorArg2, HttpMethodDecoratorRoutePath, IHttpMethodDecoratorOptions } from "./index.js";
 
-export function GET(): MethodDecorator {
+export function GET(): MethodDecorator;
+export function GET(options: IHttpMethodDecoratorOptions): MethodDecorator;
+export function GET(use: HttpMiddleware<any, any>[]): MethodDecorator;
+export function GET(path: HttpMethodDecoratorRoutePath, use?: Nilable<HttpMiddleware<any, any>[]>): MethodDecorator;
+export function GET(arg1?: Nilable<HttpMethodDecoratorArg1>, arg2?: Nilable<HttpMethodDecoratorArg2>): MethodDecorator {
     return createHttpMethodDecorator({
+        arg1,
+        arg2,
         "httpMethod": "get"
     });
 }

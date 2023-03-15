@@ -15,11 +15,26 @@
 
 import { moduleMode } from "@egomobile/http-server";
 import path from "node:path";
-import type { Constructor, Nilable } from "../types/internal.js";
+import { EntityTooLargeError } from "../errors/entityTooLarge.js";
+import type { Constructor, Nilable, Nullable } from "../types/internal.js";
 
 interface IGetListFromObjectOptions {
     deleteKey?: boolean;
     noInit?: boolean;
+}
+
+export function asAsync<TFunc extends Function = Function>(func: Function): TFunc {
+    if (typeof func !== "function") {
+        throw new TypeError("func must be of type function");
+    }
+
+    if (func.constructor.name === "AsyncFunction") {
+        return func as TFunc;
+    }
+
+    return (async function (...args: any[]) {
+        return func(...args);
+    }) as unknown as TFunc;
 }
 
 export function getAllClassProps(startClass: any): string[] {
@@ -117,6 +132,86 @@ export function normalizeRouterPath(p: Nilable<string>): string {
     }
 
     return p;
+}
+
+export function readStream(stream: NodeJS.ReadableStream) {
+    const allChunks: Buffer[] = [];
+
+    return new Promise<Buffer>((resolve, reject) => {
+        stream.once("error", reject);
+
+        stream.on("data", (chunk: Buffer) => {
+            try {
+                allChunks.push(chunk);
+            }
+            catch (error) {
+                reject(error);
+            }
+        });
+
+        stream.once("end", () => {
+            try {
+                resolve(Buffer.concat(allChunks));
+            }
+            catch (error) {
+                reject(error);
+            }
+        });
+    });
+}
+
+export function readStreamWithLimit(
+    stream: NodeJS.ReadableStream,
+    limit: Nullable<number>
+) {
+    const allChunks: Buffer[] = [];
+    let currentSize = 0;
+
+    const addChunkAndRecalc = (chunk: Buffer) => {
+        allChunks.push(chunk);
+
+        currentSize += chunk.length;
+    };
+
+    let addChunk: (chunk: Buffer) => void;
+    if (limit === null) {
+        addChunk = (chunk) => {
+            return addChunkAndRecalc(chunk);
+        };
+    }
+    else {
+        addChunk = (chunk) => {
+            if (currentSize + chunk.length > limit!) {
+                throw new EntityTooLargeError();
+            }
+
+            addChunkAndRecalc(chunk);
+        };
+    }
+
+    return new Promise<Buffer>((resolve, reject) => {
+        stream.once("error", reject);
+
+        stream.on("data", (chunk: Buffer) => {
+            try {
+                addChunk(chunk);
+            }
+            catch (error) {
+                reject(error);
+            }
+        });
+
+        stream.once("end", () => {
+            try {
+                resolve(Buffer.concat(allChunks));
+
+                allChunks.length = 0;
+            }
+            catch (error) {
+                reject(error);
+            }
+        });
+    });
 }
 
 export function runsTSNode(): boolean {

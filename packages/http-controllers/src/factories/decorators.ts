@@ -13,15 +13,20 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMethod, HttpRequestPath, IHttpServer } from "@egomobile/http-server";
+import { HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IHttpServer, params } from "@egomobile/http-server";
+import { isSchema, Schema } from "joi";
 import path from "node:path";
 import { INIT_METHOD_ACTIONS } from "../constants/internal.js";
-import { Nilable } from "../types/internal.js";
+import { HttpMethodDecoratorArg1, HttpMethodDecoratorArg2, HttpMethodDecoratorArg3, HttpMethodDecoratorWithBodyArg1, HttpMethodDecoratorWithBodyArg2, HttpMethodDecoratorWithBodyArg3, HttpMethodDecoratorWithBodyInputFormat, IHttpMethodDecoratorWithBodyOptions } from "../decorators/index.js";
+import { buffer, json, text, validate, yaml } from "../middlewares/index.js";
+import type { Nilable } from "../types/internal.js";
 import { getMethodOrThrow } from "../utils/decorators.js";
-import { getListFromObject, normalizeRouterPath } from "../utils/internal.js";
+import { getListFromObject, isNil, normalizeRouterPath } from "../utils/internal.js";
 
 interface ICreateHttpMethodDecoratorOptions {
-    controllerRouterPath?: Nilable<string>;
+    arg1: Nilable<HttpMethodDecoratorArg1 | HttpMethodDecoratorWithBodyArg1>;
+    arg2: Nilable<HttpMethodDecoratorArg2 | HttpMethodDecoratorWithBodyArg2>;
+    arg3?: Nilable<HttpMethodDecoratorArg3 | HttpMethodDecoratorWithBodyArg3>;
     httpMethod: HttpMethod;
 }
 
@@ -33,14 +38,95 @@ export interface IInitMethodContext {
     server: IHttpServer<any, any>;
 }
 
+const httpMethodsSupportingSchema: HttpMethod[] = ["patch", "post", "put"];
+
 export function createHttpMethodDecorator({
-    controllerRouterPath,
+    arg1,
+    arg2,
     httpMethod
 }: ICreateHttpMethodDecoratorOptions): MethodDecorator {
     return function (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) {
         const method = getMethodOrThrow(descriptor);
 
         const controllerMethodName = String(propertyKey).trim();
+
+        let controllerRouterPath: Nilable<string>;
+        let bodyFormat: Nilable<HttpMethodDecoratorWithBodyInputFormat>;
+        let schema: Nilable<Schema>;
+        let use: Nilable<HttpMiddleware<any, any>[]>;
+        if (!isNil(arg1)) {
+            if (typeof arg1 === "string") {
+                // arg1: string
+                // arg2: Nilable<HttpMiddleware<any, any>[]>
+
+                controllerRouterPath = arg1;
+                use = arg2 as Nilable<HttpMiddleware<any, any>[]>;
+            }
+            else if (Array.isArray(arg1)) {
+                // arg1: Nilable<HttpMiddleware<any, any>[]>
+
+                use = arg1 as Nilable<HttpMiddleware<any, any>[]>;
+            }
+            else if (isSchema(arg1)) {
+                schema = arg1;
+            }
+            else if (typeof arg1 === "object") {
+                // arg1: IHttpMethodDecoratorOptions | IHttpMethodDecoratorWithBodyOptions
+
+                bodyFormat = (arg1 as IHttpMethodDecoratorWithBodyOptions).bodyFormat;
+                controllerRouterPath = arg1.path;
+                use = arg1.use;
+            }
+        }
+
+        if (!isNil(controllerRouterPath)) {
+            if (typeof controllerRouterPath !== "string") {
+                throw new TypeError("path must be of type string");
+            }
+        }
+
+        if (!isNil(use)) {
+            if (!Array.isArray(use)) {
+                throw new TypeError("use must be of type array");
+            }
+        }
+
+        // create non-nil copy
+        use = [...(use ?? [])];
+
+        if (schema) {
+            if (httpMethodsSupportingSchema.includes(httpMethod)) {
+                let parserMiddleware: HttpMiddleware<any, any>;
+                if (isNil(bodyFormat)) {
+                    parserMiddleware = json();
+                }
+                else {
+                    if (bodyFormat === "buffer") {
+                        parserMiddleware = buffer();
+                    }
+                    else if (bodyFormat === "json") {
+                        parserMiddleware = json();
+                    }
+                    else if (bodyFormat === "json5") {
+                        parserMiddleware = json({ "version": 5 });
+                    }
+                    else if (bodyFormat === "text") {
+                        parserMiddleware = text();
+                    }
+                    else if (bodyFormat === "yaml") {
+                        parserMiddleware = yaml();
+                    }
+                    else {
+                        throw new TypeError(`bodyFormat does not support value ${bodyFormat}`);
+                    }
+                }
+
+                use.push(
+                    parserMiddleware,
+                    validate(schema)
+                );
+            }
+        }
 
         getListFromObject<InitMethodAction>(method, INIT_METHOD_ACTIONS).push(
             async ({ server, relativePath }) => {
@@ -60,6 +146,17 @@ export function createHttpMethodDecorator({
                         routerPath += `/${controllerMethodName}`;
                     }
                 }
+
+                routerPath = normalizeRouterPath(routerPath);
+                routerPath = routerPath.replaceAll("@", ":");
+
+                if (routerPath.includes(":")) {
+                    routerPath = params(routerPath);
+                }
+
+                server[httpMethod](routerPath, {
+                    use
+                }, method as HttpRequestHandler<any, any>);
             }
         );
     };

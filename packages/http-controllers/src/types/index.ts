@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import type { AnySchema } from "joi";
+import type { JSONSchema4, JSONSchema6, JSONSchema7 } from "json-schema";
 import type { Nilable } from "./internal.js";
 
 /**
@@ -40,5 +42,20 @@ export interface IControllersOptions {
  */
 export interface IControllersResult {
 }
+
+/**
+ * A possible value for JSON schema.
+ */
+export type JsonSchema = JSONSchema4 | JSONSchema6 | JSONSchema7;
+
+/**
+ * Possible values for JSON version.
+ */
+export type JsonVersion = 5;
+
+/**
+ * A possible value for a schema.
+ */
+export type Schema = AnySchema | JsonSchema;
 
 export * from "./classes/index.js";

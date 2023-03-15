@@ -12,6 +12,7 @@
 - [Install](#install)
 - [Usage](#usage)
   - [Quick example](#quick-example)
+- [Credits](#credits)
 
 <a name="install"></a>
 
@@ -33,3 +34,12 @@ npm install --save @egomobile/http-controllers@alpha
 ### Quick example [<a href="#usage">↑</a>]
 
 > TBD
+
+## Credits [<a href="#toc">↑</a>]
+
+The module makes use of:
+
+- [Ajv](https://ajv.js.org/)
+- [joi](https://joi.dev/) by [Sideway Inc.](https://github.com/sideway)
+- [js-yaml](https://github.com/nodeca/js-yaml) by
+  [Nodeca](https://github.com/nodeca)

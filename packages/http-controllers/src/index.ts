@@ -18,11 +18,18 @@
 /// <reference path="../index.d.ts" />
 
 import { HttpServerExtender, moduleMode } from "@egomobile/http-server";
+import ajv from "ajv";
+import joi from "joi";
 import path from "node:path";
 import { initializeControllers } from "./factories/controllers.js";
 import type { IControllersOptions } from "./types/index.js";
 import { isNil, runsTSNode } from "./utils/internal.js";
 
+/**
+ * Extends an `IHttpServer` instance with controller features.
+ *
+ * @returns {HttpServerExtender<TRequest, TResponse>} The extender.
+ */
 export function extendWithControllers<TRequest, TResponse>(): HttpServerExtender<TRequest, TResponse> {
     return ({ server }) => {
         // extend `server` instance with
@@ -105,6 +112,20 @@ export function extendWithControllers<TRequest, TResponse>(): HttpServerExtender
 }
 
 export * from "./decorators/index.js";
+export * from "./errors/index.js";
+export * from "./middlewares/index.js";
 export * from "./types/index.js";
 
+/**
+ * Alias for `ajv` module.
+ */
+export const jsonSchema = ajv;
+/**
+ * Alias for `joi` module.
+ */
+export const schema = joi;
+
+/**
+ * @inheritdoc
+ */
 export default extendWithControllers;
