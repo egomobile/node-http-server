@@ -18,6 +18,25 @@
 import { IS_CONTROLLER_CLASS } from "../constants/internal.js";
 import { isClass } from "../utils/internal.js";
 
+/**
+ * Returns a legacy TypeScript decorator, that marks a class as
+ * controller class.
+ *
+ * @example
+ * ```
+ * import { Controller, GET, IHttp1Request, IHttp1Response } from "@egomobile/http-controllers";
+ *
+ * @Controller()
+ * export default class MyController {
+ *     @GET('/')
+ *     public async getSomething(request: IHttp1Request, response: IHttp1Response) {
+ *         // ...
+ *     }
+ * }
+ * ```
+ *
+ * @returns {ClassDecorator} The new decorator.
+ */
 export function Controller(): ClassDecorator {
     return function (classFunction: Function) {
         if (!isClass(classFunction)) {

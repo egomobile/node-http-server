@@ -26,12 +26,17 @@ import type { IControllersOptions } from "./types/index.js";
 import { isNil, runsTSNode } from "./utils/internal.js";
 
 /**
+ * ID for an event, that is emitted after a controller instance has been created.
+ */
+export const controllerCreatedEvent: unique symbol = Symbol("controller:created");
+
+/**
  * Extends an `IHttpServer` instance with controller features.
  *
  * @returns {HttpServerExtender<TRequest, TResponse>} The extender.
  */
 export function extendWithControllers<TRequest, TResponse>(): HttpServerExtender<TRequest, TResponse> {
-    return ({ server }) => {
+    return ({ events, server }) => {
         // extend `server` instance with
         // `controllers` method.
         server.controllers = async (...args: any[]) => {
@@ -103,6 +108,10 @@ export function extendWithControllers<TRequest, TResponse>(): HttpServerExtender
             }
 
             return initializeControllers({
+                events,
+                "noAutoEnd": options?.noAutoEnd,
+                "noAutoParams": options?.noAutoParams,
+                "noAutoQuery": options?.noAutoQuery,
                 patterns,
                 rootDir,
                 server

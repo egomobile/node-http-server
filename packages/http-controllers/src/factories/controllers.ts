@@ -13,13 +13,14 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { IHttpServer } from "@egomobile/http-server";
+import type { HttpMiddleware, IHttpServer } from "@egomobile/http-server";
 import minimatch, { MinimatchOptions } from "minimatch";
 import fs from "node:fs";
 import path from "node:path";
-import { INIT_METHOD_ACTIONS, IS_CONTROLLER_CLASS } from "../constants/internal.js";
+import { CONTROLLER_MIDDLEWARES, INIT_METHOD_ACTIONS, IS_CONTROLLER_CLASS } from "../constants/internal.js";
+import { controllerCreatedEvent, IControllerCreatedEventContext } from "../index.js";
 import type { ControllerBase, IControllersResult } from "../types/index.js";
-import { Constructor } from "../types/internal.js";
+import type { Constructor, Nilable } from "../types/internal.js";
 import { getAllClassProps, getListFromObject, isClass, loadModule, normalizeRouterPath } from "../utils/internal.js";
 import type { InitMethodAction } from "./decorators.js";
 
@@ -34,17 +35,29 @@ interface IControllerFile {
 
 interface IInitializeControllerInstanceOptions {
     controllerClass: Constructor<ControllerBase>;
+    events: NodeJS.EventEmitter;
     file: IControllerFile;
+    noAutoEnd: Nilable<boolean>;
+    noAutoParams: Nilable<boolean>;
+    noAutoQuery: Nilable<boolean>;
     server: HttpServer;
 }
 
 interface IInitializeControllersOptions {
+    events: NodeJS.EventEmitter;
+    noAutoEnd: Nilable<boolean>;
+    noAutoParams: Nilable<boolean>;
+    noAutoQuery: Nilable<boolean>;
     patterns: string[];
     rootDir: string;
     server: HttpServer;
 }
 
 export async function initializeControllers({
+    events,
+    noAutoEnd,
+    noAutoParams,
+    noAutoQuery,
     patterns,
     rootDir,
     server
@@ -103,7 +116,11 @@ export async function initializeControllers({
                 controllers.push(
                     await initializeControllerInstance({
                         "controllerClass": maybeClass,
+                        events,
                         "file": cf,
+                        noAutoEnd,
+                        noAutoParams,
+                        noAutoQuery,
                         server
                     })
                 );
@@ -120,12 +137,28 @@ export async function initializeControllers({
 
 export async function initializeControllerInstance({
     controllerClass,
+    events,
     file,
+    noAutoEnd,
+    noAutoParams,
+    noAutoQuery,
     server
 }: IInitializeControllerInstanceOptions): Promise<ControllerBase> {
+    const globalMiddlewares = getListFromObject<HttpMiddleware<any, any>>(controllerClass, CONTROLLER_MIDDLEWARES, {
+        "deleteKey": true,
+        "noInit": true
+    });
+
     const newController = new controllerClass({
         "file": file.fullPath
     });
+
+    events.emit(controllerCreatedEvent, {
+        "controller": newController,
+        controllerClass,
+        "fullPath": file.fullPath,
+        "relativePath": file.relativePath
+    } as IControllerCreatedEventContext);
 
     const classProps = getAllClassProps(controllerClass);
 
@@ -139,15 +172,19 @@ export async function initializeControllerInstance({
             continue;
         }
 
+        // method actions
         const initMethodActions = getListFromObject<InitMethodAction>(propValue, INIT_METHOD_ACTIONS, {
             "deleteKey": true,
             "noInit": true
         });
-
         for (const action of initMethodActions) {
             await action({
                 "controller": newController,
                 "fullPath": file.fullPath,
+                "middlewares": globalMiddlewares,
+                noAutoEnd,
+                noAutoParams,
+                noAutoQuery,
                 "relativePath": file.relativePath,
                 server
             });

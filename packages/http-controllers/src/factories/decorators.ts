@@ -36,6 +36,10 @@ export type InitMethodAction = (context: IInitMethodContext) => Promise<void>;
 export interface IInitMethodContext {
     controller: ControllerBase;
     fullPath: string;
+    middlewares: HttpMiddleware<any, any>[];
+    noAutoEnd: Nilable<boolean>;
+    noAutoParams: Nilable<boolean>;
+    noAutoQuery: Nilable<boolean>;
     relativePath: string;
     server: IHttpServer<any, any>;
 }
@@ -52,22 +56,25 @@ export function createHttpMethodDecorator({
 
         const controllerMethodName = String(propertyKey).trim();
 
-        let controllerRouterPath: Nilable<string>;
+        let additionalMiddlewares: Nilable<HttpMiddleware<any, any>[]>;
         let bodyFormat: Nilable<HttpMethodDecoratorWithBodyInputFormat>;
+        let controllerRouterPath: Nilable<string>;
         let schema: Nilable<Schema>;
-        let use: Nilable<HttpMiddleware<any, any>[]>;
+        let shouldDoNoAutoEnd: Nilable<boolean>;
+        let shouldDoNoAutoParams: Nilable<boolean>;
+        let shouldDoNoAutoQuery: Nilable<boolean>;
         if (!isNil(arg1)) {
             if (typeof arg1 === "string") {
                 // arg1: string
                 // arg2: Nilable<HttpMiddleware<any, any>[]>
 
                 controllerRouterPath = arg1;
-                use = arg2 as Nilable<HttpMiddleware<any, any>[]>;
+                additionalMiddlewares = arg2 as Nilable<HttpMiddleware<any, any>[]>;
             }
             else if (Array.isArray(arg1)) {
                 // arg1: Nilable<HttpMiddleware<any, any>[]>
 
-                use = arg1 as Nilable<HttpMiddleware<any, any>[]>;
+                additionalMiddlewares = arg1 as Nilable<HttpMiddleware<any, any>[]>;
             }
             else if (isSchema(arg1)) {
                 schema = arg1;
@@ -77,7 +84,10 @@ export function createHttpMethodDecorator({
 
                 bodyFormat = (arg1 as IHttpMethodDecoratorWithBodyOptions).bodyFormat;
                 controllerRouterPath = arg1.path;
-                use = arg1.use;
+                additionalMiddlewares = arg1.use;
+                shouldDoNoAutoEnd = arg1.noAutoEnd;
+                shouldDoNoAutoParams = arg1.noAutoParams;
+                shouldDoNoAutoQuery = arg1.noAutoQuery;
             }
         }
 
@@ -87,14 +97,14 @@ export function createHttpMethodDecorator({
             }
         }
 
-        if (!isNil(use)) {
-            if (!Array.isArray(use)) {
+        if (!isNil(additionalMiddlewares)) {
+            if (!Array.isArray(additionalMiddlewares)) {
                 throw new TypeError("use must be of type array");
             }
         }
 
         // create non-nil copy
-        use = [...(use ?? [])];
+        additionalMiddlewares = [...(additionalMiddlewares ?? [])];
 
         if (schema) {
             if (httpMethodsSupportingSchema.includes(httpMethod)) {
@@ -123,7 +133,7 @@ export function createHttpMethodDecorator({
                     }
                 }
 
-                use.push(
+                additionalMiddlewares.push(
                     parserMiddleware,
                     validate(schema)
                 );
@@ -133,6 +143,10 @@ export function createHttpMethodDecorator({
         getListFromObject<InitMethodAction>(method, INIT_METHOD_ACTIONS).push(
             async ({
                 controller,
+                "middlewares": controllerMiddlewares,
+                "noAutoEnd": defaultNoAutoEnd,
+                "noAutoParams": defaultNoAutoParams,
+                "noAutoQuery": defaultNoAutoQuery,
                 relativePath,
                 server
             }) => {
@@ -160,9 +174,14 @@ export function createHttpMethodDecorator({
                     routerPath = params(routerPath);
                 }
 
+                const handler = method.bind(controller) as HttpRequestHandler<any, any>;
+
                 server[httpMethod](routerPath, {
-                    use
-                }, method.bind(controller) as HttpRequestHandler<any, any>);
+                    "noAutoEnd": defaultNoAutoEnd ?? shouldDoNoAutoEnd,
+                    "noAutoParams": defaultNoAutoParams ?? shouldDoNoAutoParams,
+                    "noAutoQuery": defaultNoAutoQuery ?? shouldDoNoAutoQuery,
+                    "use": [...controllerMiddlewares, ...additionalMiddlewares!]
+                }, handler);
             }
         );
     };

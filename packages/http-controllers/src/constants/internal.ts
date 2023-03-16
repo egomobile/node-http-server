@@ -13,6 +13,6 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-export const IS_CONTROLLER_CLASS = Symbol("IS_CONTROLLER_CLASS");
-
+export const CONTROLLER_MIDDLEWARES = Symbol("CONTROLLER_MIDDLEWARES");
 export const INIT_METHOD_ACTIONS = Symbol("INIT_METHOD_ACTIONS");
+export const IS_CONTROLLER_CLASS = Symbol("IS_CONTROLLER_CLASS");

@@ -22,7 +22,7 @@
         "lint:fix": "eslint --fix -c .eslintrc.cjs --ext .ts src",
         "preinstall": "node ./preinstall.cjs",
         "sandbox": "npm run build && cd ./sandbox && NODE_ENV=development nodemon --watch './**/*.ts' --watch './**/*.cts' --watch './**/*.mts' --exec node --experimental-specifier-resolution=node --loader ts-node/esm --inspect=0.0.0.0:9229 ./index.mts",
-        "test": "jest --no-cache"
+        "test": "jest --no-cache --silent"
     },
     "jest": {
         "preset": "ts-jest/presets/js-with-ts",

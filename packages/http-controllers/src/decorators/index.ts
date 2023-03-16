@@ -88,9 +88,27 @@ export type HttpMethodDecoratorRoutePath = string;
  */
 export interface IHttpMethodDecoratorOptions {
     /**
+     * Indicates, if default behavior of closing request connection automatically, should be
+     * deactivated or not.
+     */
+    noAutoEnd?: Nilable<boolean>;
+
+    /**
+     * Indicates, if default behavior of automatically setup parameters, should be
+     * deactivated or not.
+     */
+    noAutoParams?: Nilable<boolean>;
+
+    /**
+     * If `true`, do not parse query parameters automatically in this handler.
+     */
+    noAutoQuery?: Nilable<boolean>;
+
+    /**
      * The custom (relative) path of the route.
      */
     path?: Nilable<string>;
+
     /**
      * List of one or more additional middlewares.
      */
@@ -125,3 +143,5 @@ export * from "./PATCH.js";
 export * from "./POST.js";
 export * from "./PUT.js";
 export * from "./TRACE.js";
+export * from "./Use.js";
+

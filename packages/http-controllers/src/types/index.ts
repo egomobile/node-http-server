@@ -15,12 +15,52 @@
 
 import type { AnySchema } from "joi";
 import type { JSONSchema4, JSONSchema6, JSONSchema7 } from "json-schema";
-import type { Nilable } from "./internal.js";
+import type { ControllerBase } from "../index.js";
+import type { Constructor, Nilable } from "./internal.js";
+
+/**
+ * Context of an event, that is emitted, after a controller instance has been created.
+ */
+export interface IControllerCreatedEventContext {
+    /**
+     * The new instance.
+     */
+    controller: ControllerBase;
+    /**
+     * The class of the controller.
+     */
+    controllerClass: Constructor<ControllerBase>;
+    /**
+     * The full path of the underlying file.
+     */
+    fullPath: string;
+    /**
+     * The relative path of the underlying file.
+     */
+    relativePath: string;
+}
 
 /**
  * Options for `IHttpServer.controllers()` method.
  */
 export interface IControllersOptions {
+    /**
+     * Indicates, if default behavior of closing request connection automatically, should be
+     * deactivated or not.
+     */
+    noAutoEnd?: Nilable<boolean>;
+
+    /**
+     * Indicates, if default behavior of automatically setup parameters, should be
+     * deactivated or not.
+     */
+    noAutoParams?: Nilable<boolean>;
+
+    /**
+     * If `true`, do not parse query parameters automatically in this handler.
+     */
+    noAutoQuery?: Nilable<boolean>;
+
     /**
      * One or more glob patterns.
      *
