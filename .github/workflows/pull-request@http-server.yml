@@ -25,9 +25,9 @@ jobs:
         run: npm install --force
       - name: Lint code
         run: npm run lint
-      - name: Run tests
-        run: npm run test
       - name: Build library
         run: npm run build
+      - name: Run tests
+        run: npm run test
       - name: Generate documentation
         run: npm run docs:generate
