@@ -99,7 +99,7 @@ export function isNil(value: unknown): value is (undefined | null) {
 
 export async function loadModule(id: string): Promise<any> {
     if (moduleMode === "cjs") {
-        return require("id");
+        return require(id);
     }
 
     return import(id);

@@ -17,7 +17,8 @@ import { HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IHttpS
 import { isSchema, Schema } from "joi";
 import path from "node:path";
 import { INIT_METHOD_ACTIONS } from "../constants/internal.js";
-import { HttpMethodDecoratorArg1, HttpMethodDecoratorArg2, HttpMethodDecoratorArg3, HttpMethodDecoratorWithBodyArg1, HttpMethodDecoratorWithBodyArg2, HttpMethodDecoratorWithBodyArg3, HttpMethodDecoratorWithBodyInputFormat, IHttpMethodDecoratorWithBodyOptions } from "../decorators/index.js";
+import type { HttpMethodDecoratorArg1, HttpMethodDecoratorArg2, HttpMethodDecoratorArg3, HttpMethodDecoratorWithBodyArg1, HttpMethodDecoratorWithBodyArg2, HttpMethodDecoratorWithBodyArg3, HttpMethodDecoratorWithBodyInputFormat, IHttpMethodDecoratorWithBodyOptions } from "../decorators/index.js";
+import { ControllerBase } from "../index.js";
 import { buffer, json, text, validate, yaml } from "../middlewares/index.js";
 import type { Nilable } from "../types/internal.js";
 import { getMethodOrThrow } from "../utils/decorators.js";
@@ -33,6 +34,7 @@ interface ICreateHttpMethodDecoratorOptions {
 export type InitMethodAction = (context: IInitMethodContext) => Promise<void>;
 
 export interface IInitMethodContext {
+    controller: ControllerBase;
     fullPath: string;
     relativePath: string;
     server: IHttpServer<any, any>;
@@ -129,7 +131,11 @@ export function createHttpMethodDecorator({
         }
 
         getListFromObject<InitMethodAction>(method, INIT_METHOD_ACTIONS).push(
-            async ({ server, relativePath }) => {
+            async ({
+                controller,
+                relativePath,
+                server
+            }) => {
                 const dir = path.dirname(relativePath);
                 const fileName = path.basename(relativePath, path.extname(relativePath));
 
@@ -156,7 +162,7 @@ export function createHttpMethodDecorator({
 
                 server[httpMethod](routerPath, {
                     use
-                }, method as HttpRequestHandler<any, any>);
+                }, method.bind(controller) as HttpRequestHandler<any, any>);
             }
         );
     };

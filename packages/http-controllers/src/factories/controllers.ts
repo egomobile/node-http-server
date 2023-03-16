@@ -146,6 +146,7 @@ export async function initializeControllerInstance({
 
         for (const action of initMethodActions) {
             await action({
+                "controller": newController,
                 "fullPath": file.fullPath,
                 "relativePath": file.relativePath,
                 server
