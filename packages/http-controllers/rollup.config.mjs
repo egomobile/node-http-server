@@ -5,6 +5,7 @@
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
+import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 
 export default {
@@ -13,13 +14,13 @@ export default {
         {
             "file": "lib/index.mjs",
             "format": "esm",
-            "sourcemap": false,
+            "sourcemap": true,
             "exports": "named"
         },
         {
             "file": "lib/index.cjs",
             "format": "cjs",
-            "sourcemap": false,
+            "sourcemap": true,
             "exports": "named"
         }
     ],
@@ -32,6 +33,7 @@ export default {
         }),
         nodeResolve(),
         commonjs(),
-        json()
+        json(),
+        terser()
     ]
 };
