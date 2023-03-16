@@ -70,7 +70,7 @@ app.get("/foo", [query()], async (request, response) => {
   response.write(" BAZ: " + request.query!.get("baz"));
 });
 
-app.listen(3000).then((port) => {
+app.listen().then((port) => {
   console.log(`Server now running on port ${port}`);
 });
 ```
