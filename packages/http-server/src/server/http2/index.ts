@@ -200,11 +200,11 @@ export const defaultHttp2NotFoundHandler: Http2NotFoundHandler =
 /**
  * Creates a new instance of an `IHttp2Server` server.
  *
- * @param {Nilable<CreateHttp2ServerOptions>} options The custom options.
+ * @param {Nilable<CreateHttp2ServerOptions>} [options] The custom options.
  *
  * @returns {IHttp2Server} The new instance.
  */
-export function createHttp2Server(options: Nilable<CreateHttp2ServerOptions>): IHttp2Server {
+export function createHttp2Server(options?: Nilable<CreateHttp2ServerOptions>): IHttp2Server {
     if (!isNil(options)) {
         if (typeof options !== "object") {
             throw new TypeError("options must be of type object");
