@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 import commonjs from "@rollup/plugin-commonjs";
+import json from "@rollup/plugin-json";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
 
@@ -24,9 +25,13 @@ export default {
     ],
     "plugins": [
         typescript({
+            "compilerOptions": {
+                "moduleResolution": "nodenext"
+            },
             "exclude": ["**/__tests__", "**/*.test.ts", "node_modules", "sandbox"]
         }),
         nodeResolve(),
-        commonjs()
+        commonjs(),
+        json()
     ]
 };

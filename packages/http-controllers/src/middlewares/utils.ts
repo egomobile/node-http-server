@@ -13,8 +13,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import { defaultBodyLimit } from ".";
 import type { Nilable, Nullable } from "../types/internal";
+import { defaultBodyLimit } from "./index.js";
 
 export function getBodyLimit(value: Nilable<number>): Nullable<number> {
     if (typeof value === "undefined") {

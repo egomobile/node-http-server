@@ -10,7 +10,8 @@
     "declaration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "sourceMap": false
+    "sourceMap": false,
+    "moduleResolution": "nodenext"
   },
   "ts-node": {
     "esm": true
