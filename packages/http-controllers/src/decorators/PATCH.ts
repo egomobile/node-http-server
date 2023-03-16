@@ -24,16 +24,16 @@ import type { Nilable } from "../types/internal.js";
 import type { HttpMethodDecoratorRoutePath, HttpMethodDecoratorWithBodyArg1, HttpMethodDecoratorWithBodyArg2, HttpMethodDecoratorWithBodyArg3, IHttpMethodDecoratorOptions } from "./index.js";
 
 /**
- * Returns a legacy TypeScript decorator, that sets up an endpoint for a POST request.
+ * Returns a legacy TypeScript decorator, that sets up an endpoint for a PATCH request.
  *
  * @example
  * ```
- * import { Controller, POST, IHttp1Request, IHttp1Response } from "@egomobile/http-controllers";
+ * import { Controller, PATCH, IHttp1Request, IHttp1Response } from "@egomobile/http-controllers";
  *
  * @Controller()
  * export default class MyController {
- *     @POST('/')
- *     public async postSomething(request: IHttp1Request, response: IHttp1Response) {
+ *     @PATCH('/')
+ *     public async patchSomething(request: IHttp1Request, response: IHttp1Response) {
  *         // ...
  *     }
  * }
@@ -46,14 +46,14 @@ import type { HttpMethodDecoratorRoutePath, HttpMethodDecoratorWithBodyArg1, Htt
  *
  * @returns {MethodDecorator} The new decorator.
  */
-export function POST(): MethodDecorator;
-export function POST(schema: AnySchema): MethodDecorator;
-export function POST(options: IHttpMethodDecoratorOptions): MethodDecorator;
-export function POST(use: HttpMiddleware<any, any>[]): MethodDecorator;
-export function POST(path: HttpMethodDecoratorRoutePath): MethodDecorator;
-export function POST(path: HttpMethodDecoratorRoutePath, use: HttpMiddleware<any, any>[]): MethodDecorator;
-export function POST(path: HttpMethodDecoratorRoutePath, schema: Schema): MethodDecorator;
-export function POST(
+export function PATCH(): MethodDecorator;
+export function PATCH(schema: AnySchema): MethodDecorator;
+export function PATCH(options: IHttpMethodDecoratorOptions): MethodDecorator;
+export function PATCH(use: HttpMiddleware<any, any>[]): MethodDecorator;
+export function PATCH(path: HttpMethodDecoratorRoutePath): MethodDecorator;
+export function PATCH(path: HttpMethodDecoratorRoutePath, use: HttpMiddleware<any, any>[]): MethodDecorator;
+export function PATCH(path: HttpMethodDecoratorRoutePath, schema: Schema): MethodDecorator;
+export function PATCH(
     arg1?: Nilable<HttpMethodDecoratorWithBodyArg1>,
     arg2?: Nilable<HttpMethodDecoratorWithBodyArg2>,
     arg3?: Nilable<HttpMethodDecoratorWithBodyArg3>
@@ -62,6 +62,6 @@ export function POST(
         arg1,
         arg2,
         arg3,
-        "httpMethod": "post"
+        "httpMethod": "patch"
     });
 }

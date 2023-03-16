@@ -142,6 +142,20 @@ export interface IHttpServer<TRequest, TResponse> {
     (request: TRequest, response: TResponse): any;
 
     /**
+     * Adds a handler for all kind of common HTTP method based requests.
+     *
+     * @param {HttpRequestPath<TRequest>} pathOrValidator The path or the validator.
+     * @param {HttpMiddleware<TRequest, TResponse>[]} middlewares One or more middleware to add.
+     * @param {HttpRequestHandler<TRequest, TResponse>} handler The handler.
+     * @param {IHttpRequestHandlerOptions<TRequest, TResponse>} [options] Custom options.
+     *
+     * @returns {this}
+     */
+    all(pathOrValidator: HttpRequestPath<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): this;
+    all(pathOrValidator: HttpRequestPath<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): this;
+    all(pathOrValidator: HttpRequestPath<TRequest>, options: IHttpRequestHandlerOptions<TRequest, TResponse>, handler: HttpRequestHandler<TRequest, TResponse>): this;
+
+    /**
      * Closes the current server instance.
      *
      * @returns {Promise<boolean>} Promise with value that indicates if server could be should down or not.
@@ -310,6 +324,20 @@ export interface IHttpServer<TRequest, TResponse> {
      * @returns {this}
      */
     setNotFoundHandler(handler: HttpNotFoundHandler<TRequest, TResponse>): this;
+
+    /**
+     * Adds a handler for some kind of common HTTP method based requests.
+     *
+     * @param {HttpRequestPath<TRequest>} pathOrValidator The path or the validator.
+     * @param {HttpMiddleware<TRequest, TResponse>[]} middlewares One or more middleware to add.
+     * @param {HttpRequestHandler<TRequest, TResponse>} handler The handler.
+     * @param {IHttpRequestHandlerOptions<TRequest, TResponse>} [options] Custom options.
+     *
+     * @returns {this}
+     */
+    some(methods: HttpMethod[], pathOrValidator: HttpRequestPath<TRequest>, handler: HttpRequestHandler<TRequest, TResponse>): this;
+    some(methods: HttpMethod[], pathOrValidator: HttpRequestPath<TRequest>, middlewares: HttpMiddleware<TRequest, TResponse>[], handler: HttpRequestHandler<TRequest, TResponse>): this;
+    some(methods: HttpMethod[], pathOrValidator: HttpRequestPath<TRequest>, options: IHttpRequestHandlerOptions<TRequest, TResponse>, handler: HttpRequestHandler<TRequest, TResponse>): this;
 
     /**
      * Adds a handler for a TRACE request.

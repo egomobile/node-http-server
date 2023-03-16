@@ -4,11 +4,11 @@ on:
   pull_request:
     types: ["opened", "edited", "reopened", "synchronize"]
     paths:
-      - "packages/http-server/**"
+      - "packages/http-controllers/**"
 
 defaults:
   run:
-    working-directory: "packages/http-server"
+    working-directory: "packages/http-controllers"
 
 jobs:
   check-pr:

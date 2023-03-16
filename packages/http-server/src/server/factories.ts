@@ -15,7 +15,7 @@
 
 import type { RequestErrorHandler } from "../errors/index.js";
 import { httpMethods, query } from "../index.js";
-import type { HttpMethod, HttpNotFoundHandler, HttpServerEventListener, IHttpRequestHandlerOptions, IHttpServer, IHttpServerExtenderContext, IHttpServerHasBeenClosedEventContext, IHttpServerIsClosingEventContext, NextFunction, HttpPathValidator as _Http1PathValidator, HttpMiddleware as _HttpMiddleware, HttpRequestHandler as _HttpRequestHandler, HttpRequestPath as _HttpRequestPath } from "../types/index.js";
+import type { HttpMethod, HttpMiddleware as _HttpMiddleware, HttpNotFoundHandler, HttpPathValidator as _Http1PathValidator, HttpRequestHandler as _HttpRequestHandler, HttpRequestPath as _HttpRequestPath, HttpServerEventListener, IHttpRequestHandlerOptions, IHttpServer, IHttpServerExtenderContext, IHttpServerHasBeenClosedEventContext, IHttpServerIsClosingEventContext, NextFunction } from "../types/index.js";
 import type { IHttpRequestHandlerContext, Nilable, Nullable, Optional, RequestHandlerContextEndMethod as _RequestHandlerContextEndMethod } from "../types/internal.js";
 import { asAsync, getUrlWithoutQuery, isNil } from "../utils/internal.js";
 import { params } from "../validators/params.js";
@@ -454,6 +454,20 @@ export function setupServerInstance(options: ISetupServerInstanceOptions) {
             return server;
         };
     });
+
+    // setups some HTTP methods at once
+    server.some = (methods: HttpMethod[], ...args: any[]) => {
+        methods.forEach((httpMethod) => {
+            (server as any)[httpMethod](...args);
+        });
+
+        return server;
+    };
+
+    // setups all HTTP methods at once
+    server.all = (...args: any[]) => {
+        return (server as any).some(httpMethods, ...args);
+    };
 
     return Object.defineProperties(server, {
         "httpVersion": {

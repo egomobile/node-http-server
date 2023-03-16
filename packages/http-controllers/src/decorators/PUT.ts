@@ -24,16 +24,16 @@ import type { Nilable } from "../types/internal.js";
 import type { HttpMethodDecoratorRoutePath, HttpMethodDecoratorWithBodyArg1, HttpMethodDecoratorWithBodyArg2, HttpMethodDecoratorWithBodyArg3, IHttpMethodDecoratorOptions } from "./index.js";
 
 /**
- * Returns a legacy TypeScript decorator, that sets up an endpoint for a POST request.
+ * Returns a legacy TypeScript decorator, that sets up an endpoint for a PUT request.
  *
  * @example
  * ```
- * import { Controller, POST, IHttp1Request, IHttp1Response } from "@egomobile/http-controllers";
+ * import { Controller, PUT, IHttp1Request, IHttp1Response } from "@egomobile/http-controllers";
  *
  * @Controller()
  * export default class MyController {
- *     @POST('/')
- *     public async postSomething(request: IHttp1Request, response: IHttp1Response) {
+ *     @PUT('/')
+ *     public async putSomething(request: IHttp1Request, response: IHttp1Response) {
  *         // ...
  *     }
  * }
@@ -46,14 +46,14 @@ import type { HttpMethodDecoratorRoutePath, HttpMethodDecoratorWithBodyArg1, Htt
  *
  * @returns {MethodDecorator} The new decorator.
  */
-export function POST(): MethodDecorator;
-export function POST(schema: AnySchema): MethodDecorator;
-export function POST(options: IHttpMethodDecoratorOptions): MethodDecorator;
-export function POST(use: HttpMiddleware<any, any>[]): MethodDecorator;
-export function POST(path: HttpMethodDecoratorRoutePath): MethodDecorator;
-export function POST(path: HttpMethodDecoratorRoutePath, use: HttpMiddleware<any, any>[]): MethodDecorator;
-export function POST(path: HttpMethodDecoratorRoutePath, schema: Schema): MethodDecorator;
-export function POST(
+export function PUT(): MethodDecorator;
+export function PUT(schema: AnySchema): MethodDecorator;
+export function PUT(options: IHttpMethodDecoratorOptions): MethodDecorator;
+export function PUT(use: HttpMiddleware<any, any>[]): MethodDecorator;
+export function PUT(path: HttpMethodDecoratorRoutePath): MethodDecorator;
+export function PUT(path: HttpMethodDecoratorRoutePath, use: HttpMiddleware<any, any>[]): MethodDecorator;
+export function PUT(path: HttpMethodDecoratorRoutePath, schema: Schema): MethodDecorator;
+export function PUT(
     arg1?: Nilable<HttpMethodDecoratorWithBodyArg1>,
     arg2?: Nilable<HttpMethodDecoratorWithBodyArg2>,
     arg3?: Nilable<HttpMethodDecoratorWithBodyArg3>
@@ -62,6 +62,6 @@ export function POST(
         arg1,
         arg2,
         arg3,
-        "httpMethod": "post"
+        "httpMethod": "put"
     });
 }

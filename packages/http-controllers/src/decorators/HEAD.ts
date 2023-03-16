@@ -22,16 +22,16 @@ import type { Nilable } from "../types/internal.js";
 import type { HttpMethodDecoratorArg1, HttpMethodDecoratorArg2, HttpMethodDecoratorRoutePath, IHttpMethodDecoratorOptions } from "./index.js";
 
 /**
- * Returns a legacy TypeScript decorator, that sets up an endpoint for a GET request.
+ * Returns a legacy TypeScript decorator, that sets up an endpoint for a HEAD request.
  *
  * @example
  * ```
- * import { Controller, GET, IHttp1Request, IHttp1Response } from "@egomobile/http-controllers";
+ * import { Controller, HEAD, IHttp1Request, IHttp1Response } from "@egomobile/http-controllers";
  *
  * @Controller()
  * export default class MyController {
- *     @GET('/')
- *     public async getSomething(request: IHttp1Request, response: IHttp1Response) {
+ *     @HEAD('/')
+ *     public async peekSomething(request: IHttp1Request, response: IHttp1Response) {
  *         // ...
  *     }
  * }
@@ -43,14 +43,14 @@ import type { HttpMethodDecoratorArg1, HttpMethodDecoratorArg2, HttpMethodDecora
  *
  * @returns {MethodDecorator} The new decorator.
  */
-export function GET(): MethodDecorator;
-export function GET(options: IHttpMethodDecoratorOptions): MethodDecorator;
-export function GET(use: HttpMiddleware<any, any>[]): MethodDecorator;
-export function GET(path: HttpMethodDecoratorRoutePath, use?: Nilable<HttpMiddleware<any, any>[]>): MethodDecorator;
-export function GET(arg1?: Nilable<HttpMethodDecoratorArg1>, arg2?: Nilable<HttpMethodDecoratorArg2>): MethodDecorator {
+export function HEAD(): MethodDecorator;
+export function HEAD(options: IHttpMethodDecoratorOptions): MethodDecorator;
+export function HEAD(use: HttpMiddleware<any, any>[]): MethodDecorator;
+export function HEAD(path: HttpMethodDecoratorRoutePath, use?: Nilable<HttpMiddleware<any, any>[]>): MethodDecorator;
+export function HEAD(arg1?: Nilable<HttpMethodDecoratorArg1>, arg2?: Nilable<HttpMethodDecoratorArg2>): MethodDecorator {
     return createHttpMethodDecorator({
         arg1,
         arg2,
-        "httpMethod": "get"
+        "httpMethod": "head"
     });
 }

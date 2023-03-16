@@ -1,6 +1,6 @@
 {
     "name": "@egomobile/http-controllers",
-    "version": "0.0.0",
+    "version": "0.1.0",
     "description": "Controller framework for @egomobile/http-server module.",
     "main": "lib/index.cjs",
     "module": "lib/index.mjs",
@@ -78,7 +78,7 @@
         "README.md"
     ],
     "devDependencies": {
-        "@egomobile/http-server": "0.64.0-alpha.360",
+        "@egomobile/http-server": "0.64.0-alpha.361",
         "@egomobile/tsconfig": "^5.0.0",
         "@rollup/plugin-commonjs": "24.0.1",
         "@rollup/plugin-node-resolve": "15.0.1",
@@ -93,10 +93,11 @@
         "rollup": "3.19.1",
         "ts-node": "10.9.1",
         "tslint": "6.1.3",
+        "typedoc": "0.23.26",
         "typescript": "5.0.1-rc"
     },
     "peerDependencies": {
-        "@egomobile/http-server": ">= 0.64.0-alpha.360"
+        "@egomobile/http-server": ">= 0.64.0-alpha.361"
     },
     "dependencies": {
         "@types/json-schema": "7.0.11",
