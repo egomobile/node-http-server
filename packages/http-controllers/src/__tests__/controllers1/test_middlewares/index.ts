@@ -16,7 +16,7 @@ const middleware2 = async (request: any, response: any, next: any) => {
 
 @Controller()
 @Use(middleware1)
-export default class IndexController {
+export default class MiddlewareController {
     @GET()
     public async test1(request: any, response: any) {
         response.end(request.foo);

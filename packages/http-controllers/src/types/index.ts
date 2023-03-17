@@ -16,7 +16,7 @@
 import type { AnySchema } from "joi";
 import type { JSONSchema4, JSONSchema6, JSONSchema7 } from "json-schema";
 import type { ControllerBase } from "../index.js";
-import type { Constructor, Nilable } from "./internal.js";
+import type { Constructor, LazyValue, Nilable, ObjectKey } from "./internal.js";
 
 /**
  * Context of an event, that is emitted, after a controller instance has been created.
@@ -44,6 +44,11 @@ export interface IControllerCreatedEventContext {
  * Options for `IHttpServer.controllers()` method.
  */
 export interface IControllersOptions {
+    /**
+     * Additional imports.
+     */
+    imports?: Nilable<ImportValues>;
+
     /**
      * Indicates, if default behavior of closing request connection automatically, should be
      * deactivated or not.
@@ -82,6 +87,11 @@ export interface IControllersOptions {
  */
 export interface IControllersResult {
 }
+
+/**
+ * A list of import values.
+ */
+export type ImportValues = Record<ObjectKey, LazyValue>;
 
 /**
  * A possible value for JSON schema.

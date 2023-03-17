@@ -18,7 +18,7 @@ import { isSchema, Schema } from "joi";
 import path from "node:path";
 import { INIT_METHOD_ACTIONS } from "../constants/internal.js";
 import type { HttpMethodDecoratorArg1, HttpMethodDecoratorArg2, HttpMethodDecoratorArg3, HttpMethodDecoratorWithBodyArg1, HttpMethodDecoratorWithBodyArg2, HttpMethodDecoratorWithBodyArg3, HttpMethodDecoratorWithBodyInputFormat, IHttpMethodDecoratorWithBodyOptions } from "../decorators/index.js";
-import { ControllerBase } from "../index.js";
+import { ControllerBase, ImportValues } from "../index.js";
 import { buffer, json, text, validate, yaml } from "../middlewares/index.js";
 import type { Nilable } from "../types/internal.js";
 import { getMethodOrThrow } from "../utils/decorators.js";
@@ -31,7 +31,10 @@ interface ICreateHttpMethodDecoratorOptions {
     httpMethod: HttpMethod;
 }
 
-export type InitMethodAction = (context: IInitMethodContext) => Promise<void>;
+export interface IInitImportContext {
+    controller: ControllerBase;
+    imports: ImportValues;
+}
 
 export interface IInitMethodContext {
     controller: ControllerBase;
@@ -43,6 +46,10 @@ export interface IInitMethodContext {
     relativePath: string;
     server: IHttpServer<any, any>;
 }
+
+export type InitImportAction = (context: IInitImportContext) => Promise<void>;
+
+export type InitMethodAction = (context: IInitMethodContext) => Promise<void>;
 
 const httpMethodsSupportingSchema: HttpMethod[] = ["patch", "post", "put"];
 

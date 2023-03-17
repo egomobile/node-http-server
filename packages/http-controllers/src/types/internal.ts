@@ -15,6 +15,10 @@
 
 export type Constructor<T extends any = any> = (new (...args: any[]) => T);
 
+export type LazyValue<T extends any = any> = T | (() => T);
+
+export type ObjectKey = string | number | symbol;
+
 export type Optional<T extends any = any> = T | undefined;
 
 export type Nilable<T extends any = any> = Optional<T> | Nullable<T>;

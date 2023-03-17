@@ -17,12 +17,12 @@ import type { HttpMiddleware, IHttpServer } from "@egomobile/http-server";
 import minimatch, { MinimatchOptions } from "minimatch";
 import fs from "node:fs";
 import path from "node:path";
-import { CONTROLLER_MIDDLEWARES, INIT_METHOD_ACTIONS, IS_CONTROLLER_CLASS } from "../constants/internal.js";
-import { controllerCreatedEvent, IControllerCreatedEventContext } from "../index.js";
+import { CONTROLLER_MIDDLEWARES, INIT_IMPORTS_ACTIONS, INIT_METHOD_ACTIONS, IS_CONTROLLER_CLASS } from "../constants/internal.js";
+import { controllerCreatedEvent, IControllerCreatedEventContext, ImportValues } from "../index.js";
 import type { ControllerBase, IControllersResult } from "../types/index.js";
 import type { Constructor, Nilable } from "../types/internal.js";
 import { getAllClassProps, getListFromObject, isClass, loadModule, normalizeRouterPath } from "../utils/internal.js";
-import type { InitMethodAction } from "./decorators.js";
+import type { InitImportAction, InitMethodAction } from "./decorators.js";
 
 const { readdir, stat } = fs.promises;
 
@@ -37,6 +37,7 @@ interface IInitializeControllerInstanceOptions {
     controllerClass: Constructor<ControllerBase>;
     events: NodeJS.EventEmitter;
     file: IControllerFile;
+    imports: ImportValues;
     noAutoEnd: Nilable<boolean>;
     noAutoParams: Nilable<boolean>;
     noAutoQuery: Nilable<boolean>;
@@ -45,6 +46,7 @@ interface IInitializeControllerInstanceOptions {
 
 interface IInitializeControllersOptions {
     events: NodeJS.EventEmitter;
+    imports: ImportValues;
     noAutoEnd: Nilable<boolean>;
     noAutoParams: Nilable<boolean>;
     noAutoQuery: Nilable<boolean>;
@@ -55,6 +57,7 @@ interface IInitializeControllersOptions {
 
 export async function initializeControllers({
     events,
+    imports,
     noAutoEnd,
     noAutoParams,
     noAutoQuery,
@@ -118,6 +121,7 @@ export async function initializeControllers({
                         "controllerClass": maybeClass,
                         events,
                         "file": cf,
+                        imports,
                         noAutoEnd,
                         noAutoParams,
                         noAutoQuery,
@@ -139,6 +143,7 @@ export async function initializeControllerInstance({
     controllerClass,
     events,
     file,
+    imports,
     noAutoEnd,
     noAutoParams,
     noAutoQuery,
@@ -153,6 +158,19 @@ export async function initializeControllerInstance({
         "file": file.fullPath
     });
 
+    // imports
+    const initImportActions = getListFromObject<InitImportAction>(newController, INIT_IMPORTS_ACTIONS, {
+        "deleteKey": true,
+        "noInit": true
+    });
+    for (const action of initImportActions) {
+        await action({
+            "controller": newController,
+            imports
+        });
+    }
+
+    // tell others, that new controller has been created
     events.emit(controllerCreatedEvent, {
         "controller": newController,
         controllerClass,

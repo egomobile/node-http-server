@@ -138,6 +138,7 @@ export * from "./Controller.js";
 export * from "./DELETE.js";
 export * from "./GET.js";
 export * from "./HEAD.js";
+export * from "./Import.js";
 export * from "./OPTIONS.js";
 export * from "./PATCH.js";
 export * from "./POST.js";

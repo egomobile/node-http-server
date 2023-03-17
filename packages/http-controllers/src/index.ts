@@ -47,7 +47,8 @@ export function extendWithControllers<TRequest, TResponse>(): HttpServerExtender
             else {
                 if (typeof args[0] === "string") {
                     options = {
-                        "rootDir": args[0]
+                        "rootDir": args[0],
+                        "imports": args[1]
                     };
                 }
                 else if (typeof args[0] === "object") {
@@ -60,6 +61,13 @@ export function extendWithControllers<TRequest, TResponse>(): HttpServerExtender
 
             if (typeof options !== "object") {
                 throw new TypeError("options must be of type object");
+            }
+
+            const imports = options?.imports;
+            if (!isNil(imports)) {
+                if (typeof imports !== "object") {
+                    throw new TypeError("options.imports must be of type object");
+                }
             }
 
             let rootDir = options.rootDir;
@@ -109,6 +117,7 @@ export function extendWithControllers<TRequest, TResponse>(): HttpServerExtender
 
             return initializeControllers({
                 events,
+                "imports": imports ?? {},
                 "noAutoEnd": options?.noAutoEnd,
                 "noAutoParams": options?.noAutoParams,
                 "noAutoQuery": options?.noAutoQuery,

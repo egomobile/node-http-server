@@ -7,7 +7,7 @@
   - `listen()` method of HTTP server instance now returns TCP port
   - parameters are now activated automatically, if `:` is found in a string path
   - query parameter parsing is activated automatically
-  - remove controller framework, which will be outsourced to separate library
+  - remove controller framework, which has been moved to [@egomobile/http-controllers](https://www.npmjs.com/package/@egomobile/http-controllers)
   - remove test framework, which will be outsourced to separate library
   - remove OpenAPI framework, which will be outsourced to separate library
   - remove validation framework, which will be outsourced to separate library

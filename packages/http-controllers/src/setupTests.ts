@@ -30,10 +30,32 @@ beforeAll(async () => {
     httpServer2.extend(extendWithControllers());
 
     await httpServer1.controllers({
+        "imports": {
+            "foo": "FOO",
+            "bar": () => {
+                return 42;
+            },
+            "buzz": () => {
+                return () => {
+                    return "BUZZ";
+                };
+            }
+        },
         "rootDir": path.join(__dirname, "/__tests__/controllers1"),
         "patterns": ["**/*.ts"]
     });
     await httpServer2.controllers({
+        "imports": {
+            "foo": "FOO",
+            "bar": () => {
+                return 42;
+            },
+            "buzz": () => {
+                return () => {
+                    return "BUZZ";
+                };
+            }
+        },
         "rootDir": path.join(__dirname, "/__tests__/controllers2"),
         "patterns": ["**/*.ts"]
     });

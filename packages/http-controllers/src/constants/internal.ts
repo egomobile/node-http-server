@@ -14,5 +14,6 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 export const CONTROLLER_MIDDLEWARES = Symbol("CONTROLLER_MIDDLEWARES");
+export const INIT_IMPORTS_ACTIONS = Symbol("INIT_IMPORTS_ACTIONS");
 export const INIT_METHOD_ACTIONS = Symbol("INIT_METHOD_ACTIONS");
 export const IS_CONTROLLER_CLASS = Symbol("IS_CONTROLLER_CLASS");
