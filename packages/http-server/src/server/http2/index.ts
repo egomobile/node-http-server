@@ -19,7 +19,7 @@ import { EventEmitter } from "node:events";
 import { createSecureServer, createServer, Http2Server, Http2ServerRequest, Http2ServerResponse, SecureServerOptions, ServerOptions } from "node:http2";
 
 import type { RequestErrorHandler } from "../../errors/index.js";
-import type { HttpMethod, HttpMiddleware, HttpNotFoundHandler, HttpPathValidator, HttpRequestHandler, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, IHttpServerExtenderContext, IHttpServerIsListingEventContext, IHttpServerStartsListingEventContext } from "../../types/index.js";
+import type { HttpMethod, HttpMiddleware, HttpNotFoundHandler, HttpPathValidator, HttpRequestHandler, IHttpRequest, IHttpRequestHandlerOptions, IHttpResponse, IHttpServer, IHttpServerExtenderContext, IHttpServerHasBeenClosedEventContext, IHttpServerIsClosingEventContext, IHttpServerIsListingEventContext, IHttpServerStartsListingEventContext } from "../../types/index.js";
 import type { IHttpRequestHandlerContext, Nilable, Optional } from "../../types/internal.js";
 import { isDev, isNil } from "../../utils/internal.js";
 import { createRequestHandler, setupServerInstance } from "../factories.js";
@@ -216,6 +216,7 @@ export function createHttp2Server(options?: Nilable<CreateHttp2ServerOptions>): 
     const events = new EventEmitter();
     const globalMiddlewares: Http2Middleware[] = [];
     let instance: Optional<Http2Server>;
+    let isRunningInDryMode: Optional<boolean>;
     let notFoundHandler = defaultHttp2NotFoundHandler;
     let port: Optional<number>;
     const shouldNotParsePathParams = isNil(options?.noAutoParams) ? null : !!options?.noAutoParams;
@@ -280,26 +281,79 @@ export function createHttp2Server(options?: Nilable<CreateHttp2ServerOptions>): 
 
             newInstance.once("error", reject);
 
-            events.emit(
-                "server:listen",
-                {
-                    "port": tcpPort
-                } as IHttpServerStartsListingEventContext
-            );
+            const listenContext: IHttpServerStartsListingEventContext = {
+                "dryRun": false,
+                "port": tcpPort
+            };
 
-            newInstance.listen(tcpPort, () => {
+            events.emit("server:listen", listenContext);
+
+            const shouldRunInDryMode = !!listenContext.dryRun;
+            const done = () => {
+                isRunningInDryMode = shouldRunInDryMode;
                 instance = newInstance;
                 port = tcpPort;
 
-                events.emit(
-                    "server:listening",
-                    {
-                        "port": tcpPort
-                    } as IHttpServerIsListingEventContext
-                );
+                const listeningContext: IHttpServerIsListingEventContext = {
+                    "dryRun": shouldRunInDryMode,
+                    "port": tcpPort
+                };
+
+                events.emit("server:listening", listeningContext);
 
                 return resolve(tcpPort);
-            });
+            };
+
+            if (shouldRunInDryMode) {
+                done();
+            }
+            else {
+                newInstance.listen(tcpPort, done);
+            }
+        });
+    };
+
+    // server.close()
+    server.close = async () => {
+        return new Promise<boolean>((resolve, reject) => {
+            const emitClosed = (error?: any) => {
+                const closedContext: IHttpServerHasBeenClosedEventContext = {
+                    "dryRun": isRunningInDryMode,
+                    error,
+                    port
+                };
+
+                instance = undefined;
+                isRunningInDryMode = undefined;
+                port = undefined;
+
+                events.emit("server:closed", closedContext);
+            };
+
+            const closeContext: IHttpServerIsClosingEventContext = {
+                "dryRun": isRunningInDryMode,
+                port
+            };
+
+            events.emit("server:close", closeContext);
+
+            if (instance) {
+                instance.close((error?: any) => {
+                    emitClosed(error);
+
+                    if (error) {
+                        reject(error);
+                    }
+                    else {
+                        resolve(true);
+                    }
+                });
+            }
+            else {
+                emitClosed();
+
+                resolve(false);
+            }
         });
     };
 

@@ -425,6 +425,12 @@ export interface IHttpServerHasBeenClosedEventContext {
      * The error, if available.
      */
     readonly error?: Optional<any>;
+
+    /**
+     * Indicates if server is running in "dry run mode" or not.
+     */
+    readonly dryRun: Optional<boolean>;
+
     /**
      * The TCP port.
      */
@@ -436,6 +442,11 @@ export interface IHttpServerHasBeenClosedEventContext {
  */
 export interface IHttpServerIsClosingEventContext {
     /**
+     * Indicates if server is running in "dry run mode" or not.
+     */
+    readonly dryRun: Optional<boolean>;
+
+    /**
      * The TCP port.
      */
     readonly port: Optional<number>;
@@ -446,6 +457,11 @@ export interface IHttpServerIsClosingEventContext {
  */
 export interface IHttpServerIsListingEventContext {
     /**
+     * Indicates if server is running in "dry run mode" or not.
+     */
+    readonly dryRun: boolean;
+
+    /**
      * The TCP port.
      */
     readonly port: number;
@@ -455,6 +471,13 @@ export interface IHttpServerIsListingEventContext {
  * An context for a HTTP server event, that is emitted, when the server starts listening on a TCP port.
  */
 export interface IHttpServerStartsListingEventContext {
+    /**
+     * Gets or sets a value that indicates that the server should initialize anything, but not listen on a port.
+     *
+     * @default false
+     */
+    dryRun: boolean;
+
     /**
      * The TCP port.
      */
