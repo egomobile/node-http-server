@@ -93,7 +93,7 @@
         "README.md"
     ],
     "devDependencies": {
-        "@egomobile/http-server": "0.64.0-alpha.367",
+        "@egomobile/http-server": "0.64.0-alpha.370",
         "@egomobile/tsconfig": "^5.0.0",
         "@rollup/plugin-commonjs": "24.0.1",
         "@rollup/plugin-json": "6.0.0",
@@ -120,7 +120,7 @@
         "typescript": "5.0.1-rc"
     },
     "peerDependencies": {
-        "@egomobile/http-server": ">= 0.64.0-alpha.367"
+        "@egomobile/http-server": ">= 0.64.0-alpha.370"
     },
     "dependencies": {
         "@types/json-schema": "7.0.11",

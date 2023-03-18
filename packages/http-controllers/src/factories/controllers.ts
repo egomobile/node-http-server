@@ -18,7 +18,7 @@ import minimatch, { MinimatchOptions } from "minimatch";
 import fs from "node:fs";
 import path from "node:path";
 import { CONTROLLER_MIDDLEWARES, INIT_IMPORTS_ACTIONS, INIT_METHOD_ACTIONS, IS_CONTROLLER_CLASS } from "../constants/internal.js";
-import { controllerCreatedEvent, IControllerCreatedEventContext, ImportValues } from "../index.js";
+import type { IControllerCreatedEventContext, ImportValues } from "../index.js";
 import type { ControllerBase, IControllersResult } from "../types/index.js";
 import type { Constructor, Nilable } from "../types/internal.js";
 import { getAllClassProps, getListFromObject, isClass, loadModule, normalizeRouterPath } from "../utils/internal.js";
@@ -41,6 +41,7 @@ interface IInitializeControllerInstanceOptions {
     noAutoEnd: Nilable<boolean>;
     noAutoParams: Nilable<boolean>;
     noAutoQuery: Nilable<boolean>;
+    rootDir: string;
     server: HttpServer;
 }
 
@@ -125,6 +126,7 @@ export async function initializeControllers({
                         noAutoEnd,
                         noAutoParams,
                         noAutoQuery,
+                        rootDir,
                         server
                     })
                 );
@@ -147,6 +149,7 @@ export async function initializeControllerInstance({
     noAutoEnd,
     noAutoParams,
     noAutoQuery,
+    rootDir,
     server
 }: IInitializeControllerInstanceOptions): Promise<ControllerBase> {
     const globalMiddlewares = getListFromObject<HttpMiddleware<any, any>>(controllerClass, CONTROLLER_MIDDLEWARES, {
@@ -170,14 +173,6 @@ export async function initializeControllerInstance({
         });
     }
 
-    // tell others, that new controller has been created
-    events.emit(controllerCreatedEvent, {
-        "controller": newController,
-        controllerClass,
-        "fullPath": file.fullPath,
-        "relativePath": file.relativePath
-    } as IControllerCreatedEventContext);
-
     const classProps = getAllClassProps(controllerClass);
 
     for (const prop of classProps) {
@@ -185,13 +180,13 @@ export async function initializeControllerInstance({
             continue;  // ignore all props with leading _
         }
 
-        const propValue: unknown = (newController as any)[prop];
-        if (typeof propValue !== "function") {
+        const maybeMethod: unknown = (newController as any)[prop];
+        if (typeof maybeMethod !== "function") {
             continue;
         }
 
         // method actions
-        const initMethodActions = getListFromObject<InitMethodAction>(propValue, INIT_METHOD_ACTIONS, {
+        const initMethodActions = getListFromObject<InitMethodAction>(maybeMethod, INIT_METHOD_ACTIONS, {
             "deleteKey": true,
             "noInit": true
         });
@@ -208,6 +203,17 @@ export async function initializeControllerInstance({
             });
         }
     }
+
+    const createdContext: IControllerCreatedEventContext = {
+        "controller": newController,
+        controllerClass,
+        "fullPath": file.fullPath,
+        "relativePath": file.relativePath,
+        rootDir
+    };
+
+    // tell others, that new controller has been created
+    events.emit("controller:created", createdContext);
 
     return newController;
 }

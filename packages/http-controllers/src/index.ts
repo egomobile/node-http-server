@@ -26,11 +26,6 @@ import type { IControllersOptions } from "./types/index.js";
 import { isNil, runsTSNode } from "./utils/internal.js";
 
 /**
- * ID for an event, that is emitted after a controller instance has been created.
- */
-export const controllerCreatedEvent: unique symbol = Symbol("controller:created");
-
-/**
  * Extends an `IHttpServer` instance with controller features.
  *
  * @returns {HttpServerExtender<TRequest, TResponse>} The extender.

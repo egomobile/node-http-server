@@ -1,5 +1,5 @@
-import "@egomobile/http-server";
-import type { IControllersOptions, IControllersResult, ImportValues } from "./src/types/index.js";
+import { HttpServerEventListener } from "@egomobile/http-server";
+import type { IControllerCreatedEventContext, IControllersOptions, IControllersResult, ImportValues } from "./src/types/index.js";
 import type { Nilable } from "./src/types/internal.js";
 
 declare module "http" {
@@ -22,5 +22,22 @@ declare module "@egomobile/http-server" {
         controllers(): Promise<IControllersResult>;
         controllers(rootDir: string, imports?: Nilable<ImportValues>): Promise<IControllersResult>;
         controllers(options: IControllersOptions): Promise<IControllersResult>;
+    }
+
+    interface IHttpServerExtenderContext {
+        /**
+         * @inheritdoc
+         */
+        off(name: "controller:created", listener: HttpServerEventListener<IControllerCreatedEventContext>): this;
+
+        /**
+         * @inheritdoc
+         */
+        on(name: "controller:created", listener: HttpServerEventListener<IControllerCreatedEventContext>): this;
+
+        /**
+         * @inheritdoc
+         */
+        once(name: "controller:created", listener: HttpServerEventListener<IControllerCreatedEventContext>): this;
     }
 }

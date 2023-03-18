@@ -26,18 +26,26 @@ export interface IControllerCreatedEventContext {
      * The new instance.
      */
     controller: ControllerBase;
+
     /**
      * The class of the controller.
      */
     controllerClass: Constructor<ControllerBase>;
+
     /**
      * The full path of the underlying file.
      */
     fullPath: string;
+
     /**
      * The relative path of the underlying file.
      */
     relativePath: string;
+
+    /**
+     * The full path of the root directory for all controllers.
+     */
+    rootDir: string;
 }
 
 /**
