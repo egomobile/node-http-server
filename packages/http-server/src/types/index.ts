@@ -485,6 +485,11 @@ export interface IHttpServerStartsListingEventContext {
 }
 
 /**
+ * Possible values for describing a module mode.
+ */
+export type ModuleMode = "cjs" | "esm";
+
+/**
  * A next function.
  *
  * @param {Nilable<any>} [error] The error, if occurred.

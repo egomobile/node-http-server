@@ -18,7 +18,7 @@
 /// <reference path="../index.d.ts" />
 
 import { createHttp1Server, CreateHttp1ServerOptions, createHttp2Server, CreateHttp2ServerOptions, IHttp1Server, IHttp2Server } from "./server/index.js";
-import type { HttpMethod, HttpServerVersion } from "./types/index.js";
+import type { HttpMethod, HttpServerVersion, ModuleMode } from "./types/index.js";
 import type { Nilable } from "./types/internal.js";
 import { isNil } from "./utils/internal.js";
 
@@ -30,7 +30,7 @@ export const httpMethods: readonly HttpMethod[] = ["connect", "delete", "get", "
 /**
  * Indicates in which mode this module is currently running in.
  */
-export const moduleMode = typeof module !== "undefined" && typeof module?.exports !== "undefined" ?
+export const moduleMode: ModuleMode = typeof module !== "undefined" && typeof module?.exports !== "undefined" ?
     "cjs" :
     "esm";
 
@@ -85,3 +85,4 @@ export * from "./middlewares/index.js";
 export * from "./server/index.js";
 export * from "./types/index.js";
 export * from "./validators/index.js";
+
