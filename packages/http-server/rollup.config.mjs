@@ -25,7 +25,10 @@ export default {
     ],
     "plugins": [
         typescript({
-            "exclude": ["**/__tests__", "**/*.test.ts", "node_modules", "sandbox"]
+            "exclude": ["**/__tests__", "**/*.test.ts", "node_modules", "sandbox"],
+            "compilerOptions": {
+                "sourceMap": true
+            }
         }),
         nodeResolve(),
         commonjs(),

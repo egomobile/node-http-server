@@ -5,20 +5,15 @@
     "rootDir": "src",
     "target": "ES2022",
     "module": "ES2022",
-    "lib": [
-      "ES2022"
-    ],
+    "lib": ["ES2022"],
     "resolveJsonModule": false,
     "declaration": true,
     "emitDecoratorMetadata": false,
     "experimentalDecorators": false,
-    "sourceMap": false
+    "sourceMap": true
   },
   "ts-node": {
     "esm": true
   },
-  "exclude": [
-    "node_modules",
-    "sandbox"
-  ]
+  "exclude": ["node_modules", "sandbox"]
 }
