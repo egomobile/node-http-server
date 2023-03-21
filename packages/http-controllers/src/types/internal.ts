@@ -15,12 +15,34 @@
 
 export type Constructor<T extends any = any> = (new (...args: any[]) => T);
 
+export interface ITestAction {
+    description: string;
+    name: string;
+    ref: TestRefValue;
+    script: Nullable<string>;
+}
+
+export interface ITestDescription {
+    name: string;
+    script: Nullable<string>;
+}
+
 export type LazyValue<T extends any = any> = T | (() => T);
 
 export type ObjectKey = string | number | symbol;
 
 export type Optional<T extends any = any> = T | undefined;
 
+export type ClassDecorator5 = (classFunction: any, context: ClassDecoratorContext) => any;
+
+export type ClassFieldDecorator5 = (method: any, context: ClassFieldDecoratorContext) => any;
+
+export type ClassMemberDecorator5 = (method: any, context: ClassMemberDecoratorContext) => any;
+
+export type ClassMethodDecorator5 = (method: any, context: ClassMethodDecoratorContext) => any;
+
 export type Nilable<T extends any = any> = Optional<T> | Nullable<T>;
 
 export type Nullable<T extends any = any> = T | null;
+
+export type TestRefValue = string | number | symbol;

@@ -18,11 +18,11 @@
 
 import type { HttpMiddleware } from "@egomobile/http-server";
 import { createHttpMethodDecorator } from "../factories/decorators.js";
-import type { Nilable } from "../types/internal.js";
+import type { ClassMethodDecorator5, Nilable } from "../types/internal.js";
 import type { HttpMethodDecoratorArg1, HttpMethodDecoratorArg2, HttpMethodDecoratorRoutePath, IHttpMethodDecoratorOptions } from "./index.js";
 
 /**
- * Returns a legacy TypeScript decorator, that sets up an endpoint for a DELETE request.
+ * Returns a decorator, that sets up an endpoint for a DELETE request.
  *
  * @example
  * ```
@@ -41,13 +41,13 @@ import type { HttpMethodDecoratorArg1, HttpMethodDecoratorArg2, HttpMethodDecora
  * @param {HttpMethodDecoratorRoutePath} [path] The custom path.
  * @param {HttpMiddleware<any, any>[]} [use] Additional middlewares to use.
  *
- * @returns {MethodDecorator} The new decorator.
+ * @returns {ClassMethodDecorator5} The new decorator.
  */
-export function DELETE(): MethodDecorator;
-export function DELETE(options: IHttpMethodDecoratorOptions): MethodDecorator;
-export function DELETE(use: HttpMiddleware<any, any>[]): MethodDecorator;
-export function DELETE(path: HttpMethodDecoratorRoutePath, use?: Nilable<HttpMiddleware<any, any>[]>): MethodDecorator;
-export function DELETE(arg1?: Nilable<HttpMethodDecoratorArg1>, arg2?: Nilable<HttpMethodDecoratorArg2>): MethodDecorator {
+export function DELETE(): ClassMethodDecorator5;
+export function DELETE(options: IHttpMethodDecoratorOptions): ClassMethodDecorator5;
+export function DELETE(use: HttpMiddleware<any, any>[]): ClassMethodDecorator5;
+export function DELETE(path: HttpMethodDecoratorRoutePath, use?: Nilable<HttpMiddleware<any, any>[]>): ClassMethodDecorator5;
+export function DELETE(arg1?: Nilable<HttpMethodDecoratorArg1>, arg2?: Nilable<HttpMethodDecoratorArg2>): ClassMethodDecorator5 {
     return createHttpMethodDecorator({
         arg1,
         arg2,

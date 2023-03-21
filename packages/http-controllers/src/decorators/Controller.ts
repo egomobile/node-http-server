@@ -16,10 +16,10 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { IS_CONTROLLER_CLASS } from "../constants/internal.js";
-import { isClass } from "../utils/internal.js";
+import type { ClassDecorator5 } from "../types/internal.js";
 
 /**
- * Returns a legacy TypeScript decorator, that marks a class as
+ * Returns a decorator, that marks a class as
  * controller class.
  *
  * @example
@@ -35,14 +35,14 @@ import { isClass } from "../utils/internal.js";
  * }
  * ```
  *
- * @returns {ClassDecorator} The new decorator.
+ * @returns {ClassDecorator5} The new decorator.
  */
-export function Controller(): ClassDecorator {
-    return function (classFunction: Function) {
-        if (!isClass(classFunction)) {
-            throw new TypeError("classFunction must be of type class");
-        }
+export function Controller(): ClassDecorator5 {
+    return function (target: any, context: ClassDecoratorContext) {
+        context.addInitializer(function () {
+            const classFunction = this as any;
 
-        (classFunction as any)[IS_CONTROLLER_CLASS] = true;
+            classFunction[IS_CONTROLLER_CLASS] = true;
+        });
     };
 }

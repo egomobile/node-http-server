@@ -17,10 +17,11 @@
 
 import type { HttpMiddleware } from "@egomobile/http-server";
 import { CONTROLLER_MIDDLEWARES } from "../constants/internal.js";
-import { getListFromObject, isClass } from "../utils/internal.js";
+import type { ClassDecorator5 } from "../types/internal.js";
+import { getListFromObject } from "../utils/internal.js";
 
 /**
- * Returns a legacy TypeScript decorator, that stores global middlewares
+ * Returns a decorator, that stores global middlewares
  * for all handlers of a controller class.
  *
  * @example
@@ -57,22 +58,22 @@ import { getListFromObject, isClass } from "../utils/internal.js";
  *
  * @param {HttpMiddleware<any, any>[]} [middlewares] One or more middleware to setup.
  *
- * @returns {ClassDecorator} The new decorator.
+ * @returns {ClassDecorator5} The new decorator.
  */
-export function Use(...middlewares: HttpMiddleware<any, any>[]): ClassDecorator {
+export function Use(...middlewares: HttpMiddleware<any, any>[]): ClassDecorator5 {
     if (middlewares.some((mw) => {
         return typeof mw !== "function";
     })) {
         throw new TypeError("All items of middlewares must be of type function");
     }
 
-    return function (classFunction: Function) {
-        if (!isClass(classFunction)) {
-            throw new TypeError("classFunction must be of type class");
-        }
+    return function (target: any, context: ClassDecoratorContext) {
+        context.addInitializer(function () {
+            const classFunction = this as any;
 
-        getListFromObject<HttpMiddleware<any, any>>(classFunction, CONTROLLER_MIDDLEWARES).push(
-            ...middlewares
-        );
+            getListFromObject<HttpMiddleware<any, any>>(classFunction, CONTROLLER_MIDDLEWARES).push(
+                ...middlewares
+            );
+        });
     };
 }

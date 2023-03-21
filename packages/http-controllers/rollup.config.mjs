@@ -27,7 +27,8 @@ export default {
     "plugins": [
         typescript({
             "compilerOptions": {
-                "moduleResolution": "nodenext"
+                "moduleResolution": "nodenext",
+                "sourceMap": true
             },
             "exclude": ["**/__tests__", "**/*.test.ts", "node_modules", "sandbox"]
         }),

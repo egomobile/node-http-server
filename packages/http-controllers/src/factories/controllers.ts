@@ -13,15 +13,15 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpMiddleware, IHttpServer } from "@egomobile/http-server";
+import { HttpMiddleware, IHttpServer, moduleMode } from "@egomobile/http-server";
 import minimatch, { MinimatchOptions } from "minimatch";
 import fs from "node:fs";
 import path from "node:path";
 import { CONTROLLER_MIDDLEWARES, INIT_IMPORTS_ACTIONS, INIT_METHOD_ACTIONS, IS_CONTROLLER_CLASS } from "../constants/internal.js";
-import type { IControllerCreatedEventContext, ImportValues } from "../index.js";
+import type { IController, IControllerCreatedEventContext, IControllersOptions, ImportValues } from "../index.js";
 import type { ControllerBase, IControllersResult } from "../types/index.js";
 import type { Constructor, Nilable } from "../types/internal.js";
-import { getAllClassProps, getListFromObject, isClass, loadModule, normalizeRouterPath } from "../utils/internal.js";
+import { getAllClassProps, getListFromObject, isClass, isNil, loadModule, normalizeRouterPath, runsTSNode } from "../utils/internal.js";
 import type { InitImportAction, InitMethodAction } from "./decorators.js";
 
 const { readdir, stat } = fs.promises;
@@ -42,6 +42,13 @@ interface IInitializeControllerInstanceOptions {
     noAutoParams: Nilable<boolean>;
     noAutoQuery: Nilable<boolean>;
     rootDir: string;
+    server: HttpServer;
+}
+
+interface IInitializeControllersMethodOptions {
+    events: NodeJS.EventEmitter;
+    onControllersOptionsChange: (options: IControllersOptions) => void;
+    onControllersResultChange: (result: IControllersResult) => void;
     server: HttpServer;
 }
 
@@ -66,7 +73,9 @@ export async function initializeControllers({
     rootDir,
     server
 }: IInitializeControllersOptions) {
-    const result: IControllersResult = {};
+    const result: IControllersResult = {
+        "controllers": []
+    };
 
     const minimatchOpts: MinimatchOptions = {
         "dot": false,
@@ -107,8 +116,6 @@ export async function initializeControllers({
 
     await scanDir();
 
-    const controllers: ControllerBase[] = [];
-
     for (const cf of controllerFiles) {
         const module = await loadModule(cf.fullPath);
 
@@ -117,7 +124,8 @@ export async function initializeControllers({
             if ((maybeClass as any)[IS_CONTROLLER_CLASS]) {
                 // must be "marked"
                 // via class decorator
-                controllers.push(
+
+                result.controllers.push(
                     await initializeControllerInstance({
                         "controllerClass": maybeClass,
                         events,
@@ -134,7 +142,7 @@ export async function initializeControllers({
         }
     }
 
-    if (!controllers.length) {
+    if (!result.controllers.length) {
         throw new Error(`No matching controller classes found via patterns ${patterns}`);
     }
 
@@ -151,24 +159,32 @@ export async function initializeControllerInstance({
     noAutoQuery,
     rootDir,
     server
-}: IInitializeControllerInstanceOptions): Promise<ControllerBase> {
+}: IInitializeControllerInstanceOptions): Promise<IController> {
     const globalMiddlewares = getListFromObject<HttpMiddleware<any, any>>(controllerClass, CONTROLLER_MIDDLEWARES, {
         "deleteKey": true,
         "noInit": true
     });
 
-    const newController = new controllerClass({
+    const newInstance = new controllerClass({
         "file": file.fullPath
     });
 
+    const newController: IController = {
+        "controller": newInstance,
+        controllerClass,
+        "fullPath": file.fullPath,
+        "relativePath": file.relativePath,
+        rootDir
+    };
+
     // imports
-    const initImportActions = getListFromObject<InitImportAction>(newController, INIT_IMPORTS_ACTIONS, {
+    const initImportActions = getListFromObject<InitImportAction>(newInstance, INIT_IMPORTS_ACTIONS, {
         "deleteKey": true,
         "noInit": true
     });
     for (const action of initImportActions) {
         await action({
-            "controller": newController,
+            "controller": newInstance,
             imports
         });
     }
@@ -180,7 +196,7 @@ export async function initializeControllerInstance({
             continue;  // ignore all props with leading _
         }
 
-        const maybeMethod: unknown = (newController as any)[prop];
+        const maybeMethod: unknown = (newInstance as any)[prop];
         if (typeof maybeMethod !== "function") {
             continue;
         }
@@ -192,28 +208,125 @@ export async function initializeControllerInstance({
         });
         for (const action of initMethodActions) {
             await action({
-                "controller": newController,
-                "fullPath": file.fullPath,
+                "controller": newInstance,
+                "fullPath": newController.fullPath,
                 "middlewares": globalMiddlewares,
                 noAutoEnd,
                 noAutoParams,
                 noAutoQuery,
-                "relativePath": file.relativePath,
+                "relativePath": newController.relativePath,
                 server
             });
         }
     }
 
     const createdContext: IControllerCreatedEventContext = {
-        "controller": newController,
-        controllerClass,
-        "fullPath": file.fullPath,
-        "relativePath": file.relativePath,
-        rootDir
+        "controller": newController
     };
 
     // tell others, that new controller has been created
     events.emit("controller:created", createdContext);
 
     return newController;
+}
+
+export function initializeControllersMethod({
+    events,
+    onControllersOptionsChange,
+    onControllersResultChange,
+    server
+}: IInitializeControllersMethodOptions) {
+    server.controllers = async (...args: any[]) => {
+        let options: IControllersOptions;
+        if (isNil(args[0])) {
+            options = {};
+        }
+        else {
+            if (typeof args[0] === "string") {
+                options = {
+                    "rootDir": args[0],
+                    "imports": args[1]
+                };
+            }
+            else if (typeof args[0] === "object") {
+                options = args[0];
+            }
+            else {
+                throw new TypeError("First argument must be of type string or object");
+            }
+        }
+
+        if (typeof options !== "object") {
+            throw new TypeError("options must be of type object");
+        }
+
+        const imports = options?.imports;
+        if (!isNil(imports)) {
+            if (typeof imports !== "object") {
+                throw new TypeError("options.imports must be of type object");
+            }
+        }
+
+        let rootDir = options.rootDir;
+        if (isNil(rootDir)) {
+            rootDir = "controllers";
+        }
+
+        if (typeof rootDir !== "string") {
+            throw new TypeError("options.rootDir must be of type string");
+        }
+
+        let patterns = options.patterns;
+        if (isNil(patterns)) {
+            patterns = [];
+        }
+
+        if (!patterns.length) {
+            const extensions: string[] = [];
+
+            if (runsTSNode()) {
+                extensions.push("ts");
+
+                if (moduleMode === "cjs") {
+                    extensions.push("cts");
+                }
+                else if (moduleMode === "esm") {
+                    extensions.push("mts");
+                }
+            }
+            else {
+                extensions.push("js");
+
+                if (moduleMode === "cjs") {
+                    extensions.push("cjs");
+                }
+                else if (moduleMode === "esm") {
+                    extensions.push("mjs");
+                }
+            }
+
+            patterns.push(`**/*.{${extensions.join()}}`);
+        }
+
+        if (!path.isAbsolute(rootDir)) {
+            rootDir = path.join(process.cwd(), rootDir);
+        }
+
+        onControllersOptionsChange(options);
+
+        const result = await initializeControllers({
+            events,
+            "imports": imports ?? {},
+            "noAutoEnd": options?.noAutoEnd,
+            "noAutoParams": options?.noAutoParams,
+            "noAutoQuery": options?.noAutoQuery,
+            patterns,
+            rootDir,
+            server
+        });
+
+        onControllersResultChange(result);
+
+        return result;
+    };
 }

@@ -1,5 +1,5 @@
 import { HttpServerEventListener } from "@egomobile/http-server";
-import type { IControllerCreatedEventContext, IControllersOptions, IControllersResult, ImportValues } from "./src/types/index.js";
+import type { ControllerTestEventListener, IControllerCreatedEventContext, IControllersOptions, IControllersResult, IControllerTestResult, ImportValues, ITestOptions } from "./src/types/index.js";
 import type { Nilable } from "./src/types/internal.js";
 
 declare module "http" {
@@ -22,6 +22,15 @@ declare module "@egomobile/http-server" {
         controllers(): Promise<IControllersResult>;
         controllers(rootDir: string, imports?: Nilable<ImportValues>): Promise<IControllersResult>;
         controllers(options: IControllersOptions): Promise<IControllersResult>;
+
+        /**
+         * Runs tests.
+         *
+         * @param {Nilable<ITestOptions>} [options] Custom options.
+         *
+         * @returns {Promise<IControllerTestResult>} The promise with the result of the run.
+         */
+        test(options?: Nilable<ITestOptions>): Promise<IControllerTestResult>;
     }
 
     interface IHttpServerExtenderContext {
@@ -29,11 +38,13 @@ declare module "@egomobile/http-server" {
          * @inheritdoc
          */
         off(name: "controller:created", listener: HttpServerEventListener<IControllerCreatedEventContext>): this;
+        off(name: "test", listener: ControllerTestEventListener): this;
 
         /**
          * @inheritdoc
          */
         on(name: "controller:created", listener: HttpServerEventListener<IControllerCreatedEventContext>): this;
+        on(name: "test", listener: ControllerTestEventListener): this;
 
         /**
          * @inheritdoc

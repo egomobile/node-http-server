@@ -20,11 +20,11 @@ import type { HttpMiddleware } from "@egomobile/http-server";
 import type { AnySchema } from "joi";
 import { createHttpMethodDecorator } from "../factories/decorators.js";
 import type { Schema } from "../types/index.js";
-import type { Nilable } from "../types/internal.js";
+import type { ClassMethodDecorator5, Nilable } from "../types/internal.js";
 import type { HttpMethodDecoratorRoutePath, HttpMethodDecoratorWithBodyArg1, HttpMethodDecoratorWithBodyArg2, HttpMethodDecoratorWithBodyArg3, IHttpMethodDecoratorOptions } from "./index.js";
 
 /**
- * Returns a legacy TypeScript decorator, that sets up an endpoint for a PATCH request.
+ * Returns a decorator, that sets up an endpoint for a PATCH request.
  *
  * @example
  * ```
@@ -46,18 +46,18 @@ import type { HttpMethodDecoratorRoutePath, HttpMethodDecoratorWithBodyArg1, Htt
  *
  * @returns {MethodDecorator} The new decorator.
  */
-export function PATCH(): MethodDecorator;
-export function PATCH(schema: AnySchema): MethodDecorator;
-export function PATCH(options: IHttpMethodDecoratorOptions): MethodDecorator;
-export function PATCH(use: HttpMiddleware<any, any>[]): MethodDecorator;
-export function PATCH(path: HttpMethodDecoratorRoutePath): MethodDecorator;
-export function PATCH(path: HttpMethodDecoratorRoutePath, use: HttpMiddleware<any, any>[]): MethodDecorator;
-export function PATCH(path: HttpMethodDecoratorRoutePath, schema: Schema): MethodDecorator;
+export function PATCH(): ClassMethodDecorator5;
+export function PATCH(schema: AnySchema): ClassMethodDecorator5;
+export function PATCH(options: IHttpMethodDecoratorOptions): ClassMethodDecorator5;
+export function PATCH(use: HttpMiddleware<any, any>[]): ClassMethodDecorator5;
+export function PATCH(path: HttpMethodDecoratorRoutePath): ClassMethodDecorator5;
+export function PATCH(path: HttpMethodDecoratorRoutePath, use: HttpMiddleware<any, any>[]): ClassMethodDecorator5;
+export function PATCH(path: HttpMethodDecoratorRoutePath, schema: Schema): ClassMethodDecorator5;
 export function PATCH(
     arg1?: Nilable<HttpMethodDecoratorWithBodyArg1>,
     arg2?: Nilable<HttpMethodDecoratorWithBodyArg2>,
     arg3?: Nilable<HttpMethodDecoratorWithBodyArg3>
-): MethodDecorator {
+): ClassMethodDecorator5 {
     return createHttpMethodDecorator({
         arg1,
         arg2,

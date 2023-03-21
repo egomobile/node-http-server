@@ -8,9 +8,9 @@
     "lib": ["ES2022"],
     "resolveJsonModule": false,
     "declaration": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "sourceMap": false,
+    "emitDecoratorMetadata": false,
+    "experimentalDecorators": false,
+    "sourceMap": true,
     "moduleResolution": "nodenext"
   },
   "ts-node": {

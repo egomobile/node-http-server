@@ -23,6 +23,12 @@ interface IGetListFromObjectOptions {
     noInit?: boolean;
 }
 
+const truthyValues = ["1", "y", "true", "yes"];
+
+export function areRefsEqual(x: any, y: any): boolean {
+    return String(x) === String(y);
+}
+
 export function asAsync<TFunc extends Function = Function>(func: Function): TFunc {
     if (typeof func !== "function") {
         throw new TypeError("func must be of type function");
@@ -95,6 +101,12 @@ export function isClass<T extends any = any>(maybeClass: any): maybeClass is Con
 export function isNil(value: unknown): value is (undefined | null) {
     return typeof value === "undefined" ||
         value === null;
+}
+
+export function isTruthy(val: unknown): boolean {
+    return truthyValues.includes(
+        String(val ?? "").toLowerCase().trim()
+    );
 }
 
 export async function loadModule(id: string): Promise<any> {

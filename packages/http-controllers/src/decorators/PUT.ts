@@ -20,11 +20,11 @@ import type { HttpMiddleware } from "@egomobile/http-server";
 import type { AnySchema } from "joi";
 import { createHttpMethodDecorator } from "../factories/decorators.js";
 import type { Schema } from "../types/index.js";
-import type { Nilable } from "../types/internal.js";
+import type { ClassMethodDecorator5, Nilable } from "../types/internal.js";
 import type { HttpMethodDecoratorRoutePath, HttpMethodDecoratorWithBodyArg1, HttpMethodDecoratorWithBodyArg2, HttpMethodDecoratorWithBodyArg3, IHttpMethodDecoratorOptions } from "./index.js";
 
 /**
- * Returns a legacy TypeScript decorator, that sets up an endpoint for a PUT request.
+ * Returns a decorator, that sets up an endpoint for a PUT request.
  *
  * @example
  * ```
@@ -46,18 +46,18 @@ import type { HttpMethodDecoratorRoutePath, HttpMethodDecoratorWithBodyArg1, Htt
  *
  * @returns {MethodDecorator} The new decorator.
  */
-export function PUT(): MethodDecorator;
-export function PUT(schema: AnySchema): MethodDecorator;
-export function PUT(options: IHttpMethodDecoratorOptions): MethodDecorator;
-export function PUT(use: HttpMiddleware<any, any>[]): MethodDecorator;
-export function PUT(path: HttpMethodDecoratorRoutePath): MethodDecorator;
-export function PUT(path: HttpMethodDecoratorRoutePath, use: HttpMiddleware<any, any>[]): MethodDecorator;
-export function PUT(path: HttpMethodDecoratorRoutePath, schema: Schema): MethodDecorator;
+export function PUT(): ClassMethodDecorator5;
+export function PUT(schema: AnySchema): ClassMethodDecorator5;
+export function PUT(options: IHttpMethodDecoratorOptions): ClassMethodDecorator5;
+export function PUT(use: HttpMiddleware<any, any>[]): ClassMethodDecorator5;
+export function PUT(path: HttpMethodDecoratorRoutePath): ClassMethodDecorator5;
+export function PUT(path: HttpMethodDecoratorRoutePath, use: HttpMiddleware<any, any>[]): ClassMethodDecorator5;
+export function PUT(path: HttpMethodDecoratorRoutePath, schema: Schema): ClassMethodDecorator5;
 export function PUT(
     arg1?: Nilable<HttpMethodDecoratorWithBodyArg1>,
     arg2?: Nilable<HttpMethodDecoratorWithBodyArg2>,
     arg3?: Nilable<HttpMethodDecoratorWithBodyArg3>
-): MethodDecorator {
+): ClassMethodDecorator5 {
     return createHttpMethodDecorator({
         arg1,
         arg2,

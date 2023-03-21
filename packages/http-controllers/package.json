@@ -21,12 +21,19 @@
         "lint": "eslint -c .eslintrc.cjs --ext .ts src",
         "lint:fix": "eslint --fix -c .eslintrc.cjs --ext .ts src",
         "preinstall": "node ./preinstall.cjs",
-        "sandbox": "npm run build && cd ./sandbox && NODE_ENV=development nodemon --watch './**/*.ts' --watch './**/*.cts' --watch './**/*.mts' --exec node --experimental-specifier-resolution=node --loader ts-node/esm --inspect=0.0.0.0:9229 ./index.mts",
-        "test": "jest --no-cache --silent"
+        "sandbox": "npm run build && cd ./sandbox && npm start",
+        "test": "jest --no-cache"
     },
     "jest": {
         "preset": "ts-jest/presets/js-with-ts",
-        "transform": {},
+        "transform": {
+            "^.+\\.tsx?$": [
+                "ts-jest",
+                {
+                    "compiler": "./node_modules/typescript"
+                }
+            ]
+        },
         "testEnvironment": "node",
         "testMatch": [
             "**/__tests__/**/*.test.ts"
@@ -87,13 +94,12 @@
         "LICENSE",
         "lib",
         "!lib/**/__tests__/**/*",
-        "!lib/**/*.map",
         "!lib/**/setupTests.*",
         "preinstall.cjs",
         "README.md"
     ],
     "devDependencies": {
-        "@egomobile/http-server": "0.64.0-alpha.370",
+        "@egomobile/http-server": "0.64.0-alpha.375",
         "@egomobile/tsconfig": "^5.0.0",
         "@rollup/plugin-commonjs": "24.0.1",
         "@rollup/plugin-json": "6.0.0",
@@ -117,10 +123,10 @@
         "ts-node": "10.9.1",
         "tslint": "6.1.3",
         "typedoc": "0.23.26",
-        "typescript": "5.0.1-rc"
+        "typescript": "5.0.2"
     },
     "peerDependencies": {
-        "@egomobile/http-server": ">= 0.64.0-alpha.370"
+        "@egomobile/http-server": ">= 0.64.0-alpha.375"
     },
     "dependencies": {
         "@types/json-schema": "7.0.11",

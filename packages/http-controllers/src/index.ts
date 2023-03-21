@@ -17,13 +17,14 @@
 
 /// <reference path="../index.d.ts" />
 
-import { HttpServerExtender, moduleMode } from "@egomobile/http-server";
+import type { HttpServerExtender } from "@egomobile/http-server";
 import ajv from "ajv";
 import joi from "joi";
-import path from "node:path";
-import { initializeControllers } from "./factories/controllers.js";
-import type { IControllersOptions } from "./types/index.js";
-import { isNil, runsTSNode } from "./utils/internal.js";
+import { initializeControllersMethod } from "./factories/controllers.js";
+import { initializeTestMethod } from "./factories/tests.js";
+import type { IControllersOptions, IControllersResult } from "./types/index.js";
+import type { Optional } from "./types/internal.js";
+import { isTruthy } from "./utils/internal.js";
 
 /**
  * Extends an `IHttpServer` instance with controller features.
@@ -31,96 +32,59 @@ import { isNil, runsTSNode } from "./utils/internal.js";
  * @returns {HttpServerExtender<TRequest, TResponse>} The extender.
  */
 export function extendWithControllers<TRequest, TResponse>(): HttpServerExtender<TRequest, TResponse> {
-    return ({ events, server }) => {
-        // extend `server` instance with
-        // `controllers` method.
-        server.controllers = async (...args: any[]) => {
-            let options: IControllersOptions;
-            if (isNil(args[0])) {
-                options = {};
-            }
-            else {
-                if (typeof args[0] === "string") {
-                    options = {
-                        "rootDir": args[0],
-                        "imports": args[1]
-                    };
-                }
-                else if (typeof args[0] === "object") {
-                    options = args[0];
-                }
-                else {
-                    throw new TypeError("First argument must be of type string or object");
-                }
-            }
+    return (context) => {
+        const {
+            events,
+            server
+        } = context;
 
-            if (typeof options !== "object") {
-                throw new TypeError("options must be of type object");
-            }
+        let lastControllersResult: Optional<IControllersResult>;
+        let lastControllersOptions: Optional<IControllersOptions>;
+        const shouldRunTests = isTruthy(process?.env?.EGO_RUN_TESTS);
 
-            const imports = options?.imports;
-            if (!isNil(imports)) {
-                if (typeof imports !== "object") {
-                    throw new TypeError("options.imports must be of type object");
-                }
-            }
+        // server.controllers()
+        initializeControllersMethod({
+            events,
+            "onControllersOptionsChange": (newOptions) => {
+                lastControllersOptions = newOptions;
+            },
+            "onControllersResultChange": (newResult) => {
+                lastControllersResult = newResult;
+            },
+            server
+        });
 
-            let rootDir = options.rootDir;
-            if (isNil(rootDir)) {
-                rootDir = "controllers";
-            }
+        // server.test()
+        initializeTestMethod({
+            "extenderContext": context,
+            "getLastControllersOptions": () => {
+                return lastControllersOptions;
+            },
+            "getLastControllersResult": () => {
+                return lastControllersResult;
+            },
+            server
+        });
 
-            if (typeof rootDir !== "string") {
-                throw new TypeError("options.rootDir must be of type string");
-            }
-
-            let patterns = options.patterns;
-            if (isNil(patterns)) {
-                patterns = [];
-            }
-
-            if (!patterns.length) {
-                const extensions: string[] = [];
-
-                if (runsTSNode()) {
-                    extensions.push("ts");
-
-                    if (moduleMode === "cjs") {
-                        extensions.push("cts");
-                    }
-                    else if (moduleMode === "esm") {
-                        extensions.push("mts");
-                    }
-                }
-                else {
-                    extensions.push("js");
-
-                    if (moduleMode === "cjs") {
-                        extensions.push("cjs");
-                    }
-                    else if (moduleMode === "esm") {
-                        extensions.push("mjs");
-                    }
-                }
-
-                patterns.push(`**/*.{${extensions.join()}}`);
-            }
-
-            if (!path.isAbsolute(rootDir)) {
-                rootDir = path.join(process.cwd(), rootDir);
-            }
-
-            return initializeControllers({
-                events,
-                "imports": imports ?? {},
-                "noAutoEnd": options?.noAutoEnd,
-                "noAutoParams": options?.noAutoParams,
-                "noAutoQuery": options?.noAutoQuery,
-                patterns,
-                rootDir,
-                server
+        if (shouldRunTests) {
+            context.on("server:listen", (lc) => {
+                // tell server NOT to start listening on
+                // TCP port
+                lc.dryRun = true;
             });
-        };
+
+            context.on("server:listening", () => {
+                server.test()
+                    .then(() => {
+                        process.exit(0);
+                    })
+                    .catch((error) => {
+                        console.error("[HTTP SERVER TESTS]", error);
+
+                        process.exit(1);
+                    });
+            });
+        }
     };
 }
 

@@ -1,9 +1,10 @@
 /* eslint-disable unicorn/filename-case */
 /* eslint-disable @typescript-eslint/naming-convention */
 
+import { ControllerBase } from "..";
 import { INIT_IMPORTS_ACTIONS } from "../constants/internal";
 import type { InitImportAction } from "../factories/decorators";
-import type { Nilable, ObjectKey } from "../types/internal.js";
+import type { ClassFieldDecorator5, Nilable, ObjectKey } from "../types/internal.js";
 import { getListFromObject, isNil } from "../utils/internal.js";
 
 /**
@@ -50,34 +51,37 @@ import { getListFromObject, isNil } from "../utils/internal.js";
  *
  * @param {Nilable<ObjectKey>} [key] The key. Default: The name of the underlying property.
  *
- * @returns {PropertyDecorator} The new decorator function.
+ * @returns {ClassFieldDecorator5} The new decorator function.
  */
-export function Import(key?: Nilable<ObjectKey>): PropertyDecorator {
+export function Import(key?: Nilable<ObjectKey>): ClassFieldDecorator5 {
     if (!isNil(key)) {
         if (!["number", "string", "symbol"].includes(typeof key)) {
             throw new TypeError("key must be of type string, number or symbol");
         }
     }
 
-    return function (target, propertyName) {
-        const valueKey = isNil(key) ? propertyName : key!;
+    return function (target: any, context: ClassFieldDecoratorContext) {
+        context.addInitializer(function () {
+            const controller = this as ControllerBase;
+            const valueKey = isNil(key) ? String(context.name) : key!;
 
-        getListFromObject<InitImportAction>(target, INIT_IMPORTS_ACTIONS).push(
-            async ({ controller, imports }) => {
-                const lazyValue = (imports as any)[valueKey];
+            getListFromObject<InitImportAction>(controller, INIT_IMPORTS_ACTIONS).push(
+                async ({ controller, imports }) => {
+                    const lazyValue = (imports as any)[valueKey];
 
-                if (typeof lazyValue === "undefined") {
-                    throw new TypeError(`Import value ${String(valueKey)} not found`);
+                    if (typeof lazyValue === "undefined") {
+                        throw new TypeError(`Import value ${String(valueKey)} not found`);
+                    }
+
+                    // setup the property with a getter
+                    Object.defineProperty(controller, context.name, {
+                        "enumerable": true,
+                        "configurable": true,
+                        "get": createGetter(lazyValue)
+                    });
                 }
-
-                // setup the property with a getter
-                Object.defineProperty(controller, propertyName, {
-                    "enumerable": true,
-                    "configurable": true,
-                    "get": createGetter(lazyValue)
-                });
-            }
-        );
+            );
+        });
     };
 }
 

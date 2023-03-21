@@ -12,5 +12,8 @@
       "path": ".",
       "name": "(root)"
     }
-  ]
+  ],
+  "settings": {
+    "typescript.tsdk": "http-controllers/node_modules/typescript/lib"
+  }
 }

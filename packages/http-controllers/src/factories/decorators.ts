@@ -14,13 +14,13 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IHttpServer, params } from "@egomobile/http-server";
-import { isSchema, Schema } from "joi";
+import { Schema, isSchema } from "joi";
 import path from "node:path";
 import { INIT_METHOD_ACTIONS } from "../constants/internal.js";
 import type { HttpMethodDecoratorArg1, HttpMethodDecoratorArg2, HttpMethodDecoratorArg3, HttpMethodDecoratorWithBodyArg1, HttpMethodDecoratorWithBodyArg2, HttpMethodDecoratorWithBodyArg3, HttpMethodDecoratorWithBodyInputFormat, IHttpMethodDecoratorWithBodyOptions } from "../decorators/index.js";
 import { ControllerBase, ImportValues } from "../index.js";
 import { buffer, json, text, validate, yaml } from "../middlewares/index.js";
-import type { Nilable } from "../types/internal.js";
+import type { ClassMethodDecorator5, Nilable } from "../types/internal.js";
 import { getMethodOrThrow } from "../utils/decorators.js";
 import { getListFromObject, isNil, normalizeRouterPath } from "../utils/internal.js";
 
@@ -57,11 +57,13 @@ export function createHttpMethodDecorator({
     arg1,
     arg2,
     httpMethod
-}: ICreateHttpMethodDecoratorOptions): MethodDecorator {
-    return function (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) {
-        const method = getMethodOrThrow(descriptor);
+}: ICreateHttpMethodDecoratorOptions): ClassMethodDecorator5 {
+    return function (target: any, context: ClassMethodDecoratorContext) {
+        const method = getMethodOrThrow({
+            "value": target
+        });
 
-        const controllerMethodName = String(propertyKey).trim();
+        const controllerMethodName = String(context.name).trim();
 
         let additionalMiddlewares: Nilable<HttpMiddleware<any, any>[]>;
         let bodyFormat: Nilable<HttpMethodDecoratorWithBodyInputFormat>;
