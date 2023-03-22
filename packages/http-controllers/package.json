@@ -22,7 +22,7 @@
         "lint:fix": "eslint --fix -c .eslintrc.cjs --ext .ts src",
         "preinstall": "node ./preinstall.cjs",
         "sandbox": "npm run build && cd ./sandbox && npm start",
-        "test": "jest --no-cache"
+        "test": "jest --no-cache --silent"
     },
     "jest": {
         "preset": "ts-jest/presets/js-with-ts",
@@ -99,7 +99,7 @@
         "README.md"
     ],
     "devDependencies": {
-        "@egomobile/http-server": "0.64.0-alpha.375",
+        "@egomobile/http-server": "0.64.0-alpha.376",
         "@egomobile/tsconfig": "^5.0.0",
         "@rollup/plugin-commonjs": "24.0.1",
         "@rollup/plugin-json": "6.0.0",
@@ -126,7 +126,7 @@
         "typescript": "5.0.2"
     },
     "peerDependencies": {
-        "@egomobile/http-server": ">= 0.64.0-alpha.375"
+        "@egomobile/http-server": ">= 0.64.0-alpha.376"
     },
     "dependencies": {
         "@types/json-schema": "7.0.11",

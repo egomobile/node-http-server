@@ -18,10 +18,10 @@ import minimatch, { MinimatchOptions } from "minimatch";
 import fs from "node:fs";
 import path from "node:path";
 import { CONTROLLER_MIDDLEWARES, INIT_IMPORTS_ACTIONS, INIT_METHOD_ACTIONS, IS_CONTROLLER_CLASS } from "../constants/internal.js";
-import type { IController, IControllerCreatedEventContext, IControllersOptions, ImportValues } from "../index.js";
+import type { IController, IControllerCreatedEventContext, IControllerOptions, IControllersOptions, ImportValues } from "../index.js";
 import type { ControllerBase, IControllersResult } from "../types/index.js";
 import type { Constructor, Nilable } from "../types/internal.js";
-import { getAllClassProps, getListFromObject, isClass, isNil, loadModule, normalizeRouterPath, runsTSNode } from "../utils/internal.js";
+import { getListFromObject, isClass, isNil, loadModule, normalizeRouterPath, runsTSNode } from "../utils/internal.js";
 import type { InitImportAction, InitMethodAction } from "./decorators.js";
 
 const { readdir, stat } = fs.promises;
@@ -165,9 +165,11 @@ export async function initializeControllerInstance({
         "noInit": true
     });
 
-    const newInstance = new controllerClass({
+    const newInstanceOptions: IControllerOptions = {
         "file": file.fullPath
-    });
+    };
+
+    const newInstance = new controllerClass(newInstanceOptions);
 
     const newController: IController = {
         "controller": newInstance,
@@ -189,35 +191,22 @@ export async function initializeControllerInstance({
         });
     }
 
-    const classProps = getAllClassProps(controllerClass);
-
-    for (const prop of classProps) {
-        if (prop.trimStart().startsWith("_")) {
-            continue;  // ignore all props with leading _
-        }
-
-        const maybeMethod: unknown = (newInstance as any)[prop];
-        if (typeof maybeMethod !== "function") {
-            continue;
-        }
-
-        // method actions
-        const initMethodActions = getListFromObject<InitMethodAction>(maybeMethod, INIT_METHOD_ACTIONS, {
-            "deleteKey": true,
-            "noInit": true
+    // method actions
+    const initMethodActions = getListFromObject<InitMethodAction>(newInstance, INIT_METHOD_ACTIONS, {
+        "deleteKey": true,
+        "noInit": true
+    });
+    for (const action of initMethodActions) {
+        await action({
+            "controller": newInstance,
+            "fullPath": newController.fullPath,
+            "middlewares": globalMiddlewares,
+            noAutoEnd,
+            noAutoParams,
+            noAutoQuery,
+            "relativePath": newController.relativePath,
+            server
         });
-        for (const action of initMethodActions) {
-            await action({
-                "controller": newInstance,
-                "fullPath": newController.fullPath,
-                "middlewares": globalMiddlewares,
-                noAutoEnd,
-                noAutoParams,
-                noAutoQuery,
-                "relativePath": newController.relativePath,
-                server
-            });
-        }
     }
 
     const createdContext: IControllerCreatedEventContext = {

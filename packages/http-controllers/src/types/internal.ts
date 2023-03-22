@@ -13,6 +13,14 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+export type ClassDecorator5 = (classFunction: any, context: ClassDecoratorContext) => any;
+
+export type ClassFieldDecorator5 = (target: any, context: ClassFieldDecoratorContext) => any;
+
+export type ClassMemberDecorator5 = (target: any, context: ClassMemberDecoratorContext) => any;
+
+export type ClassMethodDecorator5 = (method: any, context: ClassMethodDecoratorContext) => any;
+
 export type Constructor<T extends any = any> = (new (...args: any[]) => T);
 
 export interface ITestAction {
@@ -32,14 +40,6 @@ export type LazyValue<T extends any = any> = T | (() => T);
 export type ObjectKey = string | number | symbol;
 
 export type Optional<T extends any = any> = T | undefined;
-
-export type ClassDecorator5 = (classFunction: any, context: ClassDecoratorContext) => any;
-
-export type ClassFieldDecorator5 = (method: any, context: ClassFieldDecoratorContext) => any;
-
-export type ClassMemberDecorator5 = (method: any, context: ClassMemberDecoratorContext) => any;
-
-export type ClassMethodDecorator5 = (method: any, context: ClassMethodDecoratorContext) => any;
 
 export type Nilable<T extends any = any> = Optional<T> | Nullable<T>;
 

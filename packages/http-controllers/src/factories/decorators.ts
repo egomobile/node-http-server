@@ -21,7 +21,6 @@ import type { HttpMethodDecoratorArg1, HttpMethodDecoratorArg2, HttpMethodDecora
 import { ControllerBase, ImportValues } from "../index.js";
 import { buffer, json, text, validate, yaml } from "../middlewares/index.js";
 import type { ClassMethodDecorator5, Nilable } from "../types/internal.js";
-import { getMethodOrThrow } from "../utils/decorators.js";
 import { getListFromObject, isNil, normalizeRouterPath } from "../utils/internal.js";
 
 interface ICreateHttpMethodDecoratorOptions {
@@ -58,140 +57,142 @@ export function createHttpMethodDecorator({
     arg2,
     httpMethod
 }: ICreateHttpMethodDecoratorOptions): ClassMethodDecorator5 {
-    return function (target: any, context: ClassMethodDecoratorContext) {
-        const method = getMethodOrThrow({
-            "value": target
-        });
+    let additionalMiddlewares: Nilable<HttpMiddleware<any, any>[]>;
+    let bodyFormat: Nilable<HttpMethodDecoratorWithBodyInputFormat>;
+    let controllerRouterPath: Nilable<string>;
+    let schema: Nilable<Schema>;
+    let shouldDoNoAutoEnd: Nilable<boolean>;
+    let shouldDoNoAutoParams: Nilable<boolean>;
+    let shouldDoNoAutoQuery: Nilable<boolean>;
 
-        const controllerMethodName = String(context.name).trim();
+    if (!isNil(arg1)) {
+        if (typeof arg1 === "string") {
+            // arg1: string
+            // arg2: Nilable<HttpMiddleware<any, any>[]>
 
-        let additionalMiddlewares: Nilable<HttpMiddleware<any, any>[]>;
-        let bodyFormat: Nilable<HttpMethodDecoratorWithBodyInputFormat>;
-        let controllerRouterPath: Nilable<string>;
-        let schema: Nilable<Schema>;
-        let shouldDoNoAutoEnd: Nilable<boolean>;
-        let shouldDoNoAutoParams: Nilable<boolean>;
-        let shouldDoNoAutoQuery: Nilable<boolean>;
-        if (!isNil(arg1)) {
-            if (typeof arg1 === "string") {
-                // arg1: string
-                // arg2: Nilable<HttpMiddleware<any, any>[]>
-
-                controllerRouterPath = arg1;
-                additionalMiddlewares = arg2 as Nilable<HttpMiddleware<any, any>[]>;
-            }
-            else if (Array.isArray(arg1)) {
-                // arg1: Nilable<HttpMiddleware<any, any>[]>
-
-                additionalMiddlewares = arg1 as Nilable<HttpMiddleware<any, any>[]>;
-            }
-            else if (isSchema(arg1)) {
-                schema = arg1;
-            }
-            else if (typeof arg1 === "object") {
-                // arg1: IHttpMethodDecoratorOptions | IHttpMethodDecoratorWithBodyOptions
-
-                bodyFormat = (arg1 as IHttpMethodDecoratorWithBodyOptions).bodyFormat;
-                controllerRouterPath = arg1.path;
-                additionalMiddlewares = arg1.use;
-                shouldDoNoAutoEnd = arg1.noAutoEnd;
-                shouldDoNoAutoParams = arg1.noAutoParams;
-                shouldDoNoAutoQuery = arg1.noAutoQuery;
-            }
+            controllerRouterPath = arg1;
+            additionalMiddlewares = arg2 as Nilable<HttpMiddleware<any, any>[]>;
         }
+        else if (Array.isArray(arg1)) {
+            // arg1: Nilable<HttpMiddleware<any, any>[]>
 
-        if (!isNil(controllerRouterPath)) {
-            if (typeof controllerRouterPath !== "string") {
-                throw new TypeError("path must be of type string");
-            }
+            additionalMiddlewares = arg1 as Nilable<HttpMiddleware<any, any>[]>;
         }
-
-        if (!isNil(additionalMiddlewares)) {
-            if (!Array.isArray(additionalMiddlewares)) {
-                throw new TypeError("use must be of type array");
-            }
+        else if (isSchema(arg1)) {
+            schema = arg1;
         }
+        else if (typeof arg1 === "object") {
+            // arg1: IHttpMethodDecoratorOptions | IHttpMethodDecoratorWithBodyOptions
 
-        // create non-nil copy
-        additionalMiddlewares = [...(additionalMiddlewares ?? [])];
+            bodyFormat = (arg1 as IHttpMethodDecoratorWithBodyOptions).bodyFormat;
+            controllerRouterPath = arg1.path;
+            additionalMiddlewares = arg1.use;
+            shouldDoNoAutoEnd = arg1.noAutoEnd;
+            shouldDoNoAutoParams = arg1.noAutoParams;
+            shouldDoNoAutoQuery = arg1.noAutoQuery;
+        }
+    }
 
-        if (schema) {
-            if (httpMethodsSupportingSchema.includes(httpMethod)) {
-                let parserMiddleware: HttpMiddleware<any, any>;
-                if (isNil(bodyFormat)) {
+    if (!isNil(controllerRouterPath)) {
+        if (typeof controllerRouterPath !== "string") {
+            throw new TypeError("path must be of type string");
+        }
+    }
+
+    if (!isNil(additionalMiddlewares)) {
+        if (!Array.isArray(additionalMiddlewares)) {
+            throw new TypeError("use must be of type array");
+        }
+    }
+
+    // create non-nil copy
+    additionalMiddlewares = [...(additionalMiddlewares ?? [])];
+
+    if (schema) {
+        if (httpMethodsSupportingSchema.includes(httpMethod)) {
+            let parserMiddleware: HttpMiddleware<any, any>;
+            if (isNil(bodyFormat)) {
+                parserMiddleware = json();
+            }
+            else {
+                if (bodyFormat === "buffer") {
+                    parserMiddleware = buffer();
+                }
+                else if (bodyFormat === "json") {
                     parserMiddleware = json();
                 }
+                else if (bodyFormat === "json5") {
+                    parserMiddleware = json({ "version": 5 });
+                }
+                else if (bodyFormat === "text") {
+                    parserMiddleware = text();
+                }
+                else if (bodyFormat === "yaml") {
+                    parserMiddleware = yaml();
+                }
                 else {
-                    if (bodyFormat === "buffer") {
-                        parserMiddleware = buffer();
+                    throw new TypeError(`bodyFormat does not support value ${bodyFormat}`);
+                }
+            }
+
+            additionalMiddlewares.push(
+                parserMiddleware,
+                validate(schema)
+            );
+        }
+    }
+
+    return function (target: any, context: ClassMethodDecoratorContext) {
+        const controllerMethodName = String(context.name).trim();
+
+        context.addInitializer(function () {
+            const controller = this as ControllerBase;
+            const method = target as Function;
+
+            getListFromObject<InitMethodAction>(controller, INIT_METHOD_ACTIONS).push(
+                async ({
+                    controller,
+                    "middlewares": controllerMiddlewares,
+                    "noAutoEnd": defaultNoAutoEnd,
+                    "noAutoParams": defaultNoAutoParams,
+                    "noAutoQuery": defaultNoAutoQuery,
+                    relativePath,
+                    server
+                }) => {
+                    const dir = path.dirname(relativePath);
+                    const fileName = path.basename(relativePath, path.extname(relativePath));
+
+                    let routerPath: HttpRequestPath<any> = dir;
+                    if (fileName !== "index") {
+                        routerPath += `/${fileName}`;
                     }
-                    else if (bodyFormat === "json") {
-                        parserMiddleware = json();
-                    }
-                    else if (bodyFormat === "json5") {
-                        parserMiddleware = json({ "version": 5 });
-                    }
-                    else if (bodyFormat === "text") {
-                        parserMiddleware = text();
-                    }
-                    else if (bodyFormat === "yaml") {
-                        parserMiddleware = yaml();
+
+                    if (controllerRouterPath?.length) {
+                        routerPath += normalizeRouterPath(controllerRouterPath);
                     }
                     else {
-                        throw new TypeError(`bodyFormat does not support value ${bodyFormat}`);
+                        if (controllerMethodName.length && controllerMethodName !== "index") {
+                            routerPath += `/${controllerMethodName}`;
+                        }
                     }
-                }
 
-                additionalMiddlewares.push(
-                    parserMiddleware,
-                    validate(schema)
-                );
-            }
-        }
+                    routerPath = normalizeRouterPath(routerPath);
+                    routerPath = routerPath.replaceAll("@", ":");
 
-        getListFromObject<InitMethodAction>(method, INIT_METHOD_ACTIONS).push(
-            async ({
-                controller,
-                "middlewares": controllerMiddlewares,
-                "noAutoEnd": defaultNoAutoEnd,
-                "noAutoParams": defaultNoAutoParams,
-                "noAutoQuery": defaultNoAutoQuery,
-                relativePath,
-                server
-            }) => {
-                const dir = path.dirname(relativePath);
-                const fileName = path.basename(relativePath, path.extname(relativePath));
-
-                let routerPath: HttpRequestPath<any> = dir;
-                if (fileName !== "index") {
-                    routerPath += `/${fileName}`;
-                }
-
-                if (controllerRouterPath?.length) {
-                    routerPath += normalizeRouterPath(controllerRouterPath);
-                }
-                else {
-                    if (controllerMethodName.length && controllerMethodName !== "index") {
-                        routerPath += `/${controllerMethodName}`;
+                    if (routerPath.includes(":")) {
+                        routerPath = params(routerPath);
                     }
+
+                    const handler = method.bind(controller) as HttpRequestHandler<any, any>;
+
+                    server[httpMethod](routerPath, {
+                        "noAutoEnd": defaultNoAutoEnd ?? shouldDoNoAutoEnd,
+                        "noAutoParams": defaultNoAutoParams ?? shouldDoNoAutoParams,
+                        "noAutoQuery": defaultNoAutoQuery ?? shouldDoNoAutoQuery,
+                        "use": [...controllerMiddlewares, ...additionalMiddlewares!]
+                    }, handler);
                 }
-
-                routerPath = normalizeRouterPath(routerPath);
-                routerPath = routerPath.replaceAll("@", ":");
-
-                if (routerPath.includes(":")) {
-                    routerPath = params(routerPath);
-                }
-
-                const handler = method.bind(controller) as HttpRequestHandler<any, any>;
-
-                server[httpMethod](routerPath, {
-                    "noAutoEnd": defaultNoAutoEnd ?? shouldDoNoAutoEnd,
-                    "noAutoParams": defaultNoAutoParams ?? shouldDoNoAutoParams,
-                    "noAutoQuery": defaultNoAutoQuery ?? shouldDoNoAutoQuery,
-                    "use": [...controllerMiddlewares, ...additionalMiddlewares!]
-                }, handler);
-            }
-        );
+            );
+        });
     };
 }
