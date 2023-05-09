@@ -21,7 +21,7 @@ import { CONTROLLER_MIDDLEWARES, INIT_IMPORTS_ACTIONS, INIT_METHOD_ACTIONS, IS_C
 import type { IController, IControllerCreatedEventContext, IControllerOptions, IControllersOptions, ImportValues } from "../index.js";
 import type { ControllerBase, IControllersResult } from "../types/index.js";
 import type { Constructor, Nilable } from "../types/internal.js";
-import { getListFromObject, isClass, isNil, loadModule, normalizeRouterPath, runsTSNode } from "../utils/internal.js";
+import { getListFromObject, isClass, isNil, loadModule, multiSort, normalizeRouterPath, runsTSNode } from "../utils/internal.js";
 import type { InitImportAction, InitMethodAction } from "./decorators.js";
 
 const { readdir, stat } = fs.promises;
@@ -63,6 +63,68 @@ interface IInitializeControllersOptions {
     server: HttpServer;
 }
 
+const safePathSep = "/";
+
+function getSafePath(input: string): string {
+    return input.replaceAll(path.sep, safePathSep);
+}
+
+function getSortValueByPathItemName(itemName: Nilable<string>): number {
+    return !!itemName?.toLowerCase().trim().startsWith("@") ?
+        Number.MAX_SAFE_INTEGER :
+        Number.MIN_SAFE_INTEGER;
+}
+
+export function sortControllerFiles(files: IControllerFile[]): IControllerFile[] {
+    return multiSort(
+        files,
+
+        // first: by number of parts, separated by path chars like `/`
+        (file) => {
+            const filePath = getSafePath(file.relativePath);
+            const filePathParts = filePath.split(safePathSep);
+
+            return filePathParts.length;
+        },
+
+        // then: all directories, starting with `@`, will be moved to the bottom
+        (file) => {
+            const filePath = getSafePath(file.relativePath);
+            const dirName = path.dirname(filePath);
+            const dirNameParts = dirName.split(safePathSep);
+            const lastPart = dirNameParts[dirNameParts.length - 1];
+
+            return getSortValueByPathItemName(lastPart);
+        },
+
+        // then: by directory path (case-insensitive)
+        (file) => {
+            const filePath = getSafePath(file.relativePath);
+            const dirName = path.dirname(filePath);
+
+            return dirName.toLowerCase().trim();
+        },
+
+        // then: all files, starting with `@`, will be moved to the bottom
+        (file) => {
+            const filePath = getSafePath(file.relativePath);
+            const filePathParts = filePath.split(safePathSep);
+            const lastPart = filePathParts[filePathParts.length - 1];
+
+            return getSortValueByPathItemName(lastPart);
+        },
+
+        // then: by file name (case-insensitive)
+        (file) => {
+            const filePath = getSafePath(file.relativePath);
+            const filePathParts = filePath.split(safePathSep);
+            const lastPart = filePathParts[filePathParts.length - 1];
+
+            return lastPart?.toLowerCase().trim();
+        }
+    );
+}
+
 export async function initializeControllers({
     events,
     imports,
@@ -82,7 +144,7 @@ export async function initializeControllers({
         "matchBase": true
     };
 
-    const controllerFiles: IControllerFile[] = [];
+    let controllerFiles: IControllerFile[] = [];
 
     const scanDir = async (dir = rootDir) => {
         for (const item of await readdir(dir)) {
@@ -113,8 +175,13 @@ export async function initializeControllers({
             }
         }
     };
-
     await scanDir();
+
+    if (!result.controllers.length) {
+        throw new Error(`No matching controller classes found via patterns ${patterns}`);
+    }
+
+    controllerFiles = sortControllerFiles(controllerFiles);
 
     for (const cf of controllerFiles) {
         const module = await loadModule(cf.fullPath);
@@ -140,10 +207,6 @@ export async function initializeControllers({
                 );
             }
         }
-    }
-
-    if (!result.controllers.length) {
-        throw new Error(`No matching controller classes found via patterns ${patterns}`);
     }
 
     return result;

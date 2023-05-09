@@ -16,7 +16,7 @@
 import { moduleMode } from "@egomobile/http-server";
 import path from "node:path";
 import { EntityTooLargeError } from "../errors/entityTooLarge.js";
-import type { Constructor, Nilable, Nullable } from "../types/internal.js";
+import type { Constructor, List, Nilable, Nullable } from "../types/internal.js";
 
 interface IGetListFromObjectOptions {
     deleteKey?: boolean;
@@ -41,6 +41,27 @@ export function asAsync<TFunc extends Function = Function>(func: Function): TFun
     return (async function (...args: any[]) {
         return func(...args);
     }) as unknown as TFunc;
+}
+
+export function compareValues<T>(x: T, y: T): number {
+    return compareValuesBy(x, y, item => {
+        return item;
+    });
+}
+
+export function compareValuesBy<T1, T2>(x: T1, y: T1, selector: (item: T1) => T2): number {
+    const valX = selector(x);
+    const valY = selector(y);
+
+    if (valX !== valY) {
+        if (valX < valY) {
+            return -1;
+        }
+
+        return 1;  // valX > valY
+    }
+
+    return 0;
 }
 
 export function getAllClassProps(startClass: any): string[] {
@@ -115,6 +136,22 @@ export async function loadModule(id: string): Promise<any> {
     }
 
     return import(id);
+}
+
+export function multiSort<T extends any = any>(
+    arr: List<T>,
+    ...selectors: ((item: T) => any)[]
+) {
+    return [...arr].sort((x, y) => {
+        for (const selector of selectors) {
+            const sortValue = compareValuesBy(x, y, selector);
+            if (sortValue !== 0) {
+                return sortValue;
+            }
+        }
+
+        return 0;
+    });
 }
 
 export function normalizeRouterPath(p: Nilable<string>): string {

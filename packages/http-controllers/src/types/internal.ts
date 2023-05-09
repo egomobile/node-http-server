@@ -37,6 +37,8 @@ export interface ITestDescription {
 
 export type LazyValue<T extends any = any> = T | (() => T);
 
+export type List<T extends any = any> = T[] | Iterable<T> | IterableIterator<T>;
+
 export type ObjectKey = string | number | symbol;
 
 export type Optional<T extends any = any> = T | undefined;
