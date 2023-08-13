@@ -10,6 +10,7 @@ import typescript from "@rollup/plugin-typescript";
 
 export default {
     "input": "src/index.ts",
+    "external": ["@egomobile/http-server"],
     "output": [
         {
             "file": "lib/index.mjs",

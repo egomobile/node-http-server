@@ -14,7 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import { HttpMiddleware, IHttpServer, moduleMode } from "@egomobile/http-server";
-import minimatch, { MinimatchOptions } from "minimatch";
+import { MinimatchOptions, minimatch } from "minimatch";
 import fs from "node:fs";
 import path from "node:path";
 import { CONTROLLER_MIDDLEWARES, INIT_IMPORTS_ACTIONS, INIT_METHOD_ACTIONS, IS_CONTROLLER_CLASS } from "../constants/internal.js";
@@ -177,8 +177,8 @@ export async function initializeControllers({
     };
     await scanDir();
 
-    if (!result.controllers.length) {
-        throw new Error(`No matching controller classes found via patterns ${patterns}`);
+    if (!controllerFiles.length) {
+        throw new Error(`No matching controller files found via patterns ${patterns}`);
     }
 
     controllerFiles = sortControllerFiles(controllerFiles);

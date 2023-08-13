@@ -42,7 +42,7 @@ beforeAll(async () => {
             }
         },
         "rootDir": path.join(__dirname, "/__tests__/controllers1"),
-        "patterns": ["**/*.ts"]
+        "patterns": ["*.+(ts)"]
     });
     await httpServer2.controllers({
         "imports": {
@@ -57,7 +57,7 @@ beforeAll(async () => {
             }
         },
         "rootDir": path.join(__dirname, "/__tests__/controllers2"),
-        "patterns": ["**/*.ts"]
+        "patterns": ["*.+(ts)"]
     });
 });
 
