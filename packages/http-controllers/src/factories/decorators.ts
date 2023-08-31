@@ -186,9 +186,9 @@ export function createHttpMethodDecorator({
                     const handler = method.bind(controller) as HttpRequestHandler<any, any>;
 
                     server[httpMethod](routerPath, {
-                        "noAutoEnd": defaultNoAutoEnd ?? shouldDoNoAutoEnd,
-                        "noAutoParams": defaultNoAutoParams ?? shouldDoNoAutoParams,
-                        "noAutoQuery": defaultNoAutoQuery ?? shouldDoNoAutoQuery,
+                        "noAutoEnd": shouldDoNoAutoEnd ?? defaultNoAutoEnd,
+                        "noAutoParams": shouldDoNoAutoParams ?? defaultNoAutoParams,
+                        "noAutoQuery": shouldDoNoAutoQuery ?? defaultNoAutoQuery,
                         "use": [...controllerMiddlewares, ...additionalMiddlewares!]
                     }, handler);
                 }
