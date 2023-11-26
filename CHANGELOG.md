@@ -1,8 +1,9 @@
 # Change Log (@egomobile/http-server)
 
-## 0.63.2
+## 0.64.0
 
 - add `deprecated` property to [IControllerRouteOptions interface](https://egomobile.github.io/node-http-server/interfaces/IControllerRouteOptions.html)
+- `npm update`s, [Swagger UI 5+](https://github.com/swagger-api/swagger-ui)
 
 ## 0.63.1
 
