@@ -1,6 +1,6 @@
 {
     "name": "@egomobile/http-controllers",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Controller framework for @egomobile/http-server module.",
     "main": "lib/index.cjs",
     "module": "lib/index.mjs",
@@ -108,7 +108,7 @@
         "@rollup/plugin-typescript": "11.1.5",
         "@types/jest": "29.5.10",
         "@types/js-yaml": "4.0.9",
-        "@types/node": "18.15.0",
+        "@types/node": "18.18.13",
         "@types/supertest": "2.0.16",
         "axios": "1.6.2",
         "babel-jest": "29.7.0",
