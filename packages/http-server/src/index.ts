@@ -37,9 +37,6 @@ export const moduleMode: ModuleMode = typeof module !== "undefined" && typeof mo
 /**
  * Creates a new server instance.
  *
- * @param {Nilable<CreateHttp1ServerOptions | CreateHttp2ServerOptions>} [options] Custom options.
- * @param {HttpServerVersion} [version=1] The custom HTTP version.
- *
  * @returns {IHttp1Server|IHttp2Server} The new instance.
  */
 export function createServer(): IHttp1Server;
