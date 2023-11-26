@@ -37,10 +37,6 @@ import type { HttpMethodDecoratorArg1, HttpMethodDecoratorArg2, HttpMethodDecora
  * }
  * ```
  *
- * @param {IHttpMethodDecoratorOptions} [options] Custom options.
- * @param {HttpMethodDecoratorRoutePath} [path] The custom path.
- * @param {HttpMiddleware<any, any>[]} [use] Additional middlewares to use.
- *
  * @returns {ClassMethodDecorator5} The new decorator.
  */
 export function OPTIONS(): ClassMethodDecorator5;

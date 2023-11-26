@@ -11,7 +11,7 @@ export default class ImportsController {
     @Import()
     public bar!: number;
 
-    @Import('buzz')
+    @Import("buzz")
     public getBuzz!: () => string;
 
     @GET()
