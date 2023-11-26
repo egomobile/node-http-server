@@ -39,11 +39,6 @@ import type { HttpMethodDecoratorRoutePath, HttpMethodDecoratorWithBodyArg1, Htt
  * }
  * ```
  *
- * @param {IHttpMethodDecoratorOptions} [options] The custom options.
- * @param {HttpMethodDecoratorRoutePath} [path] The custom path.
- * @param {AnySchema|Schema} [schema] The schema for the validation.
- * @param {HttpMiddleware<any, any>[]} [use] Additional middlewares to use.
- *
  * @returns {MethodDecorator} The new decorator.
  */
 export function PATCH(): ClassMethodDecorator5;

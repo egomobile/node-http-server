@@ -40,7 +40,7 @@ export interface IJsonOptions extends IBodyParserMiddlewareOptions {
  * string and tries to parse it to JSON object and writes this
  * object to `body` property of the current request context.
  *
- * @param {Nilable<IJsonOptions>} [options] Custom options.
+ * @returns {HttpMiddleware<any,any>} The new middleware.
  */
 export function json(): HttpMiddleware<any, any>;
 export function json(options: Nilable<IJsonOptions>): HttpMiddleware<any, any>;

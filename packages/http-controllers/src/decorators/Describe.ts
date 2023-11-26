@@ -37,8 +37,6 @@ import { getListFromObject, isNil } from "../utils/internal.js";
  * }
  * ```
  *
- * @param {Nilable<string>} [name] The custom name / category. Default: Class name.
- *
  * @returns {ClassDecorator5} The new decorator.
  */
 export function Describe(): ClassDecorator5;
