@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.63.2
+
+- add `deprecated` property to [IControllerRouteOptions interface](https://egomobile.github.io/node-http-server/interfaces/IControllerRouteOptions.html)
+
 ## 0.63.1
 
 - revert to version `0.61.x`

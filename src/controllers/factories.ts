@@ -19,11 +19,11 @@ import minimatch, { MinimatchOptions } from "minimatch";
 import { OpenAPIV3 } from "openapi-types";
 import path from "path";
 import { ADD_CONTROLLER_METHOD_TEST_ACTION, CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER } from "../constants";
-import { buffer, query } from "../middlewares";
+import { buffer, defaultDeprecatedMiddleware, query } from "../middlewares";
 import { prepareSwaggerDocumentFromOpenAPIFiles, prepareSwaggerDocumentFromResources, setupSwaggerUIForServerControllers } from "../swagger";
-import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRouteWithBodyOptions, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ITestSettings, ParameterOptions, ResponseSerializer } from "../types";
-import type { Func, GetSwaggerDocumentationsFunc, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerMethodTestAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, IRouterPathItem, Nilable, Optional, PrepareControllerMethodAction, ResolveSwaggerOperationObject, ResolveTestSettings } from "../types/internal";
-import { asAsync, canHttpMethodHandleBodies, getAllClassProps, getFunctionParamNames, isClass, isNil, limitToBytes, walkDirSync } from "../utils";
+import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRouteWithBodyOptions, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllerRouteDeprecatedOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ITestSettings, ImportValues, ParameterOptions, ResponseSerializer } from "../types";
+import type { Func, GetSwaggerDocumentationsFunc, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, IRouterPathItem, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerMethodTestAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, Nilable, Optional, PrepareControllerMethodAction, ResolveSwaggerOperationObject, ResolveTestSettings } from "../types/internal";
+import { asAsync, canHttpMethodHandleBodies, getAllClassProps, getFunctionParamNames, getIfDeprecated, isClass, isNil, limitToBytes, walkDirSync } from "../utils";
 import { params } from "../validators/params";
 import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath, setupMiddlewaresBySchema, setupMiddlewaresBySwaggerDocumentation, setupSwaggerDocumentation, toParameterValueUpdaters } from "./utils";
 import { sortControllerFiles } from "./utils/files";
@@ -57,6 +57,7 @@ export interface ICreateHttpMethodDecoratorOptions {
 interface ICreateInitControllerMethodActionOptions {
     controllerMethodName: string;
     decoratorOptions: Nilable<ControllerRouteWithBodyOptions>;
+    deprecatedOptions: IControllerRouteDeprecatedOptions;
     getErrorHandler: GetContollerValue<HttpErrorHandler>;
     httpMethod: HttpMethod;
     middlewares: HttpMiddleware[];
@@ -306,6 +307,15 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
         }
     }
 
+    if (!isNil(decoratorOptions?.deprecated)) {
+        if (
+            typeof decoratorOptions?.deprecated !== "object" &&
+            typeof decoratorOptions?.deprecated !== "boolean"
+        ) {
+            throw new TypeError("decoratorOptions.deprecated must be of type object or boolean");
+        }
+    }
+
     return function (target, methodName, descriptor) {
         const method = getMethodOrThrow(descriptor);
 
@@ -349,10 +359,25 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
             middlewares.push(createDataParser());
         }
 
+        let deprecatedOptions: IControllerRouteDeprecatedOptions = {
+            "isDeprecated": false
+        };
+        if (!isNil(decoratorOptions?.deprecated)) {
+            if (typeof decoratorOptions!.deprecated === "object") {
+                deprecatedOptions = decoratorOptions!.deprecated;
+
+                deprecatedOptions.isDeprecated = getIfDeprecated(deprecatedOptions);
+            }
+            else {
+                deprecatedOptions.isDeprecated = !!decoratorOptions!.deprecated;
+            }
+        }
+
         getListFromObject<InitControllerMethodAction>(method, INIT_CONTROLLER_METHOD_ACTIONS).push(
             createInitControllerMethodAction({
                 "controllerMethodName": String(methodName).trim(),
                 decoratorOptions,
+                deprecatedOptions,
                 "httpMethod": options.name,
                 middlewares,
                 "getErrorHandler": (controller, server) => {
@@ -390,6 +415,7 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
                         decoratorOptions,
                         "getOperationObjects": () => {
                             return getOperationObjects({
+                                deprecatedOptions,
                                 "httpMethod": options.name,
                                 "methodFunction": method,
                                 "rawRouterPath": rawPath
@@ -419,6 +445,7 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
 function createInitControllerMethodAction({
     controllerMethodName,
     decoratorOptions,
+    deprecatedOptions,
     getErrorHandler,
     httpMethod,
     middlewares,
@@ -505,6 +532,7 @@ function createInitControllerMethodAction({
                 }
 
                 return getOperationObjects({
+                    deprecatedOptions,
                     httpMethod,
                     "methodFunction": method,
                     rawRouterPath
@@ -547,6 +575,34 @@ function createInitControllerMethodAction({
             });
         }
 
+        // 'deprecated' options
+        if (getIfDeprecated(deprecatedOptions)) {
+            let onDeprecated: HttpMiddleware;
+            if (isNil(deprecatedOptions.onDeprecated)) {
+                onDeprecated = defaultDeprecatedMiddleware;
+            }
+            else {
+                onDeprecated = deprecatedOptions.onDeprecated;
+            }
+
+            const deprecatedMiddleswares = (
+                Array.isArray(deprecatedOptions.use) ? deprecatedOptions.use : [deprecatedOptions.use]
+            ).filter((mw) => {
+                return !!mw;
+            }) as HttpMiddleware[];
+
+            if (deprecatedOptions.appendMiddlewares) {
+                middlewares.push(...deprecatedMiddleswares);
+                middlewares.push(onDeprecated);
+            }
+            else {
+                // default: append middlewares
+
+                middlewares.unshift(onDeprecated);
+                middlewares.unshift(...deprecatedMiddleswares);
+            }
+        }
+
         const requestHandler = createControllerMethodRequestHandler({
             "getErrorHandler": () => {
                 return getErrorHandler(controller, server);
@@ -577,7 +633,7 @@ export function createParameterDecorator({
     options
 }: ICreateParameterDecoratorOptions): ParameterDecorator {
     return function (target, propertyKey, parameterIndex) {
-        const method: Function = (target as any)[propertyKey];
+        const method: Function = (target as any)[propertyKey!];
 
         let parameterName: Nilable<string> = (options as any)?.name;
         if (!parameterName?.trim().length) {
@@ -588,7 +644,7 @@ export function createParameterDecorator({
             throw new Error(`Could not get name for parameter ${parameterIndex} of method ${method.name}`);
         }
 
-        getListFromObject<PrepareControllerMethodAction>((target as any)[propertyKey], PREPARE_CONTROLLER_METHOD_ACTIONS).push(
+        getListFromObject<PrepareControllerMethodAction>((target as any)[propertyKey!], PREPARE_CONTROLLER_METHOD_ACTIONS).push(
             ({ method }) => {
                 getListFromObject<IControllerMethodParameter>(method, CONTROLLER_METHOD_PARAMETERS).push(
                     {
@@ -939,6 +995,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
 
                 const getOperationObjects: GetSwaggerDocumentationsFunc =
                     ({
+                        deprecatedOptions,
                         httpMethod,
                         methodFunction,
                         rawRouterPath
@@ -950,7 +1007,15 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                         });
 
                         if (matchingMethodInfo) {
-                            return [...matchingMethodInfo.swaggerOperations];
+                            const isDeprecated = getIfDeprecated(deprecatedOptions);
+
+                            return [...matchingMethodInfo.swaggerOperations].map((swaggerOperation) => {
+                                return {
+                                    "deprecated": isDeprecated,
+
+                                    ...swaggerOperation
+                                };
+                            });
                         }
 
                         return [];

@@ -151,6 +151,13 @@ export type ControllerRouteArgument2
 export type ControllerRouteArgument3 = number;
 
 /**
+ * A possible value for `IControllerRouteOptions.deprecated`.
+ */
+export type ControllerRouteDeprecatedValue =
+    boolean |
+    IControllerRouteDeprecatedOptions;
+
+/**
  * A possible value for a path of a controller route.
  */
 export type ControllerRoutePath = string;
@@ -529,6 +536,36 @@ export interface IControllerMethodInitializedEventArguments {
 }
 
 /**
+ * Options for handling a deprecated status.
+ */
+export interface IControllerRouteDeprecatedOptions {
+    /**
+     * Append middlewares instead of prepend them.
+     *
+     * @default `false`
+     */
+    appendMiddlewares?: Nilable<boolean>;
+    /**
+     * Indicates if route is deprecated or not.
+     *
+     * @default `true`
+     */
+    isDeprecated?: Nilable<boolean>;
+    /**
+     * A custom middleware, that may tell a client that the endpoint is deprecated
+     * and/or logs access.
+     *
+     * The default behavior is, that the server will return a simple 410 HTTP response.
+     */
+    onDeprecated?: Nilable<HttpMiddleware>;
+    /**
+     * One or more middlewares, that is added before `onDeprecated`, but only for the
+     * case that `isDeprecated` is activated.
+     */
+    use?: Nilable<HttpMiddleware | HttpMiddleware[]>;
+}
+
+/**
  * Options for a controller route without a body.
  */
 export interface IControllerRouteOptions {
@@ -536,6 +573,10 @@ export interface IControllerRouteOptions {
      * Custom 'authorize' options.
      */
     authorize?: Nilable<AuthorizeArgumentValue>;
+    /**
+     * Indicates, if route is deprecated or not.
+     */
+    deprecated?: Nilable<ControllerRouteDeprecatedValue>;
     /**
      * Optional Swagger documentation.
      */
