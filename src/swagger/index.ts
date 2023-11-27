@@ -21,7 +21,7 @@ import { knownFileMimes } from "../constants";
 import { normalizeRouterPath } from "../controllers/utils";
 import type { HttpMethod, IControllerMethodInfo, IControllersSwaggerOptions, IHttpServer } from "../types";
 import type { Nilable, ResolveSwaggerOperationObject } from "../types/internal";
-import { isNil, loadModule, setupObjectProperty, walkDirSync } from "../utils";
+import { clone, isNil, loadModule, setupObjectProperty, walkDirSync } from "../utils";
 import swaggerInitializerJs from "./resources/swagger-initializer_js";
 import { createSwaggerPathValidator, getSwaggerDocsBasePath, toOperationObject, toSwaggerPath } from "./utils";
 
@@ -238,12 +238,15 @@ export function setupSwaggerUIForServerControllers({
     const basePath = getSwaggerDocsBasePath(options.basePath);
     const basePathWithSuffix = basePath + (basePath.endsWith("/") ? "" : "/");
 
-    const documentJson = Buffer.from(JSON.stringify(document), "utf8");
-    const documentYAML = Buffer.from(yaml.dump(document), "utf8");
+    const documentJson = options.noJSON ?
+        null :
+        Buffer.from(JSON.stringify(document), "utf8");
+    const documentYAML = options.noYAML ?
+        null :
+        Buffer.from(yaml.dump(document), "utf8");
 
-    document = JSON.parse(
-        documentJson.toString("utf8")
-    );
+    // keep sure we have a clean copy here
+    document = clone(document);
 
     const swaggerInitializerJSContent = Buffer.from(swaggerInitializerJs(), "utf8");
 
@@ -261,28 +264,34 @@ export function setupSwaggerUIForServerControllers({
             let fileOrDir = normalizeRouterPath(request.url);
             let relativePath = normalizeRouterPath(path.relative(basePath, fileOrDir));
 
-            // return as JSON
-            if (["/json", "/json/"].includes(relativePath)) {
-                response.writeHead(200, {
-                    "Content-Disposition": "attachment; filename=\"api-openapi3.json",
-                    "Content-Type": "application/json; charset=UTF-8",
-                    "Content-Length": String(documentJson.length)
-                });
-                response.write(documentJson);
+            if (documentJson) {
+                // return as JSON?
 
-                return;
+                if (["/json", "/json/"].includes(relativePath)) {
+                    response.writeHead(200, {
+                        "Content-Disposition": "attachment; filename=\"api-openapi3.json",
+                        "Content-Type": "application/json; charset=UTF-8",
+                        "Content-Length": String(documentJson.length)
+                    });
+                    response.write(documentJson);
+
+                    return;
+                }
             }
 
-            // return as YAML
-            if (["/yaml", "/yaml/"].includes(relativePath)) {
-                response.writeHead(200, {
-                    "Content-Disposition": "attachment; filename=\"api-openapi3.yaml",
-                    "Content-Type": "application/x-yaml; charset=UTF-8",
-                    "Content-Length": String(documentYAML.length)
-                });
-                response.write(documentYAML);
+            if (documentYAML) {
+                // return as YAML?
 
-                return;
+                if (["/yaml", "/yaml/"].includes(relativePath)) {
+                    response.writeHead(200, {
+                        "Content-Disposition": "attachment; filename=\"api-openapi3.yaml",
+                        "Content-Type": "application/x-yaml; charset=UTF-8",
+                        "Content-Length": String(documentYAML.length)
+                    });
+                    response.write(documentYAML);
+
+                    return;
+                }
             }
 
             let fullPath = path.join(pathToSwaggerUi, relativePath);

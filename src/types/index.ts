@@ -841,6 +841,14 @@ export interface IControllersSwaggerOptions {
      */
     document: ControllersSwaggerBaseDocument;
     /**
+     * Do not provide `document` as JSON file download.
+     */
+    noJSON?: Nilable<boolean>;
+    /**
+     * Do not provide `document` as YAML file download.
+     */
+    noYAML?: Nilable<boolean>;
+    /**
      * The path to the resource files / modules.
      * Relative paths will be mapped to the controller root directory.
      */

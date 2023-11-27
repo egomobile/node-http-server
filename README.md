@@ -3,9 +3,7 @@
 
 # @egomobile/http-server
 
-> Very fast alternative HTTP server to [Express](http://expressjs.com/), with
-> simple routing and middleware support and which is compatible with
-> [Node.js 16](https://nodejs.org/en/blog/release/v16.0.0/) or later.
+> A very fast alternative HTTP server to Express, with simple routing and middleware support, that is compatible with [Node.js 18](https://nodejs.org/en/blog/release/v18.0.0/) or later.
 
 <a name="toc"></a>
 
