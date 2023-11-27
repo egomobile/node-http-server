@@ -19,9 +19,9 @@ import type { OpenAPIV3 } from "openapi-types";
 import path from "path";
 import { knownFileMimes } from "../constants";
 import { normalizeRouterPath } from "../controllers/utils";
-import type { HttpMethod, IControllerMethodInfo, IControllersSwaggerOptions, IHttpServer } from "../types";
+import type { HttpMethod, IControllerMethodInfo, IControllerRouteDeprecatedOptions, IControllersSwaggerOptions, IHttpServer } from "../types";
 import type { Nilable, ResolveSwaggerOperationObject } from "../types/internal";
-import { clone, isNil, loadModule, setupObjectProperty, walkDirSync } from "../utils";
+import { clone, getIfDeprecated, isNil, loadModule, setupObjectProperty, walkDirSync } from "../utils";
 import swaggerInitializerJs from "./resources/swagger-initializer_js";
 import { createSwaggerPathValidator, getSwaggerDocsBasePath, toOperationObject, toSwaggerPath } from "./utils";
 
@@ -48,6 +48,7 @@ export interface ISetupSwaggerUIForServerControllersOptions {
 }
 
 interface IUpdateOperationObject {
+    deprecatedOptions: IControllerRouteDeprecatedOptions;
     document: OpenAPIV3.Document;
     httpMethod: HttpMethod;
     operation: Nilable<OpenAPIV3.OperationObject>;
@@ -125,6 +126,7 @@ export function prepareSwaggerDocumentFromOpenAPIFiles({
             const operation = toOperationObject(operationOrGetter);
 
             updateOperationObject({
+                "deprecatedOptions": matchingMethod.deprecatedOptions,
                 document,
                 httpMethod,
                 operation,
@@ -219,6 +221,7 @@ export function prepareSwaggerDocumentFromResources({
                 const operation = toOperationObject(operationOrGetter);
 
                 updateOperationObject({
+                    "deprecatedOptions": matchingMethod.deprecatedOptions,
                     document,
                     httpMethod,
                     operation,
@@ -363,12 +366,8 @@ export function setupSwaggerUIForServerControllers({
 }
 
 function updateOperationObject(options: IUpdateOperationObject) {
-    const {
-        document,
-        httpMethod,
-        operation,
-        rawPath,
-        resolveOperation
+    let {
+        operation
     } = options;
     if (isNil(operation)) {
         return;
@@ -377,6 +376,17 @@ function updateOperationObject(options: IUpdateOperationObject) {
     if (typeof operation !== "object") {
         throw new TypeError("Swagger path operation must be of type object");
     }
+
+    const {
+        deprecatedOptions,
+        document,
+        httpMethod,
+        rawPath,
+        resolveOperation
+    } = options;
+
+    operation = clone(operation);
+    operation.deprecated = getIfDeprecated(deprecatedOptions);
 
     const swaggerPath = toSwaggerPath(rawPath);
 

@@ -614,6 +614,7 @@ function createInitControllerMethodAction({
 
         resolveInfo({
             controller,
+            deprecatedOptions,
             "function": method as Func,
             "handler": requestHandler,
             "method": httpMethod,

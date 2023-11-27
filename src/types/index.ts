@@ -452,6 +452,10 @@ export interface IControllerMethodInfo {
      */
     controller: IHttpController;
     /**
+     * Deprecated options.
+     */
+    deprecatedOptions: IControllerRouteDeprecatedOptions;
+    /**
      * The underlying base function instance.
      */
     function: Func;
