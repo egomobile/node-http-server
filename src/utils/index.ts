@@ -19,7 +19,7 @@ import type { URLSearchParams } from "url";
 import { ExitWithCodeValue, middleware } from "..";
 import { httpMethodsWithBodies } from "../constants";
 import { EntityTooLargeError } from "../errors";
-import type { HttpMiddleware, HttpRequestHandler, IHttpRequest, IHttpResponse, NextFunction, UniqueHttpMiddleware } from "../types";
+import type { HttpMiddleware, HttpRequestHandler, IControllerRouteDeprecatedOptions, IHttpRequest, IHttpResponse, NextFunction, UniqueHttpMiddleware } from "../types";
 import type { Constructor, List, Nilable, Nullable, ObjectNameListResolver, Optional } from "../types/internal";
 
 interface ICreateWithEntityTooLargeActionOptions {
@@ -202,6 +202,12 @@ export function getFunctionParamNames(func: Function): string[] {
     }
 
     return result ?? [];
+}
+
+export function getIfDeprecated(deprecatedOptions: Nilable<IControllerRouteDeprecatedOptions>): boolean {
+    return isNil(deprecatedOptions?.isDeprecated) ?
+        true :
+        !!deprecatedOptions?.isDeprecated;
 }
 
 export function getProp(val: any, prop: string): any {

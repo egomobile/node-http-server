@@ -13,12 +13,29 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { HttpRequestHandler, JsonSchemaValidationFailedHandler, ParseErrorHandler, SchemaValidationFailedHandler, ValidationFailedHandler } from "../types";
+import type { HttpMiddleware, HttpRequestHandler, JsonSchemaValidationFailedHandler, ParseErrorHandler, SchemaValidationFailedHandler, ValidationFailedHandler } from "../types";
 
 /**
  * Default limit of a body parser: 128 MB
  */
 export const defaultBodyLimit = 134217728;
+
+/**
+ * The default 'deprecated' handler.
+ *
+ * @param {IncomingMessage} request The request context.
+ * @param {ServerResponse} response The response context.
+ * @param {NextFunction} next The next function.
+ */
+export const defaultDeprecatedMiddleware: HttpMiddleware = async (request, response, next) => {
+    if (!response.headersSent) {
+        response.writeHead(410, {
+            "Content-Length": "0"
+        });
+    }
+
+    response.end();
+};
 
 /**
  * The default 'parse error' handler.

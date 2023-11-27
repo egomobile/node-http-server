@@ -20,7 +20,7 @@ import { DOCUMENTATION_UPDATER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CO
 import { validateMiddleware, validateQueryMiddleware, validateWithSwagger } from "../../middlewares";
 import { toSwaggerPath } from "../../swagger/utils";
 import type { ControllerRouteWithBodyOptions, DocumentationUpdaterHandler, HttpMethod, HttpMiddleware, IControllersOptions } from "../../types";
-import type { GetterFunc, InitControllerMethodSwaggerAction, IRouterPathItem, ISwaggerMethodInfo, Nilable } from "../../types/internal";
+import type { GetterFunc, IRouterPathItem, ISwaggerMethodInfo, InitControllerMethodSwaggerAction, Nilable } from "../../types/internal";
 import { asAsync, invokeMiddleware, isNil, sortObjectByKeys } from "../../utils";
 
 interface ICreateInitControllerMethodSwaggerActionOptions {

@@ -15,7 +15,7 @@
 
 import type { ServerResponse } from "http";
 import type { OpenAPIV3 } from "openapi-types";
-import type { AfterEachTestFunc, BeforeEachTestFunc, HttpMethod, HttpMiddleware, HttpPathValidator, HttpRequestHandler, IControllerMethodInfo, IControllersOptions, IHttpController, IHttpServer, ImportValues, ITestSettings, ITestSettingValueGetterContext, ParameterOptions } from ".";
+import type { AfterEachTestFunc, BeforeEachTestFunc, HttpMethod, HttpMiddleware, HttpPathValidator, HttpRequestHandler, IControllerMethodInfo, IControllerRouteDeprecatedOptions, IControllersOptions, IHttpController, IHttpServer, ImportValues, ITestSettings, ITestSettingValueGetterContext, ParameterOptions } from ".";
 
 export type Constructor<T extends any = any> = (new (...args: any[]) => T);
 
@@ -59,6 +59,7 @@ export interface IControllerMethodParameter {
 }
 
 export interface IGetSwaggerDocumentationsFuncContext {
+    deprecatedOptions: IControllerRouteDeprecatedOptions;
     httpMethod: HttpMethod;
     methodFunction: Function;
     rawRouterPath: string;
