@@ -2,6 +2,7 @@
 
 ## 0.64.0
 
+- **BREAKING CHANGE**: module requires at least [Node 18+](https://nodejs.org/en/blog/release/v18.0.0) now
 - add `deprecated` property to [IControllerRouteOptions interface](https://egomobile.github.io/node-http-server/interfaces/IControllerRouteOptions.html)
 - `npm update`s, [Swagger UI 5+](https://github.com/swagger-api/swagger-ui)
 
