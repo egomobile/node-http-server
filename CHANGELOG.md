@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-server)
 
-## 0.64.1
+## 0.64.2
 
 - **BREAKING CHANGE**: module requires at least [Node 18+](https://nodejs.org/en/blog/release/v18.0.0) now
 - add `deprecated` property to [IControllerRouteOptions interface](https://egomobile.github.io/node-http-server/interfaces/IControllerRouteOptions.html)
