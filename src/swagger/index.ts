@@ -23,7 +23,7 @@ import type { HttpMethod, IControllerMethodInfo, IControllerRouteDeprecatedOptio
 import type { IControllerClass, Nilable, ResolveSwaggerOperationObject } from "../types/internal";
 import { clone, getIfDeprecated, isNil, loadModule, setupObjectProperty, walkDirSync } from "../utils";
 import swaggerInitializerJs from "./resources/swagger-initializer_js";
-import { createSwaggerPathValidator, getSwaggerDocsBasePath, toOperationObject, toSwaggerPath } from "./utils";
+import { createSwaggerPathValidator, getSwaggerDocsBasePath, parseSwaggerOperationIdTemplate, toOperationObject, toSwaggerPath } from "./utils";
 
 export interface IPrepareSwaggerDocumentOptions {
     controllerClass: IControllerClass;
@@ -395,10 +395,6 @@ function updateOperationObject(options: IUpdateOperationObject) {
     }
 
     const {
-        "relativePath": controllerFilePath
-    } = controllerClass.file;
-
-    const {
         deprecatedOptions,
         document,
         httpMethod,
@@ -411,18 +407,18 @@ function updateOperationObject(options: IUpdateOperationObject) {
     operation.deprecated = getIfDeprecated(deprecatedOptions);
 
     if (!operationOptions.noAutoIds) {
-        // generate operation IDs automatically
+        // create auto generated IDs
 
-        if (!operation.operationId) {
+        if (operationOptions.overwriteIds || !operation.operationId) {
             // only if not defined
+            // or if all should be overwritten
 
-            const operationId = (operationOptions.idTemplate ?? defaultOperationIdTemplate)
-                .replaceAll("{{class}}", controllerClass["class"].name)
-                .replaceAll("{{file}}", path.basename(controllerFilePath, path.extname(controllerFilePath)))
-                .replaceAll("{{http-method}}", httpMethod)
-                .replaceAll("{{method}}", methodName);
-
-            operation.operationId = operationId;
+            operation.operationId = parseSwaggerOperationIdTemplate({
+                controllerClass,
+                httpMethod,
+                methodName,
+                "template": operationOptions.idTemplate ?? defaultOperationIdTemplate
+            });
         }
     }
 

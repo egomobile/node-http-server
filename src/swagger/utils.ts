@@ -14,10 +14,18 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { OpenAPIV3 } from "openapi-types";
+import path from "path";
 import { normalizeRouterPath } from "../controllers/utils";
-import type { HttpPathValidator } from "../types";
-import type { Nilable } from "../types/internal";
-import { isNil } from "../utils";
+import type { HttpMethod, HttpPathValidator } from "../types";
+import type { IControllerClass, Nilable } from "../types/internal";
+import { isNil, toKebabCase } from "../utils";
+
+export interface IParseSwaggerOperationIdTemplateOptions {
+    controllerClass: IControllerClass;
+    httpMethod: HttpMethod;
+    methodName: string;
+    template: string;
+}
 
 export function createSwaggerPathValidator(basePath: Nilable<string>): HttpPathValidator {
     basePath = getSwaggerDocsBasePath(basePath);
@@ -41,6 +49,87 @@ export function getSwaggerDocsBasePath(basePath: Nilable<string>): string {
     }
 
     return normalizeRouterPath(basePath);
+}
+
+export function parseSwaggerOperationIdTemplate(options: IParseSwaggerOperationIdTemplateOptions): string {
+    const {
+        controllerClass,
+        httpMethod,
+        methodName,
+        template
+    } = options;
+
+    const {
+        "relativePath": controllerFilePath
+    } = controllerClass.file;
+
+    return template.replaceAll(/(\{\{)([a-z|\-]+)(\:?)([^\}]*)(\}\})/gi, (
+        str: string,
+        openBracket: string, name: string, sep1: string, formatterList: string, closeBracket: string
+    ) => {
+        const nameLower = name.toLowerCase().trim();
+
+        let shouldUseFormatters = true;
+
+        // detect base value first
+        let result = str;
+        if (nameLower === "class") {
+            result = controllerClass["class"].name;
+        }
+        else if (nameLower === "method") {
+            result = methodName;
+        }
+        else if (nameLower === "http-method") {
+            result = httpMethod;
+        }
+        else if (nameLower === "file") {
+            result = path.basename(controllerFilePath, path.extname(controllerFilePath));
+        }
+        else if (nameLower === "path") {
+            result = controllerFilePath;
+        }
+        else {
+            // is not support, so it makes no sense to
+            // use formatters
+            shouldUseFormatters = false;
+        }
+
+        if (shouldUseFormatters) {
+            const allFormatters = formatterList.split(",").map((formatter) => {
+                return formatter.trim();
+            }).filter((formatter) => {
+                return formatter !== "";
+            });
+
+            for (let i = 0; i < allFormatters.length; i++) {
+                const format = allFormatters[i];
+                const formatLower = format.toLowerCase();
+
+                if (formatLower === "upper") {
+                    result = result.toUpperCase();
+                }
+                else if (formatLower === "lower") {
+                    result = result.toLowerCase();
+                }
+                else if (formatLower === "trim") {
+                    result = result.trim();
+                }
+                else if (formatLower === "kebap") {
+                    result = toKebabCase(result);
+                }
+                else {
+                    if (["path"].includes(nameLower)) {
+                        const index = parseInt(formatLower);
+                        if (!Number.isNaN(index)) {
+                            result = controllerFilePath.split("/")[index] ?? result;
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    });
 }
 
 export function toSwaggerPath(routePath: string): string {

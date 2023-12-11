@@ -426,6 +426,13 @@ export function sortObjectByKeys<T extends any = any>(obj: T): T {
     return newObj;
 }
 
+export function toKebabCase(val: any): string {
+    return String(val)
+        .replace(/\s+/g, "-")  // replaces spaces with -
+        .replace(/([a-z])([A-Z])/g, "$1-$2")  // adds - between camelCase words
+        .toLowerCase(); // converts string to lowercase
+}
+
 export function toUniqueHttpMiddleware(id: symbol, mw: HttpMiddleware): UniqueHttpMiddleware {
     const namedMiddleware = mw as UniqueHttpMiddleware;
 
