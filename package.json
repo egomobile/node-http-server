@@ -1,6 +1,6 @@
 {
     "name": "@egomobile/http-server",
-    "version": "0.64.2",
+    "version": "0.65.0",
     "description": "A very fast alternative HTTP server to Express, with simple routing and middleware support, that is compatible with Node.js 18 or later.",
     "main": "lib/index.js",
     "engines": {
@@ -85,21 +85,21 @@
     },
     "devDependencies": {
         "@egomobile/tsconfig": "^5.0.0",
-        "@types/jest": "29.5.10",
+        "@types/jest": "29.5.11",
         "@types/js-yaml": "4.0.9",
         "@types/node": "18.18.13",
         "@types/supertest": "2.0.16",
         "@types/swagger-ui-dist": "3.30.4",
         "babel-jest": "29.7.0",
         "del-cli": "5.1.0",
-        "eslint": "8.54.0",
+        "eslint": "8.55.0",
         "eslint-config-ego": "^0.17.1",
         "jest": "29.7.0",
-        "nodemon": "3.0.1",
+        "nodemon": "3.0.2",
         "supertest": "6.3.3",
         "ts-jest": "29.1.1",
-        "ts-node": "10.9.1",
-        "typedoc": "0.25.3",
-        "typescript": "4.6.4"
+        "ts-node": "10.9.2",
+        "typedoc": "0.25.4",
+        "typescript": "4.7.4"
     }
 }

@@ -21,7 +21,7 @@ import path from "path";
 import { ADD_CONTROLLER_METHOD_TEST_ACTION, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, CONTROLLERS_CONTEXES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER } from "../constants";
 import { buffer, defaultDeprecatedMiddleware, query } from "../middlewares";
 import { prepareSwaggerDocumentFromOpenAPIFiles, prepareSwaggerDocumentFromResources, setupSwaggerUIForServerControllers } from "../swagger";
-import { ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRouteWithBodyOptions, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllerRouteDeprecatedOptions, IControllersOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ITestSettings, ParameterOptions, ResponseSerializer } from "../types";
+import { ControllerParameterFormat, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRouteWithBodyOptions, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllerRouteDeprecatedOptions, IControllersOptions, IControllersSwaggerOperationOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ITestSettings, ParameterOptions, ResponseSerializer } from "../types";
 import type { Func, GetSwaggerDocumentationsFunc, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerMethodTestAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, IRouterPathItem, Nilable, Optional, PrepareControllerMethodAction, ResolveSwaggerOperationObject, ResolveTestSettings } from "../types/internal";
 import { asAsync, canHttpMethodHandleBodies, getAllClassProps, getFunctionParamNames, getIfDeprecated, isClass, isNil, limitToBytes, walkDirSync } from "../utils";
 import { params } from "../validators/params";
@@ -467,6 +467,9 @@ function createInitControllerMethodAction({
     }) => {
         const dir = path.dirname(relativeFilePath);
         const fileName = path.basename(relativeFilePath, path.extname(relativeFilePath));
+        const parameterFormat = decoratorOptions?.parameterFormat ||
+            globalOptions?.parameterFormat ||
+            ControllerParameterFormat.Default;
 
         let routerPath: HttpRequestPath = dir;
         if (fileName !== "index") {
@@ -483,7 +486,20 @@ function createInitControllerMethodAction({
         }
 
         routerPath = normalizeRouterPath(routerPath);
-        routerPath = routerPath.replaceAll("/@", "/:");
+
+        if (parameterFormat === ControllerParameterFormat.NextJS) {
+            // `/[foo]` => `/:foo`
+
+            routerPath = routerPath.replaceAll(
+                /(\/)(\[)([^\]]*)(\])/g,
+                "/:$3"
+            );
+        }
+        else {
+            // `/@foo` => `/:foo`
+
+            routerPath = routerPath.replaceAll("/@", "/:");
+        }
 
         let allRouterPaths: Nilable<IRouterPathItem[]> = (method as any)[ROUTER_PATHS];
         if (!allRouterPaths) {
@@ -861,6 +877,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
         }
 
         let swaggerResourcePath: Optional<string>;
+        let swaggerOperationOptions: Partial<IControllersSwaggerOperationOptions> = {};
         if (!isNil(swagger)) {
             if (!isNil(swagger.resourcePath)) {
                 if (typeof swagger.resourcePath !== "string") {
@@ -870,6 +887,24 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                 swaggerResourcePath = swagger.resourcePath;
                 if (!path.isAbsolute(swaggerResourcePath)) {
                     swaggerResourcePath = path.join(rootDir, swaggerResourcePath);
+                }
+            }
+
+            if (!isNil(swagger.operations)) {
+                if (
+                    typeof swagger.operations !== "object" &&
+                    typeof swagger.operations !== "boolean"
+                ) {
+                    throw new TypeError("options.swagger.operations must be of type object or boolean");
+                }
+
+                if (typeof swagger.operations === "boolean") {
+                    swaggerOperationOptions = {
+                        "noAutoIds": !swagger.operations
+                    };
+                }
+                else {
+                    swaggerOperationOptions = swagger.operations!;
                 }
             }
         }
@@ -1094,6 +1129,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                         // try load data from `.openapi` files
 
                         prepareSwaggerDocumentFromOpenAPIFiles({
+                            "controllerClass": cls,
                             "controllersRootDir": rootDir,
                             "document": swaggerDoc,
                             "doesScriptFileMatch": (file) => {
@@ -1106,6 +1142,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                                 });
                             },
                             methods,
+                            "operationOptions": swaggerOperationOptions,
                             resolveOperation
                         });
                     }
@@ -1115,6 +1152,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                         // in `swaggerResourcePath`
 
                         prepareSwaggerDocumentFromResources({
+                            "controllerClass": cls,
                             "document": swaggerDoc,
                             "doesScriptFileMatch": (file) => {
                                 const relativeFilePath = normalizeRouterPath(
@@ -1126,6 +1164,7 @@ export function setupHttpServerControllerMethod(setupOptions: ISetupHttpServerCo
                                 });
                             },
                             methods,
+                            "operationOptions": swaggerOperationOptions,
                             resolveOperation,
                             "resourcePath": swaggerResourcePath
                         });
