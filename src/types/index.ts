@@ -131,6 +131,27 @@ export type ControllerInitializedEventHandler = (args: IControllerInitializedEve
 export type ControllerMethodInitializedEventHandler = (args: IControllerMethodInitializedEventArguments) => any;
 
 /**
+ * Format for controller URL parameters.
+ */
+export enum ControllerParameterFormat {
+    /**
+     * Default: `@my_parameter`
+     */
+    Default = "default",
+    /**
+     * Next.js: `[my_parameter]`
+     */
+    NextJS = "next_js"
+}
+
+/**
+ * A possible value for `IControllersSwaggerOptions.operations` property.
+ *
+ * `false` indicates to generate no auto operation ID by this module.
+ */
+export type ControllersSwaggerOperationOptionsValue = IControllersSwaggerOperationOptions | false;
+
+/**
  * A possible value for a first argument of a HTTP method / controller route decorator
  * like GET() or POST().
  */
@@ -598,6 +619,12 @@ export interface IControllerRouteOptions {
      */
     onValidationWithDocumentationFailed?: Nilable<JsonSchemaValidationFailedHandler>;
     /**
+     * The custom URL parameter format (only for the route).
+     *
+     * @default: `ControllerParameterFormat.Default`
+     */
+    parameterFormat?: Nilable<ControllerParameterFormat>;
+    /**
      * The custom path.
      */
     path?: Nilable<ControllerRoutePath>;
@@ -764,6 +791,12 @@ export interface IControllersOptions {
      */
     onValidationWithDocumentationFailed?: Nilable<JsonSchemaValidationFailedHandler>;
     /**
+     * The custom URL parameter format.
+     *
+     * @default: `ControllerParameterFormat.Default`
+     */
+    parameterFormat?: Nilable<ControllerParameterFormat>;
+    /**
      * The custom file patterns.
      *
      * @see https://www.npmjs.com/package/minimatch
@@ -831,6 +864,30 @@ export interface IControllersResult {
 }
 
 /**
+ * Settings for Swagger operations and their IDs.
+ */
+export interface IControllersSwaggerOperationOptions {
+    /**
+     * Custom template for the IDs.
+     *
+     * Supports following variables:
+     * - `{{class}}`: Name of the controller class, like `MyHttpController`
+     * - `{{file}}`: Base name of the file (without extension), like `index`
+     * - `{{http-method}}`: `get`, `post`, `patch`, etc.
+     * - `{{method}}`: Name of the controller method, like `getAllUsers`
+     *
+     * @default: `{{http-method}}-{{class}}-{{method}}`
+     */
+    idTemplate?: Nilable<string>;
+    /**
+     * Indicates to use no automatic generated operation IDs.
+     *
+     * @default `false`
+     */
+    noAutoIds?: Nilable<boolean>;
+}
+
+/**
  * Swagger options for controllers.
  */
 export interface IControllersSwaggerOptions {
@@ -852,6 +909,10 @@ export interface IControllersSwaggerOptions {
      * Do not provide `document` as YAML file download.
      */
     noYAML?: Nilable<boolean>;
+    /**
+     * Anything about handling operations and their IDs in Swagger documentations.
+     */
+    operations?: Nilable<ControllersSwaggerOperationOptionsValue>;
     /**
      * The path to the resource files / modules.
      * Relative paths will be mapped to the controller root directory.

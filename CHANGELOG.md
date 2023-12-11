@@ -1,5 +1,11 @@
 # Change Log (@egomobile/http-server)
 
+## 0.65.0
+
+- can define custom settings to setup IDs for Swagger operations
+- add `parameterFormat` to [IControllersOptions](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html) and [IControllerRouteOptions](https://egomobile.github.io/node-http-server/interfaces/IControllerRouteOptions.html) interfaces
+- `npm update`s
+
 ## 0.64.2
 
 - **BREAKING CHANGE**: module requires at least [Node 18+](https://nodejs.org/en/blog/release/v18.0.0) now

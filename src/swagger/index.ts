@@ -19,25 +19,26 @@ import type { OpenAPIV3 } from "openapi-types";
 import path from "path";
 import { knownFileMimes } from "../constants";
 import { normalizeRouterPath } from "../controllers/utils";
-import type { HttpMethod, IControllerMethodInfo, IControllerRouteDeprecatedOptions, IControllersSwaggerOptions, IHttpServer } from "../types";
-import type { Nilable, ResolveSwaggerOperationObject } from "../types/internal";
+import type { HttpMethod, IControllerMethodInfo, IControllerRouteDeprecatedOptions, IControllersSwaggerOperationOptions, IControllersSwaggerOptions, IHttpServer } from "../types";
+import type { IControllerClass, Nilable, ResolveSwaggerOperationObject } from "../types/internal";
 import { clone, getIfDeprecated, isNil, loadModule, setupObjectProperty, walkDirSync } from "../utils";
 import swaggerInitializerJs from "./resources/swagger-initializer_js";
 import { createSwaggerPathValidator, getSwaggerDocsBasePath, toOperationObject, toSwaggerPath } from "./utils";
 
-export interface IPrepareSwaggerDocumentFromOpenAPIFilesOptions {
-    controllersRootDir: string;
+export interface IPrepareSwaggerDocumentOptions {
+    controllerClass: IControllerClass;
     document: OpenAPIV3.Document;
     doesScriptFileMatch: (file: string) => boolean;
     methods: IControllerMethodInfo[];
+    operationOptions: Partial<IControllersSwaggerOperationOptions>;
     resolveOperation: ResolveSwaggerOperationObject;
 }
 
-export interface IPrepareSwaggerDocumentFromResourcesOptions {
-    document: OpenAPIV3.Document;
-    doesScriptFileMatch: (file: string) => boolean;
-    methods: IControllerMethodInfo[];
-    resolveOperation: ResolveSwaggerOperationObject;
+export interface IPrepareSwaggerDocumentFromOpenAPIFilesOptions extends IPrepareSwaggerDocumentOptions {
+    controllersRootDir: string;
+}
+
+export interface IPrepareSwaggerDocumentFromResourcesOptions extends IPrepareSwaggerDocumentOptions {
     resourcePath: string;
 }
 
@@ -48,10 +49,13 @@ export interface ISetupSwaggerUIForServerControllersOptions {
 }
 
 interface IUpdateOperationObject {
+    controllerClass: IControllerClass;
     deprecatedOptions: IControllerRouteDeprecatedOptions;
     document: OpenAPIV3.Document;
     httpMethod: HttpMethod;
+    methodName: string;
     operation: Nilable<OpenAPIV3.OperationObject>;
+    options: Partial<IControllersSwaggerOperationOptions>;
     rawPath: string;
     resolveOperation: ResolveSwaggerOperationObject;
 }
@@ -67,6 +71,7 @@ const componentKeys: (keyof OpenAPIV3.ComponentsObject)[] = [
     "schemas",
     "securitySchemes"
 ];
+const defaultOperationIdTemplate = "{{http-method}}-{{class}}-{{method}}";
 
 const pathToSwaggerUi: string = require("swagger-ui-dist").absolutePath();
 
@@ -76,10 +81,12 @@ const swaggerInitializerJSFilePath = path.join(pathToSwaggerUi, "swagger-initial
 const { readFile, stat } = fs.promises;
 
 export function prepareSwaggerDocumentFromOpenAPIFiles({
+    controllerClass,
     controllersRootDir,
     document,
     doesScriptFileMatch,
     methods,
+    operationOptions,
     resolveOperation
 }: IPrepareSwaggerDocumentFromOpenAPIFilesOptions) {
     walkDirSync(controllersRootDir, (file) => {
@@ -126,10 +133,13 @@ export function prepareSwaggerDocumentFromOpenAPIFiles({
             const operation = toOperationObject(operationOrGetter);
 
             updateOperationObject({
+                controllerClass,
                 "deprecatedOptions": matchingMethod.deprecatedOptions,
                 document,
                 httpMethod,
+                methodName,
                 operation,
+                "options": operationOptions,
                 rawPath,
                 resolveOperation
             });
@@ -138,9 +148,11 @@ export function prepareSwaggerDocumentFromOpenAPIFiles({
 }
 
 export function prepareSwaggerDocumentFromResources({
+    controllerClass,
     document,
     doesScriptFileMatch,
     methods,
+    operationOptions,
     resolveOperation,
     resourcePath
 }: IPrepareSwaggerDocumentFromResourcesOptions) {
@@ -221,10 +233,13 @@ export function prepareSwaggerDocumentFromResources({
                 const operation = toOperationObject(operationOrGetter);
 
                 updateOperationObject({
+                    controllerClass,
                     "deprecatedOptions": matchingMethod.deprecatedOptions,
                     document,
                     httpMethod,
+                    methodName,
                     operation,
+                    "options": operationOptions,
                     rawPath,
                     resolveOperation
                 });
@@ -367,7 +382,9 @@ export function setupSwaggerUIForServerControllers({
 
 function updateOperationObject(options: IUpdateOperationObject) {
     let {
-        operation
+        controllerClass,
+        operation,
+        "options": operationOptions
     } = options;
     if (isNil(operation)) {
         return;
@@ -378,15 +395,36 @@ function updateOperationObject(options: IUpdateOperationObject) {
     }
 
     const {
+        "relativePath": controllerFilePath
+    } = controllerClass.file;
+
+    const {
         deprecatedOptions,
         document,
         httpMethod,
+        methodName,
         rawPath,
         resolveOperation
     } = options;
 
     operation = clone(operation);
     operation.deprecated = getIfDeprecated(deprecatedOptions);
+
+    if (!operationOptions.noAutoIds) {
+        // generate operation IDs automatically
+
+        if (!operation.operationId) {
+            // only if not defined
+
+            const operationId = (operationOptions.idTemplate ?? defaultOperationIdTemplate)
+                .replaceAll("{{class}}", controllerClass["class"].name)
+                .replaceAll("{{file}}", path.basename(controllerFilePath, path.extname(controllerFilePath)))
+                .replaceAll("{{http-method}}", httpMethod)
+                .replaceAll("{{method}}", methodName);
+
+            operation.operationId = operationId;
+        }
+    }
 
     const swaggerPath = toSwaggerPath(rawPath);
 

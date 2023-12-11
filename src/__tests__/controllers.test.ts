@@ -59,8 +59,28 @@ describe("controllers", () => {
         expect(str).toBe(expectedResult);
     });
 
-    it.each(["/test_path_params_via_dirs/foo%20baz", "/test_path_params_via_dirs/foo%20baz/bar"])("should return 200 when do a GET request for existing TestUrlParamsViaDirsController which uses parameters via directories", async (p) => {
+    it.each(["/test_path_params_via_dirs_1/foo%20baz", "/test_path_params_via_dirs_1/foo%20baz/bar"])("should return 200 when do a GET request for existing TestUrlParamsViaDirsController which uses parameters via directories", async (p) => {
         const expectedResult = "test2:" + p + ":foo baz";
+
+        const server = createServerAndInitControllers();
+
+        const response = await request(server).get(p)
+            .send()
+            .parse(binaryParser)
+            .expect(200);
+
+        const data = response.body;
+        expect(Buffer.isBuffer(data)).toBe(true);
+
+        const str = data.toString("utf8");
+
+        expect(typeof str).toBe("string");
+        expect(str.length).toBe(expectedResult.length);
+        expect(str).toBe(expectedResult);
+    });
+
+    it.each(["/test_path_params_via_dirs_2/foo%20baz/foo/buzz", "/test_path_params_via_dirs_2/foo%20baz/foo/buzz/bar"])("should return 200 when do a GET request for existing TestUrlParamsViaDirsController which uses parameters (Next.js style) via directories", async (p) => {
+        const expectedResult = "test3:" + p + ":foo baz buzz";
 
         const server = createServerAndInitControllers();
 
