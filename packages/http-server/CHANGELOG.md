@@ -1,8 +1,15 @@
 # Change Log (@egomobile/http-server)
 
-## 0.65.0-alpha
+## 0.66.0-alpha
 
-- bump alpha version `0.65.x`
+- bump alpha version `0.66.x`
+- `npm update`s
+
+## 0.65.0 (legacy)
+
+- can define custom settings to setup IDs for Swagger operations
+- add `parameterFormat` to [IControllersOptions](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html) and [IControllerRouteOptions](https://egomobile.github.io/node-http-server/interfaces/IControllerRouteOptions.html) interfaces
+- `npm update`s
 
 ## 0.64.0 (legacy)
 
