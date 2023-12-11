@@ -1,6 +1,6 @@
 {
     "name": "@egomobile/http-server",
-    "version": "0.65.1",
+    "version": "0.65.2",
     "description": "A very fast alternative HTTP server to Express, with simple routing and middleware support, that is compatible with Node.js 18 or later.",
     "main": "lib/index.js",
     "engines": {

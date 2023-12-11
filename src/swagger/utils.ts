@@ -121,7 +121,7 @@ export function parseSwaggerOperationIdTemplate(options: IParseSwaggerOperationI
                     if (["path"].includes(nameLower)) {
                         const index = parseInt(formatLower);
                         if (!Number.isNaN(index)) {
-                            result = controllerFilePath.split("/")[index] ?? result;
+                            result = controllerFilePath.split("/")[index + 1] ?? result;
                         }
                     }
                 }
