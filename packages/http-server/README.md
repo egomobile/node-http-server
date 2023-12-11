@@ -5,7 +5,7 @@
 
 > Very fast alternative HTTP server to [Express](http://expressjs.com/), with
 > simple routing and middleware support and which is compatible with
-> [Node.js 18](https://nodejs.org/en/blog/release/v18.0.0/) or later.
+> [Node.js 18+](https://nodejs.org/en/blog/release/v18.0.0/).
 
 <a name="toc"></a>
 
