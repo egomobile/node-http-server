@@ -24,6 +24,8 @@ jobs:
         with:
           node-version: 18
           registry-url: https://registry.npmjs.org/
+      - name: NPM 9 install
+        run: npm install -g npm@9
       - name: Install dependencies
         run: npm install --force
       - name: Lint code
