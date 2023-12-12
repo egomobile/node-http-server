@@ -877,10 +877,10 @@ export interface IControllersSwaggerOperationOptions {
      * - `{{method}}`: Name of the controller method, like `getAllUsers`
      * - `{{path}}`: The relative path of the controller file, like `/v1/foo/@bar/buzz`
      *
-     * Also following, optional formatters (multiple separated by commas) are supported:
-     * - `{{method:lower,trim}}`: Takes the value of `method`, converts to lower case and trims the final string
+     * Also following, optional formatters (multiple separated by `|`) are supported:
+     * - `{{method:lower|trim}}`: Takes the value of `method`, converts to lower case and trims the final string
      * - `{{path:1}}`: Takes the 2nd part of the value of `path`, e.g. `/v1/foo/@bar/buzz` would extract `foo`
-     * - `{{method:kebap,upper}}`: A method name like `addUser` would result in `ADD-USER`
+     * - `{{method:kebap|upper}}`: A method name like `addUser` would result in `ADD-USER`
      *
      * @default: `{{http-method}}-{{class}}-{{method}}`
      */

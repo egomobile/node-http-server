@@ -1,6 +1,6 @@
 # Change Log (@egomobile/http-server)
 
-## 0.65.1
+## 0.65.3
 
 - can define custom settings to setup IDs for Swagger operations
 - add `parameterFormat` to [IControllersOptions](https://egomobile.github.io/node-http-server/interfaces/IControllersOptions.html) and [IControllerRouteOptions](https://egomobile.github.io/node-http-server/interfaces/IControllerRouteOptions.html) interfaces

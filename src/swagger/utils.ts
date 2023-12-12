@@ -63,6 +63,7 @@ export function parseSwaggerOperationIdTemplate(options: IParseSwaggerOperationI
         "relativePath": controllerFilePath
     } = controllerClass.file;
 
+    // example: {{http-method:lower|trim}}
     return template.replaceAll(/(\{\{)([a-z|\-]+)(\:?)([^\}]*)(\}\})/gi, (
         str: string,
         openBracket: string, name: string, sep1: string, formatterList: string, closeBracket: string
@@ -95,7 +96,7 @@ export function parseSwaggerOperationIdTemplate(options: IParseSwaggerOperationI
         }
 
         if (shouldUseFormatters) {
-            const allFormatters = formatterList.split(",").map((formatter) => {
+            const allFormatters = formatterList.split("|").map((formatter) => {
                 return formatter.trim();
             }).filter((formatter) => {
                 return formatter !== "";
