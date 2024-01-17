@@ -33,6 +33,12 @@ Execute the following command from your project folder, where your
 npm install --save @egomobile/http-server
 ```
 
+If you want to lookup types, also install the Node Types:
+
+```bash
+npm install --save-dev @types/node
+```
+
 <a name="usage"></a>
 
 ## Usage [<a href="#toc">↑</a>]
