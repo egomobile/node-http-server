@@ -607,6 +607,12 @@ export interface IControllerRouteOptions {
      */
     documentation?: Nilable<OpenAPIV3.OperationObject>;
     /**
+     * Should do no automatic `response.end()` call.
+     *
+     * @default `false`
+     */
+    noAutoEnd?: Nilable<boolean>;
+    /**
      * Indicates, that query parameters should NOT be parsed.
      */
     noQueryParams?: Nilable<boolean>;

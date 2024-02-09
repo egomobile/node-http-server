@@ -1,5 +1,9 @@
 # Change Log (@egomobile/http-server)
 
+## 0.66.0
+
+- add `noAutoEnd` to [IControllerRouteOptions](https://egomobile.github.io/node-http-server/interfaces/IControllerRouteOptions.html)
+
 ## 0.65.3
 
 - can define custom settings to setup IDs for Swagger operations

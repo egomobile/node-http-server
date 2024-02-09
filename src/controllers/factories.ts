@@ -18,7 +18,7 @@ import { isSchema } from "joi";
 import { minimatch, MinimatchOptions } from "minimatch";
 import { OpenAPIV3 } from "openapi-types";
 import path from "path";
-import { ADD_CONTROLLER_METHOD_TEST_ACTION, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, CONTROLLERS_CONTEXES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER } from "../constants";
+import { ADD_CONTROLLER_METHOD_TEST_ACTION, CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER } from "../constants";
 import { buffer, defaultDeprecatedMiddleware, query } from "../middlewares";
 import { prepareSwaggerDocumentFromOpenAPIFiles, prepareSwaggerDocumentFromResources, setupSwaggerUIForServerControllers } from "../swagger";
 import { ControllerParameterFormat, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRouteWithBodyOptions, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllerRouteDeprecatedOptions, IControllersOptions, IControllersSwaggerOperationOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ITestSettings, ParameterOptions, ResponseSerializer } from "../types";
@@ -55,6 +55,7 @@ export interface ICreateHttpMethodDecoratorOptions {
 }
 
 interface ICreateInitControllerMethodActionOptions {
+    autoEnd: boolean;
     controllerMethodName: string;
     decoratorOptions: Nilable<ControllerRouteWithBodyOptions>;
     deprecatedOptions: IControllerRouteDeprecatedOptions;
@@ -316,6 +317,8 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
         }
     }
 
+    const shouldNotDoAutoEndRequest = !!decoratorOptions?.noAutoEnd;
+
     return function (target, methodName, descriptor) {
         const method = getMethodOrThrow(descriptor);
 
@@ -375,6 +378,7 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
 
         getListFromObject<InitControllerMethodAction>(method, INIT_CONTROLLER_METHOD_ACTIONS).push(
             createInitControllerMethodAction({
+                "autoEnd": !shouldNotDoAutoEndRequest,
                 "controllerMethodName": String(methodName).trim(),
                 decoratorOptions,
                 deprecatedOptions,
@@ -443,6 +447,7 @@ export function createHttpMethodDecorator(options: ICreateHttpMethodDecoratorOpt
 }
 
 function createInitControllerMethodAction({
+    autoEnd,
     controllerMethodName,
     decoratorOptions,
     deprecatedOptions,
@@ -626,7 +631,10 @@ function createInitControllerMethodAction({
             handler
         });
 
-        server[httpMethod](routerPath, middlewares, requestHandler);
+        server[httpMethod](routerPath, {
+            autoEnd,
+            "use": middlewares
+        }, requestHandler);
 
         resolveInfo({
             controller,
