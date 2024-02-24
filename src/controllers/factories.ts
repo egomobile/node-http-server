@@ -18,11 +18,11 @@ import { isSchema } from "joi";
 import { minimatch, MinimatchOptions } from "minimatch";
 import { OpenAPIV3 } from "openapi-types";
 import path from "path";
-import { ADD_CONTROLLER_METHOD_TEST_ACTION, CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER } from "../constants";
+import { ADD_CONTROLLER_METHOD_TEST_ACTION, CONTROLLERS_CONTEXES, CONTROLLER_METHOD_PARAMETERS, CONTROLLER_MIDDLEWARES, ERROR_HANDLER, HTTP_METHODS, INIT_CONTROLLER_AUTHORIZE, INIT_CONTROLLER_METHOD_ACTIONS, INIT_CONTROLLER_METHOD_SWAGGER_ACTIONS, IS_CONTROLLER_CLASS, PREPARE_CONTROLLER_METHOD_ACTIONS, RESPONSE_SERIALIZER, ROUTER_PATHS, SETUP_DOCUMENTATION_UPDATER, SETUP_ERROR_HANDLER, SETUP_IMPORTS, SETUP_PARSE_ERROR_HANDLER, SETUP_RESPONSE_SERIALIZER, SETUP_VALIDATION_ERROR_HANDLER, TEST_OPTIONS } from "../constants";
 import { buffer, defaultDeprecatedMiddleware, query } from "../middlewares";
 import { prepareSwaggerDocumentFromOpenAPIFiles, prepareSwaggerDocumentFromResources, setupSwaggerUIForServerControllers } from "../swagger";
-import { ControllerParameterFormat, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRouteWithBodyOptions, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllerRouteDeprecatedOptions, IControllersOptions, IControllersSwaggerOperationOptions, IControllersSwaggerOptions, IHttpController, IHttpControllerOptions, IHttpServer, ImportValues, ITestSettings, ParameterOptions, ResponseSerializer } from "../types";
-import type { Func, GetSwaggerDocumentationsFunc, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerMethodTestAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, IRouterPathItem, Nilable, Optional, PrepareControllerMethodAction, ResolveSwaggerOperationObject, ResolveTestSettings } from "../types/internal";
+import { ControllerParameterFormat, ControllerRouteArgument1, ControllerRouteArgument2, ControllerRouteArgument3, ControllerRouteWithBodyOptions, HttpErrorHandler, HttpInputDataFormat, HttpMethod, HttpMiddleware, HttpRequestHandler, HttpRequestPath, IControllerMethodInfo, IControllerRouteDeprecatedOptions, IControllersOptions, IControllersSwaggerOperationOptions, IControllersSwaggerOptions, IGetTestsOptions, IHttpController, IHttpControllerOptions, IHttpControllerTest, IHttpServer, ImportValues, ITestSettings, ParameterOptions, ResponseSerializer } from "../types";
+import type { Func, GetSwaggerDocumentationsFunc, GetterFunc, IControllerClass, IControllerContext, IControllerFile, IControllerMethodParameter, InitControllerAuthorizeAction, InitControllerErrorHandlerAction, InitControllerImportAction, InitControllerMethodAction, InitControllerMethodSwaggerAction, InitControllerMethodTestAction, InitControllerParseErrorHandlerAction, InitControllerSerializerAction, InitControllerValidationErrorHandlerAction, InitDocumentationUpdaterAction, IRouterPathItem, Nilable, Optional, PrepareControllerMethodAction, ResolveSwaggerOperationObject, ResolveTestSettings, TestOptionsGetter } from "../types/internal";
 import { asAsync, canHttpMethodHandleBodies, getAllClassProps, getFunctionParamNames, getIfDeprecated, isClass, isNil, limitToBytes, walkDirSync } from "../utils";
 import { params } from "../validators/params";
 import { createBodyParserMiddlewareByFormat, createInitControllerAuthorizeAction, getListFromObject, getMethodOrThrow, normalizeRouterPath, setupMiddlewaresBySchema, setupMiddlewaresBySwaggerDocumentation, setupSwaggerDocumentation, toParameterValueUpdaters } from "./utils";
@@ -1319,6 +1319,33 @@ ${missingDocsText}`
         return {
             "app": server,
             "documentation": swaggerDoc,
+            "getTests": async (options?: IGetTestsOptions) => {
+                const shouldResetGetters = !!options?.resetGetters;
+
+                const tests: IHttpControllerTest[] = [];
+
+                const allTestOptionGetters = getListFromObject<TestOptionsGetter>(server, TEST_OPTIONS, false, true);
+                for (let i = 0; i < allTestOptionGetters.length; i++) {
+                    const optionGetter = allTestOptionGetters[i];
+
+                    if (shouldResetGetters) {
+                        optionGetter.reset();
+                    }
+
+                    const options = await optionGetter();
+
+                    tests.push({
+                        "controller": options.controller,
+                        "index": i,
+                        "method": options.method,
+                        "methodName": options.methodName,
+                        "name": options.name,
+                        "settings": options.settings
+                    });
+                }
+
+                return tests;
+            },
             "isSwaggerUIEnabled": newControllersContext.isSwaggerUIEnabled,
             "methods": allMethods
         };

@@ -1,5 +1,10 @@
 # Change Log (@egomobile/http-server)
 
+## 0.67.0
+
+- add `server:created` event
+- add `getTests()` to [IControllersResult interface](https://egomobile.github.io/node-http-server/interfaces/IControllersResult.html)
+
 ## 0.66.0
 
 - add `noAutoEnd` to [IControllerRouteOptions](https://egomobile.github.io/node-http-server/interfaces/IControllerRouteOptions.html)

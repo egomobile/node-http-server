@@ -167,34 +167,48 @@ export function It(name: string, arg2?: Nilable<ItArgument2>, arg3?: Nilable<ItA
                     "ref": name
                 });
 
-                getListFromObject<TestOptionsGetter>(server, TEST_OPTIONS).push(
-                    async () => {
-                        const {
-                            afterEach,
-                            beforeEach,
-                            settings
-                        } = await getTestOptionsProps({
-                            controller,
-                            index,
-                            methodName
-                        });
-
-                        return toTestOptions({
-                            afterEach,
-                            beforeEach,
-                            controller,
-                            index,
-                            method,
-                            methodName,
-                            name,
-                            "ref": name,
-                            settings,
-                            shouldAllowEmptySettings,
-                            shouldUseModuleAsDefault,
-                            timeout
-                        });
+                let lastResult: Nilable<ITestOptions>;
+                const getter = (async () => {
+                    const lr = lastResult;
+                    if (lr) {
+                        return lr;
                     }
-                );
+
+                    const {
+                        afterEach,
+                        beforeEach,
+                        settings
+                    } = await getTestOptionsProps({
+                        controller,
+                        index,
+                        methodName
+                    });
+
+                    const result = await toTestOptions({
+                        afterEach,
+                        beforeEach,
+                        controller,
+                        index,
+                        method,
+                        methodName,
+                        name,
+                        "ref": name,
+                        settings,
+                        shouldAllowEmptySettings,
+                        shouldUseModuleAsDefault,
+                        timeout
+                    });
+
+                    lastResult = result;
+                    return result;
+                }) as unknown as TestOptionsGetter;
+
+                getter.reset = () => {
+                    lastResult = null;
+                };
+
+                getListFromObject<TestOptionsGetter>(server, TEST_OPTIONS)
+                    .push(getter);
             }
         );
     };

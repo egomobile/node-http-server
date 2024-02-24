@@ -13,10 +13,12 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { IHttpServer, ITestEventHandlerContext, TestEventHandler } from "..";
+import type { Server } from "http";
+import type { IHttpServer, ITestEventHandlerContext, ServerCreatedEventHandler, TestEventHandler } from "..";
 import { asAsync } from "../utils";
 
 export function setupEventMethods(server: IHttpServer) {
+    const serverCreatedHandlers: ServerCreatedEventHandler[] = [];
     const testHandlers: TestEventHandler[] = [];
 
     // emit()
@@ -45,9 +47,17 @@ export function setupEventMethods(server: IHttpServer) {
         }
     };
 
-    // on
+    // on()
     server.on = (event: string, ...args: any[]): any => {
-        if (event === "test") {
+        if (event === "server:created") {
+            const handler = args[0] as ServerCreatedEventHandler;
+            if (typeof handler !== "function") {
+                throw new TypeError("handler must be of type function");
+            }
+
+            serverCreatedHandlers.push(asAsync(handler));
+        }
+        else if (event === "test") {
             const handler = args[0] as TestEventHandler;
             if (typeof handler !== "function") {
                 throw new TypeError("handler must be of type function");
@@ -57,6 +67,16 @@ export function setupEventMethods(server: IHttpServer) {
         }
         else {
             throw new TypeError(`Event ${event} is not supported`);
+        }
+    };
+
+    return {
+        "emitServerCreated": async (instance: Server) => {
+            for (const handler of serverCreatedHandlers) {
+                await handler({
+                    instance
+                });
+            }
         }
     };
 }

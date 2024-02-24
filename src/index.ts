@@ -195,6 +195,7 @@ export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHt
     let errorHandler: HttpErrorHandler = defaultHttpErrorHandler;
     const globalMiddlewares: HttpMiddleware[] = [];
     let instance: Optional<Server>;
+    let emitServerCreated: Optional<(server: Server) => Promise<void>>;
     let notFoundHandler: HttpNotFoundHandler = defaultHttpNotFoundHandler;
 
     const getErrorHandler = () => {
@@ -442,28 +443,31 @@ export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHt
                 reject(ex);
             });
 
-            const finalizeInstance = () => {
+            const finalizeInstance = async () => {
                 (server as any).port = port;
 
                 instance = newInstance;
+                await emitServerCreated!(newInstance);
             };
 
             if (isTruthy(process.env.EGO_RUN_TESTS)) {
                 // run tests instead of creating a new instance
 
-                finalizeInstance();
-
-                server.test()
+                finalizeInstance()
                     .then(() => {
-                        resolve();
+                        server.test()
+                            .then(() => {
+                                resolve();
+                            })
+                            .catch(reject);
                     })
                     .catch(reject);
             }
             else {
                 newInstance.listen(port as number, "0.0.0.0", () => {
-                    finalizeInstance();
-
-                    resolve();
+                    finalizeInstance()
+                        .then(resolve)
+                        .catch(reject);
                 });
             }
         });
@@ -517,7 +521,10 @@ export function createServer(serverOptions?: Nilable<ICreateServerOptions>): IHt
         shouldUseTestModuleAsDefault,
         testTimeout
     });
-    setupEventMethods(server);
+
+    const eventMethods = setupEventMethods(server);
+    emitServerCreated = eventMethods.emitServerCreated;
+
     setupHttpServerTestMethod({
         "options": serverOptions,
         server

@@ -14,7 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import type { ErrorObject as AjvError } from "ajv";
-import type { IncomingMessage, ServerResponse } from "http";
+import type { IncomingMessage, Server, ServerResponse } from "http";
 import type { AnySchema, ValidationError as JoiValidationError } from "joi";
 import type { JSONSchema4, JSONSchema6, JSONSchema7 } from "json-schema";
 import type { OpenAPIV3 } from "openapi-types";
@@ -860,6 +860,12 @@ export interface IControllersResult {
      */
     documentation: OpenAPIV3.Document;
     /**
+     * Resolves a list of all tests.
+     *
+     * @returns {Promise<IHttpControllerTest[]>} The promise with the tests.
+     */
+    getTests(options?: IGetTestsOptions): Promise<IHttpControllerTest[]>;
+    /**
      * Indicates if Swagger UI is enabled or not.
      */
     isSwaggerUIEnabled: boolean;
@@ -987,6 +993,18 @@ export interface IExistingAndAuthorizedUser {
 }
 
 /**
+ * Options for `IControllersResult.getTests()` method.
+ */
+export interface IGetTestsOptions {
+    /**
+     * Indicates to reset getters before resolve tests again.
+     *
+     * @default `false`
+     */
+    resetGetters?: Nilable<boolean>;
+}
+
+/**
  * Options for a body parser function.
  */
 export interface IHttpBodyParserOptions {
@@ -1021,6 +1039,36 @@ export interface IHttpController<TApp extends any = IHttpServer> {
      * The relative path of the underlying file.
      */
     readonly __path: string;
+}
+
+/**
+ * Describes a test of a `IHttpController`.
+ */
+export interface IHttpControllerTest {
+    /**
+     * The underlying controller.
+     */
+    controller: IHttpController;
+    /**
+     * The zero based index.
+     */
+    index: number;
+    /**
+     * The function of the underlying method.
+     */
+    method: Function;
+    /**
+     * The key of the method in class.
+     */
+    methodName: string | symbol;
+    /**
+     * The name.
+     */
+    name: string;
+    /**
+     * The underlying settings.
+     */
+    settings: ITestSettings;
 }
 
 /**
@@ -1341,8 +1389,9 @@ export interface IHttpServer {
      * Registers an event handler.
      *
      * @param {string} event The name of the event.
-     * @param {TestEventHandler} handler The handler to execute.
+     * @param {Function} handler The handler to execute.
      */
+    on(event: "server:created", handler: ServerCreatedEventHandler): this;
     on(event: "test", handler: TestEventHandler): this;
 
     /**
@@ -1775,6 +1824,16 @@ export interface IParameterOptionsWithUrlsSource extends IParameterOptions<"urls
      * One or more url parameter names. If not defined, all parameters are taken.
      */
     names?: Nilable<string[]>;
+}
+
+/**
+ * Context for a `ServerCreatedEventHandler` function.
+ */
+export interface IServerCreatedEventHandlerContext {
+    /**
+     * The new server instance.
+     */
+    instance: Server;
 }
 
 /**
@@ -2213,6 +2272,13 @@ export type Schema = AnySchema | JsonSchema;
  * @param {IHttpResponse} response The response context.
  */
 export type SchemaValidationFailedHandler = (errors: AjvError[], request: IHttpRequest, response: IHttpResponse) => any;
+
+/**
+ * An event handler that is invoked after server instance has been created.
+ *
+ * @param {IServerCreatedEventHandlerContext} {context} The context.
+ */
+export type ServerCreatedEventHandler = (context: IServerCreatedEventHandlerContext) => any;
 
 /**
  * Is invoked after a Swagger documentation has been loaded, initialized and added to the context.

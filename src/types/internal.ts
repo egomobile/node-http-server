@@ -232,4 +232,6 @@ export type ResolveSwaggerOperationObject = (context: IResolveSwaggerOperationOb
 
 export type ResolveTestSettings = (context: IResolveTestSettingsContext) => any;
 
-export type TestOptionsGetter = () => Promise<ITestOptions>;
+export type TestOptionsGetter = (() => Promise<ITestOptions>) & {
+    reset(): void;
+};
