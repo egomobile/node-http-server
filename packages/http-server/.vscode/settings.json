@@ -4,8 +4,8 @@
   "eslint.quiet": false,
   "eslint.workingDirectories": ["./src"],
   "editor.codeActionsOnSave": {
-    "source.fixAll": true,
-    "source.organizeImports": true
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
   },
   "typescript.tsdk": "node_modules/typescript/lib"
 }

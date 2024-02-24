@@ -1,5 +1,10 @@
 # Change Log (@egomobile/http-server)
 
+## 0.68.0-alpha
+
+- bump alpha version `0.68.x`
+- `npm update`s
+
 ## 0.67.0-alpha
 
 - bump alpha version `0.67.x`
